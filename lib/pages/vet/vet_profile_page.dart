@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
 import '../../models/vet_model.dart';
+import 'vet_booking_page.dart';
 
-class VetProfilePage extends StatelessWidget {
+class VetProfilePage extends StatefulWidget {
   final VetModel vet;
 
   const VetProfilePage({super.key, required this.vet});
 
   @override
+  State<VetProfilePage> createState() => _VetProfilePageState();
+}
+
+class _VetProfilePageState extends State<VetProfilePage> {
+  String? selectedSlot;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedSlot = null; // Optional selection
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final vet = widget.vet;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -269,36 +284,44 @@ class VetProfilePage extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: vet.availableSlots.map((slot) {
-                  return Container(
-                    margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: slot == vet.availableSlots.first ? const Color(0xFF3FA9F5) : Colors.grey.shade300,
-                        width: slot == vet.availableSlots.first ? 2 : 1,
+                  final isSelected = slot == selectedSlot;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedSlot = slot;
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF3FA9F5) : Colors.grey.shade300,
+                          width: isSelected ? 2 : 1,
+                        ),
                       ),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          slot.split(' at ')[0],
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: slot == vet.availableSlots.first ? const Color(0xFF3FA9F5) : Colors.black87,
+                      child: Column(
+                        children: [
+                          Text(
+                            slot.split(' at ')[0],
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? const Color(0xFF3FA9F5) : Colors.black87,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          slot.split(' at ')[1],
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: slot == vet.availableSlots.first ? const Color(0xFF3FA9F5) : Colors.black54,
+                          const SizedBox(height: 4),
+                          Text(
+                            slot.split(' at ')[1],
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isSelected ? const Color(0xFF3FA9F5) : Colors.black54,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 }).toList(),
@@ -343,7 +366,17 @@ class VetProfilePage extends StatelessWidget {
                 ),
               ),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => VetBookingPage(
+                        vet: vet,
+                        selectedSlot: selectedSlot,
+                      ),
+                    ),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3FA9F5),
                   foregroundColor: Colors.white,

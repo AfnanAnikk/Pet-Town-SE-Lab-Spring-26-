@@ -9,6 +9,7 @@ class PostModel {
   final int commentsCount;
   final Color placeholderColor;
   final double placeholderHeight;
+  final String imagePath;
 
   PostModel({
     required this.id,
@@ -19,9 +20,9 @@ class PostModel {
     required this.commentsCount,
     required this.placeholderColor,
     required this.placeholderHeight,
+    required this.imagePath,
   });
 
-  // Factory method to generate dummy posts
   static List<PostModel> generateDummyPosts(int count, {int startIndex = 0}) {
     final colors = [
       Colors.blueGrey.shade100,
@@ -34,8 +35,13 @@ class PostModel {
 
     final heights = [180.0, 220.0, 260.0, 300.0, 150.0];
 
+    // random-looking order, then repeats
+    final imageOrder = [3, 8, 1, 10, 5, 2, 7, 4, 9, 6];
+
     return List.generate(count, (index) {
       final actualIndex = startIndex + index;
+      final imageNumber = imageOrder[actualIndex % imageOrder.length];
+
       return PostModel(
         id: 'post_$actualIndex',
         title: 'Pookie cat $actualIndex',
@@ -45,6 +51,7 @@ class PostModel {
         commentsCount: 6 + actualIndex,
         placeholderColor: colors[actualIndex % colors.length],
         placeholderHeight: heights[actualIndex % heights.length],
+        imagePath: 'assets/images/p$imageNumber.png',
       );
     });
   }

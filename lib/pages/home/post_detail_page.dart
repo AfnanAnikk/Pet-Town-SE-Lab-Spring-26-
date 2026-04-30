@@ -11,7 +11,7 @@ class PostDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Generate dummy related posts for "More to explore"
+
     final relatedPosts = PostModel.generateDummyPosts(6, startIndex: 20);
 
     return Scaffold(

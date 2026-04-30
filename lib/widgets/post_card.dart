@@ -55,13 +55,14 @@ class _PostCardState extends State<PostCard> {
               height: widget.post.placeholderHeight,
               width: double.infinity,
               color: widget.post.placeholderColor,
-              child: const Center(
-                child: Icon(
-                  Icons.image_outlined,
-                  color: Colors.black26,
-                  size: 32,
-                ),
-              ),
+              child: Center(
+                child: Image.asset(
+                         widget.post.imagePath,
+                         width: 256,
+                         height: 256,
+                         fit: BoxFit.cover,
+                       ),
+                      ),
             ),
 
             // Darken Overlay & Buttons

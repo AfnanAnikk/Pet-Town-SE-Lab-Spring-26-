@@ -3,8 +3,33 @@ import '../../models/vet_model.dart';
 import '../../widgets/vet_filter_sheet.dart';
 import 'vet_profile_page.dart';
 
-class VetListPage extends StatelessWidget {
+class VetListPage extends StatefulWidget {
   const VetListPage({super.key});
+
+  @override
+  State<VetListPage> createState() => _VetListPageState();
+}
+
+class _VetListPageState extends State<VetListPage> {
+  bool _showFeatureMenu = false;
+  int _selectedIndex = 2; //
+
+  Widget _buildFeatureIcon({
+    required Widget icon,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Tooltip(
+        message: tooltip,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: icon,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,12 +37,17 @@ class VetListPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -37,13 +67,212 @@ class VetListPage extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        itemCount: vets.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 24),
-        itemBuilder: (context, index) {
-          return VetCard(vet: vets[index]);
+
+      body: SafeArea(
+        child: Stack(
+          children: [
+            ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              itemCount: vets.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 24),
+              itemBuilder: (context, index) {
+                return VetCard(vet: vets[index]);
+              },
+            ),
+
+            if (_showFeatureMenu)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showFeatureMenu = false;
+                    });
+                  },
+                  child: Container(color: Colors.transparent),
+                ),
+              ),
+
+            if (_showFeatureMenu)
+              Positioned(
+                bottom: 16,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Material(
+                    elevation: 8,
+                    borderRadius: BorderRadius.circular(40),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(40),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildFeatureIcon(
+                            icon: Image.asset(
+                              'assets/images/vet1.png',
+                              width: 28,
+                            ),
+                            tooltip: 'Pet Vet',
+                            onTap: () {
+                              setState(() {
+                                _showFeatureMenu = false;
+                              });
+                            },
+                          ),
+
+                          _buildFeatureIcon(
+                            icon: Image.asset(
+                              'assets/images/marketplace.png',
+                              width: 28,
+                            ),
+                            tooltip: 'Marketplace',
+                            onTap: () {
+                              setState(() {
+                                _showFeatureMenu = false;
+                              });
+                            },
+                          ),
+
+                          _buildFeatureIcon(
+                            icon: Image.asset(
+                              'assets/images/adoption.png',
+                              width: 28,
+                            ),
+                            tooltip: 'Adoption',
+                            onTap: () {
+                              setState(() {
+                                _showFeatureMenu = false;
+                              });
+                            },
+                          ),
+
+                          _buildFeatureIcon(
+                            icon: Image.asset(
+                              'assets/images/events.png',
+                              width: 28,
+                            ),
+                            tooltip: 'Events',
+                            onTap: () {
+                              setState(() {
+                                _showFeatureMenu = false;
+                              });
+                            },
+                          ),
+
+                          _buildFeatureIcon(
+                            icon: Image.asset(
+                              'assets/images/grooming.png',
+                              width: 28,
+                            ),
+                            tooltip: 'Grooming',
+                            onTap: () {
+                              setState(() {
+                                _showFeatureMenu = false;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: const Color.fromARGB(255, 124, 124, 124),
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        elevation: 8,
+        currentIndex: _selectedIndex,
+
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pop(context);
+            return;
+          }
+
+          if (index == 2) {
+            setState(() {
+              _showFeatureMenu = !_showFeatureMenu;
+              _selectedIndex = 2;
+            });
+          } else {
+            setState(() {
+              _showFeatureMenu = false;
+              _selectedIndex = index;
+            });
+          }
         },
+
+        items: [
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'assets/images/home.png',
+              width: 28,
+              height: 28,
+              fit: BoxFit.contain,
+            ),
+            activeIcon: Image.asset(
+              'assets/images/home1.png',
+              width: 28,
+              height: 28,
+              fit: BoxFit.contain,
+            ),
+            label: 'Home',
+          ),
+
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.search, size: 28),
+            label: 'Search',
+          ),
+
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'assets/images/features.png',
+              width: 28,
+              height: 28,
+              fit: BoxFit.contain,
+            ),
+            activeIcon: Image.asset(
+              'assets/images/features1.png',
+              width: 28,
+              height: 28,
+              fit: BoxFit.contain,
+            ),
+            label: 'Features',
+          ),
+
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_none, size: 28),
+            label: 'Notifications',
+          ),
+
+          BottomNavigationBarItem(
+            icon: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey.shade300, width: 2),
+              ),
+              child: const CircleAvatar(
+                radius: 12,
+                backgroundColor: Color(0xFFE0E0E0),
+                child: Icon(Icons.person, size: 16, color: Colors.grey),
+              ),
+            ),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }
@@ -68,14 +297,13 @@ class VetCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF2F7FC), // Very light blue background
+          color: const Color(0xFFF2F7FC),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFD6E4F0)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: Picture, Name, Degree, Rating
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -84,7 +312,9 @@ class VetCard extends StatelessWidget {
                   backgroundColor: Color(0xFFE0E0E0),
                   child: Icon(Icons.person, size: 40, color: Colors.grey),
                 ),
+
                 const SizedBox(width: 16),
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,13 +331,25 @@ class VetCard extends StatelessWidget {
                               ),
                             ),
                           ),
+
                           if (vet.isVerified)
-                            const Icon(Icons.verified, color: Colors.green, size: 20),
+                            const Icon(
+                              Icons.verified,
+                              color: Colors.green,
+                              size: 20,
+                            ),
+
                           const SizedBox(width: 8),
-                          const Icon(Icons.chevron_right, color: Colors.black54),
+
+                          const Icon(
+                            Icons.chevron_right,
+                            color: Colors.black54,
+                          ),
                         ],
                       ),
+
                       const SizedBox(height: 4),
+
                       Text(
                         vet.degree,
                         style: const TextStyle(
@@ -115,7 +357,9 @@ class VetCard extends StatelessWidget {
                           color: Colors.black54,
                         ),
                       ),
+
                       const SizedBox(height: 8),
+
                       Row(
                         children: [
                           const Icon(Icons.star, color: Colors.amber, size: 18),
@@ -135,15 +379,18 @@ class VetCard extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 16),
-            
-            // Tags
+
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: vet.tags.map((tag) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -160,13 +407,16 @@ class VetCard extends StatelessWidget {
                 );
               }).toList(),
             ),
+
             const SizedBox(height: 16),
-            
-            // Time Slots
+
             ...vet.availableSlots.take(2).map((slot) {
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -183,16 +433,22 @@ class VetCard extends StatelessWidget {
                   children: [
                     RichText(
                       text: TextSpan(
-                        style: const TextStyle(color: Colors.black, fontSize: 14),
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                        ),
                         children: [
                           TextSpan(
                             text: slot.split(' at ')[0],
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           TextSpan(text: ' at ${slot.split(' at ')[1]}'),
                         ],
                       ),
                     ),
+
                     Text(
                       'BDT ${vet.price}',
                       style: const TextStyle(
@@ -204,9 +460,8 @@ class VetCard extends StatelessWidget {
                   ],
                 ),
               );
-            }).toList(),
-            
-            // See more
+            }),
+
             if (vet.availableSlots.length > 2)
               const Center(
                 child: Padding(

@@ -63,14 +63,21 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Widget _buildFeatureIcon(IconData icon, String tooltip) {
-    return Tooltip(
+  Widget _buildFeatureIcon({
+  required Widget icon,
+  required String tooltip,
+  required VoidCallback onTap,
+  }) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Tooltip(
       message: tooltip,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Icon(icon, size: 28, color: Colors.black87),
+        child: icon,
       ),
-    );
+    ),
+  );
   }
 
   @override
@@ -86,9 +93,17 @@ class _HomePageState extends State<HomePage> {
           onPressed: () {},
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.send_outlined, color: Colors.black, size: 28),
-            onPressed: () {},
+          Padding(
+            padding: const EdgeInsets.only(right: 5),
+            child: IconButton(
+              icon: Image.asset(
+                          'assets/images/messaging.png',
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain,                       
+                        ),
+              onPressed: () {},
+            ),
           ),
         ],
         title: const Text(
@@ -137,37 +152,79 @@ class _HomePageState extends State<HomePage> {
             if (_showFeatureMenu)
               Positioned(
                 bottom: 16,
-                right: 60,
-                child: Material(
-                  elevation: 8,
-                  borderRadius: BorderRadius.circular(40),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(40),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const VetListPage()),
-                            );
-                            setState(() {
-                              _showFeatureMenu = false;
-                            });
-                          },
-                          child: _buildFeatureIcon(Icons.medical_information_outlined, 'Pet Vet'),
-                        ),
-                        _buildFeatureIcon(Icons.shopping_bag_outlined, 'Marketplace'),
-                        _buildFeatureIcon(Icons.volunteer_activism_outlined, 'Adoption'),
-                        _buildFeatureIcon(Icons.event_outlined, 'Events'),
-                        _buildFeatureIcon(Icons.cut_outlined, 'Grooming'),
-                      ],
+                left: (MediaQuery.of(context).size.width - 300) / 2,
+                child: SizedBox(
+                  width: 300,
+                  child: Material(
+                    elevation: 8,
+                    borderRadius: BorderRadius.circular(40),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(40),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildFeatureIcon(
+                             icon: Image.asset('assets/images/vet1.png', width: 28),
+                             tooltip: 'Pet Vet',
+                             onTap: () {
+                               Navigator.push(
+                                 context,
+                                 MaterialPageRoute(builder: (context) => const VetListPage()),
+                               );
+                               setState(() => _showFeatureMenu = false);
+                             },
+                          ),
+                          _buildFeatureIcon(
+                            icon: Image.asset('assets/images/marketplace.png', width: 28),
+                            tooltip: 'Marketplace',
+                            onTap: () {
+                              Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const VetListPage()),
+                                  );
+                                  setState(() => _showFeatureMenu = false);
+                                },
+                          ),
+                          _buildFeatureIcon(
+                            icon: Image.asset('assets/images/adoption.png', width: 28),
+                            tooltip: 'Adoption',
+                            onTap: () {
+                              Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const VetListPage()),
+                                  );
+                                  setState(() => _showFeatureMenu = false);
+                                },
+                          ),
+                          _buildFeatureIcon(
+                            icon: Image.asset('assets/images/events.png', width: 28),
+                            tooltip: 'Events',
+                            onTap: () {
+                              Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const VetListPage()),
+                                  );
+                                  setState(() => _showFeatureMenu = false);
+                                },
+                          ),
+                          _buildFeatureIcon(
+                            icon: Image.asset('assets/images/grooming.png', width: 28),
+                            tooltip: 'Grooming',
+                            onTap: () {
+                              Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const VetListPage()),
+                                  );
+                                  setState(() => _showFeatureMenu = false);
+                                },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -179,7 +236,7 @@ class _HomePageState extends State<HomePage> {
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black54,
+        unselectedItemColor: const Color.fromARGB(255, 124, 124, 124),
         showSelectedLabels: false,
         showUnselectedLabels: false,
         elevation: 8,
@@ -189,7 +246,9 @@ class _HomePageState extends State<HomePage> {
             // Toggle feature menu
             setState(() {
               _showFeatureMenu = !_showFeatureMenu;
-            });
+              _selectedIndex = 2;
+            },
+            );
           } else {
             // Hide menu and select tab
             setState(() {
@@ -199,17 +258,38 @@ class _HomePageState extends State<HomePage> {
           }
         },
         items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined, size: 28),
-            activeIcon: Icon(Icons.home, size: 28),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+                          'assets/images/home.png',
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain,
+                        ),
+            activeIcon: Image.asset(
+                          'assets/images/home1.png',
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain,
+                        ),
             label: 'Home',
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.search, size: 28),
             label: 'Search',
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.pets, size: 26),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+                          'assets/images/features.png',
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain,
+                        ),
+            activeIcon: Image.asset(
+                          'assets/images/features1.png',
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain,
+                        ),
             label: 'Features',
           ),
           const BottomNavigationBarItem(

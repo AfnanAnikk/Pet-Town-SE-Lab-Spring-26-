@@ -3,6 +3,7 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/primary_button.dart';
 import '../home/home_page.dart';
 import 'user_signup_page.dart';
+import '../provider/provider_dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -115,6 +116,24 @@ class _LoginPageState extends State<LoginPage> {
                     (route) => false,
                   );
                 },
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProviderDashboardPage(),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    'Login as Provider (Demo)',
+                    style: TextStyle(color: Color(0xFF3293B3), fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
               const SizedBox(height: 10),
 

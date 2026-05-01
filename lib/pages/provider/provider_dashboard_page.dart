@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'provider_profile_page.dart';
 
 class ProviderDashboardPage extends StatefulWidget {
   const ProviderDashboardPage({super.key});
@@ -57,7 +58,9 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
           Expanded(
             child: _selectedIndex == 0 
                 ? _buildDashboardContent() 
-                : const Center(child: Text("Feature coming soon")),
+                : _selectedIndex == 3
+                    ? const ProviderProfilePage()
+                    : const Center(child: Text("Feature coming soon")),
           ),
         ],
       ),

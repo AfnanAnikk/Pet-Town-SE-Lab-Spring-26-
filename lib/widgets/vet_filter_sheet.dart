@@ -9,6 +9,14 @@ class VetFilterSheet extends StatefulWidget {
 
 class _VetFilterSheetState extends State<VetFilterSheet> {
   String _selectedSpecies = 'Dog';
+  String? _selectedConcern;
+  final TextEditingController _locationController = TextEditingController();
+
+  @override
+  void dispose() {
+    _locationController.dispose();
+    super.dispose();
+  }
 
   Widget _buildDateBox(String title, String subtitle, {bool isSelected = false, bool isNextAvailable = false}) {
     return Container(
@@ -152,10 +160,10 @@ class _VetFilterSheetState extends State<VetFilterSheet> {
                     ),
                     const SizedBox(height: 8),
                     TextField(
+                      controller: _locationController,
                       decoration: InputDecoration(
-                        hintText: 'City',
-                        prefixText: 'Dhaka, Bangladesh ',
-                        prefixStyle: const TextStyle(color: Colors.black87, fontSize: 16),
+                        hintText: 'City (e.g. Dhaka, Chittagong)',
+                        prefixIcon: const Icon(Icons.location_on, color: Colors.black54),
                         suffixIcon: const Icon(Icons.search, color: Colors.grey),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         border: OutlineInputBorder(
@@ -231,12 +239,36 @@ class _VetFilterSheetState extends State<VetFilterSheet> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
-                    _buildCategoryBox('Vaccines & Preventive care', Icons.vaccines),
-                    _buildCategoryBox('Injury & Infection', Icons.healing),
-                    _buildCategoryBox('Cancer & Chronic Care', Icons.medical_services_outlined),
-                    _buildCategoryBox('Wellness & Checkups', Icons.monitor_heart_outlined),
-                    _buildCategoryBox('Skin & Allergies', Icons.back_hand_outlined),
-                    _buildCategoryBox('Dental Care', Icons.medical_information_outlined),
+                    _buildCategoryBox(
+                      'Vaccines & Preventive care', Icons.vaccines,
+                      isSelected: _selectedConcern == 'Vaccines & Preventive care',
+                      onTap: () => setState(() => _selectedConcern = 'Vaccines & Preventive care'),
+                    ),
+                    _buildCategoryBox(
+                      'Injury & Infection', Icons.healing,
+                      isSelected: _selectedConcern == 'Injury & Infection',
+                      onTap: () => setState(() => _selectedConcern = 'Injury & Infection'),
+                    ),
+                    _buildCategoryBox(
+                      'Cancer & Chronic Care', Icons.medical_services_outlined,
+                      isSelected: _selectedConcern == 'Cancer & Chronic Care',
+                      onTap: () => setState(() => _selectedConcern = 'Cancer & Chronic Care'),
+                    ),
+                    _buildCategoryBox(
+                      'Wellness & Checkups', Icons.monitor_heart_outlined,
+                      isSelected: _selectedConcern == 'Wellness & Checkups',
+                      onTap: () => setState(() => _selectedConcern = 'Wellness & Checkups'),
+                    ),
+                    _buildCategoryBox(
+                      'Skin & Allergies', Icons.back_hand_outlined,
+                      isSelected: _selectedConcern == 'Skin & Allergies',
+                      onTap: () => setState(() => _selectedConcern = 'Skin & Allergies'),
+                    ),
+                    _buildCategoryBox(
+                      'Dental Care', Icons.medical_information_outlined,
+                      isSelected: _selectedConcern == 'Dental Care',
+                      onTap: () => setState(() => _selectedConcern = 'Dental Care'),
+                    ),
                     
                     const SizedBox(height: 40),
                   ],
@@ -261,7 +293,12 @@ class _VetFilterSheetState extends State<VetFilterSheet> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pop(context, {
+                          'location': null,
+                          'concern': null,
+                        });
+                      },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         side: const BorderSide(color: Colors.black54),
@@ -282,7 +319,12 @@ class _VetFilterSheetState extends State<VetFilterSheet> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        Navigator.pop(context, {
+                          'location': _locationController.text.isNotEmpty ? _locationController.text : null,
+                          'concern': _selectedConcern,
+                        });
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3FA9F5),
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -311,8 +353,8 @@ class _VetFilterSheetState extends State<VetFilterSheet> {
   }
 }
 
-void showVetFilterSheet(BuildContext context) {
-  showModalBottomSheet(
+Future<dynamic> showVetFilterSheet(BuildContext context) {
+  return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,

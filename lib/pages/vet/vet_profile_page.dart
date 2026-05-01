@@ -73,6 +73,17 @@ class _VetProfilePageState extends State<VetProfilePage> {
                         vet.degree,
                         style: const TextStyle(fontSize: 14, color: Colors.black54),
                       ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            vet.location,
+                            style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 8),
                       Row(
                         children: [

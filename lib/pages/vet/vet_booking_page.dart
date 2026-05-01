@@ -215,13 +215,7 @@ class _VetBookingPageState extends State<VetBookingPage> {
             fontSize: 22,
           ),
         ),
-        leading: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: Color(0xFFE0E0E0),
-            child: Icon(Icons.person, color: Colors.grey),
-          ),
-        ),
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [

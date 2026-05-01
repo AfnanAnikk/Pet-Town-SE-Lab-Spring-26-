@@ -13,6 +13,9 @@ class VetListPage extends StatefulWidget {
 class _VetListPageState extends State<VetListPage> {
   bool _showFeatureMenu = false;
   int _selectedIndex = 2; //
+  
+  String? _filterLocation;
+  String? _filterConcern;
 
   Widget _buildFeatureIcon({
     required Widget icon,
@@ -33,7 +36,40 @@ class _VetListPageState extends State<VetListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final vets = VetModel.generateDummyVets();
+    var vets = VetModel.generateDummyVets();
+    
+    // Apply Demo Filters
+    if (_filterLocation != null && _filterLocation!.isNotEmpty) {
+      vets = vets.where((vet) => vet.location.toLowerCase().contains(_filterLocation!.toLowerCase())).toList();
+    }
+    
+    if (_filterConcern != null) {
+      String requiredSkill = '';
+      switch (_filterConcern) {
+        case 'Vaccines & Preventive care':
+          requiredSkill = 'Vaccinologist';
+          break;
+        case 'Injury & Infection':
+          requiredSkill = 'Surgeon';
+          break;
+        case 'Cancer & Chronic Care':
+          requiredSkill = 'Oncologist';
+          break;
+        case 'Wellness & Checkups':
+          requiredSkill = 'General Practitioner';
+          break;
+        case 'Skin & Allergies':
+          requiredSkill = 'Dermatologist';
+          break;
+        case 'Dental Care':
+          requiredSkill = 'Dentist';
+          break;
+      }
+      
+      if (requiredSkill.isNotEmpty) {
+        vets = vets.where((vet) => vet.tags.contains(requiredSkill)).toList();
+      }
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -61,8 +97,14 @@ class _VetListPageState extends State<VetListPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.tune, color: Color(0xFF2C3E50)),
-            onPressed: () {
-              showVetFilterSheet(context);
+            onPressed: () async {
+              final result = await showVetFilterSheet(context);
+              if (result != null && result is Map<String, String?>) {
+                setState(() {
+                  _filterLocation = result['location'];
+                  _filterConcern = result['concern'];
+                });
+              }
             },
           ),
         ],
@@ -356,6 +398,18 @@ class VetCard extends StatelessWidget {
                           fontSize: 14,
                           color: Colors.black54,
                         ),
+                      ),
+                      
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            vet.location,
+                            style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                        ],
                       ),
 
                       const SizedBox(height: 8),

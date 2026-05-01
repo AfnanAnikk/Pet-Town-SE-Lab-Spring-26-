@@ -134,7 +134,6 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
               // Owner Verification
               _buildSectionTitle('Owner Verification'),
               _buildTextField('Name'),
-              _buildTextField('NID Number'),
               const SizedBox(height: 4),
               Row(
                 children: [
@@ -143,6 +142,8 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
                   _buildUploadBox('Upload NID\nBack'),
                 ],
               ),
+              const SizedBox(height: 12),
+              _buildTextField('NID Number'),
 
               // Business Verification
               _buildSectionTitle('Business Verification (At least one)'),
@@ -153,6 +154,9 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
                   _buildUploadBox('Upload Trade\nCertificate'),
                 ],
               ),
+              const SizedBox(height: 12),
+              _buildTextField('TIN Certificate Number'),
+              _buildTextField('Trade License Number'),
 
               // Professional License
               _buildSectionTitle('Professional License (Vet/Clinic)'),
@@ -163,6 +167,9 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
                   _buildUploadBox('Upload Other\nCertificate\n(optional)'),
                 ],
               ),
+              const SizedBox(height: 12),
+              _buildTextField('BVC Registration Number'),
+              _buildTextField('Other License Name/Number (optional)'),
               const SizedBox(height: 14),
 
               // Terms and Conditions

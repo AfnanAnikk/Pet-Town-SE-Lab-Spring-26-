@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
 
 class ProviderProfilePage extends StatefulWidget {
   const ProviderProfilePage({super.key});
@@ -22,31 +24,86 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     }
   }
 
-  // Mock initial data
-  final TextEditingController _nameController = TextEditingController(text: 'Dr. Afnan Mehmud');
-  final TextEditingController _degreeController = TextEditingController(text: 'DVM, MS in Veterinary Surgery');
-  final TextEditingController _locationController = TextEditingController(text: 'Dhaka, Bangladesh');
-  final TextEditingController _feeController = TextEditingController(text: '800');
-  final TextEditingController _aboutController = TextEditingController(
-      text: 'Passionate veterinarian with over 10 years of experience in small animal surgery and preventive care.');
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _degreeController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _feeController = TextEditingController();
+  final TextEditingController _aboutController = TextEditingController();
   
   final List<String> _predefinedSkills = [
     'Immunologist', 'Vaccinologist', 'Biosecurity Veterinarian',
     'Dermatologist', 'Surgeon', 'Dentist', 'Cardiologist',
     'Nutritionist', 'Behaviorist', 'Neurologist', 'Oncologist', 'Ophthalmologist'
   ];
-  final List<String> _selectedSkills = ['Surgeon'];
+  List<String> _selectedSkills = [];
   
-  final List<String> _speciesTreated = ['Dog', 'Cat'];
+  List<String> _speciesTreated = [];
   final List<String> _availableSpecies = ['Dog', 'Cat', 'Bird', 'Rabbit', 'Reptile', 'Equine'];
 
-  final List<String> _areasOfInterest = ['Dermatology', 'Surgery'];
+  List<String> _areasOfInterest = [];
   final TextEditingController _newAreaController = TextEditingController();
 
-  final List<DateTime> _timeslots = [
-    DateTime.now().add(const Duration(hours: 2)),
-    DateTime.now().add(const Duration(days: 1, hours: 2)),
-  ];
+  List<DateTime> _timeslots = [];
+
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final userId = await AuthService.getUserId();
+    if (userId != null) {
+      final res = await ApiService.getVetProfile(userId);
+      if (res['success'] && res['data'] != null) {
+        final data = res['data'];
+        setState(() {
+          _nameController.text = data['name'] ?? '';
+          _degreeController.text = data['degree'] ?? '';
+          _locationController.text = data['location'] ?? '';
+          _feeController.text = data['price']?.toString() ?? '0';
+          _aboutController.text = data['profile_description'] ?? '';
+          
+          _selectedSkills = List<String>.from(data['tags'] ?? []);
+          _speciesTreated = List<String>.from(data['speciesTreated'] ?? []);
+          _areasOfInterest = List<String>.from(data['areasOfInterest'] ?? []);
+          
+          // Parse timeslots back to DateTime objects for internal representation
+          _timeslots = [];
+          if (data['availableSlots'] != null) {
+             for (String slot in data['availableSlots']) {
+                try {
+                  final parts = slot.split(' at ');
+                  if (parts.length == 2) {
+                    final dateParts = parts[0].split('/');
+                    final timeParts = parts[1].split(' ');
+                    final timeNumParts = timeParts[0].split(':');
+                    
+                    int day = int.parse(dateParts[0]);
+                    int month = int.parse(dateParts[1]);
+                    int year = int.parse(dateParts[2]);
+                    
+                    int hour = int.parse(timeNumParts[0]);
+                    int minute = int.parse(timeNumParts[1]);
+                    if (timeParts[1].toLowerCase() == 'pm' && hour < 12) hour += 12;
+                    if (timeParts[1].toLowerCase() == 'am' && hour == 12) hour = 0;
+                    
+                    _timeslots.add(DateTime(year, month, day, hour, minute));
+                  }
+                } catch (e) {
+                  // Ignore parsing errors for individual slots
+                }
+             }
+          }
+        });
+      }
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -61,6 +118,10 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -310,14 +371,36 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
           
           const SizedBox(height: 40),
           
-          // Save Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile updated successfully!')),
-                );
+              onPressed: () async {
+                final userId = await AuthService.getUserId();
+                if (userId == null) return;
+                
+                final payload = {
+                  'userId': userId,
+                  'name': _nameController.text,
+                  'degree': _degreeController.text,
+                  'location': _locationController.text,
+                  'fee': int.tryParse(_feeController.text) ?? 0,
+                  'about': _aboutController.text,
+                  'skills': _selectedSkills,
+                  'species': _speciesTreated,
+                  'areas': _areasOfInterest,
+                  'timeslots': _timeslots.map((slot) {
+                    final timeStr = TimeOfDay.fromDateTime(slot).format(context);
+                    final dateStr = '${slot.day}/${slot.month}/${slot.year}';
+                    return '$dateStr at $timeStr';
+                  }).toList(),
+                };
+                
+                final res = await ApiService.updateVetProfile(payload);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(res['data']?['message'] ?? res['message'] ?? 'Profile updated successfully!')),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3FA9F5),

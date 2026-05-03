@@ -3,6 +3,7 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/primary_button.dart';
 import 'login_page.dart';
 import 'sp_verification_page.dart';
+import '../../services/auth_service.dart';
 
 class SpSignupPage extends StatefulWidget {
   const SpSignupPage({super.key});
@@ -12,8 +13,75 @@ class SpSignupPage extends StatefulWidget {
 }
 
 class _SpSignupPageState extends State<SpSignupPage> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  bool _isLoading = false;
   bool _agreedToTerms = true;
   String _selectedServiceType = 'Pet Salon';
+
+  Future<void> _handleSignup() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final phone = _phoneController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please agree to Terms and Conditions')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await AuthService.registerServiceProvider(
+      name: name,
+      serviceType: _selectedServiceType,
+      email: email,
+      password: password,
+      phone: phone,
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registration successful!')),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => SpVerificationPage(userId: result['data']['userId'])),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Registration failed')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
 
   Widget _buildServiceTypeOption(String title) {
     bool isSelected = _selectedServiceType == title;
@@ -104,9 +172,10 @@ class _SpSignupPageState extends State<SpSignupPage> {
               const SizedBox(height: 32),
 
               // Form Fields
-              const CustomTextField(
+              CustomTextField(
                 label: 'Service/ Vet Name',
                 hintText: 'PawPatrol',
+                controller: _nameController,
               ),
               const SizedBox(height: 8),
               // Service Type
@@ -129,22 +198,25 @@ class _SpSignupPageState extends State<SpSignupPage> {
                 ],
               ),
               const SizedBox(height: 8),
-              const CustomTextField(
+              CustomTextField(
                 label: 'Email',
                 hintText: 'user@gmail.com',
                 keyboardType: TextInputType.emailAddress,
+                controller: _emailController,
               ),
               const SizedBox(height: 8),
-              const CustomTextField(
+              CustomTextField(
                 label: 'Password',
                 hintText: '••••••••••',
                 isPassword: true,
+                controller: _passwordController,
               ),
               const SizedBox(height: 8),
-              const CustomTextField(
+              CustomTextField(
                 label: 'Phone Number',
                 hintText: '019••••••••',
                 keyboardType: TextInputType.phone,
+                controller: _phoneController,
               ),
               const SizedBox(height: 14),
 
@@ -187,17 +259,12 @@ class _SpSignupPageState extends State<SpSignupPage> {
               const SizedBox(height: 24),
 
               // Actions
-              PrimaryButton(
-                text: 'Sign up',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const SpVerificationPage(),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : PrimaryButton(
+                      text: 'Sign up',
+                      onPressed: _handleSignup,
                     ),
-                  );
-                },
-              ),
               const SizedBox(height: 10),
 
               // Bottom link

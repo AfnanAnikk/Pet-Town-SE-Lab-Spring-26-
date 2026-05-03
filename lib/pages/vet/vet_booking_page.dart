@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/vet_model.dart';
 import 'vet_booking_sheets.dart';
 import 'vet_booking_success_page.dart';
+import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
 
 class VetBookingPage extends StatefulWidget {
   final VetModel vet;
@@ -22,6 +24,63 @@ class _VetBookingPageState extends State<VetBookingPage> {
   String? selectedConcern;
   String? reasonForVisit;
   String? paymentMethod;
+  bool _isBooking = false;
+
+  void _handleBooking() async {
+    if (petDetails == null || selectedConcern == null || reasonForVisit == null || paymentMethod == null || selectedTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields and select a time')),
+      );
+      return;
+    }
+
+    final userId = await AuthService.getUserId();
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please log in first.')));
+      return;
+    }
+
+    setState(() => _isBooking = true);
+
+    final summaryParts = petDetails!['summary']!.split(', ');
+
+    final bookingData = {
+      'userId': userId,
+      'vetId': widget.vet.id,
+      'petName': petDetails!['name'],
+      'petSpecies': petDetails!['species'],
+      'petBreed': summaryParts.length > 1 ? summaryParts[1] : '',
+      'petSex': summaryParts.length > 2 ? summaryParts[2] : '',
+      'petAge': summaryParts.length > 3 ? summaryParts[3] : '',
+      'concern': selectedConcern,
+      'reason': reasonForVisit,
+      'paymentMethod': paymentMethod,
+      'slotTime': selectedTime,
+      'bookingDate': formattedDate.split(' at ').first,
+    };
+
+    final result = await ApiService.createBooking(bookingData);
+
+    setState(() => _isBooking = false);
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VetBookingSuccessPage(
+            vet: widget.vet,
+            dateStr: formattedDate.split(' at ').first,
+            timeStr: selectedTime ?? '',
+            reason: reasonForVisit ?? '',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+    }
+  }
 
   @override
   void initState() {
@@ -385,37 +444,21 @@ class _VetBookingPageState extends State<VetBookingPage> {
                       ],
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (petDetails == null || selectedConcern == null || reasonForVisit == null || paymentMethod == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please fill all required fields')),
-                        );
-                        return;
-                      }
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => VetBookingSuccessPage(
-                            vet: widget.vet,
-                            dateStr: formattedDate.split(' at ').first,
-                            timeStr: selectedTime ?? '',
-                            reason: reasonForVisit ?? '',
+                  _isBooking
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton(
+                          onPressed: _handleBooking,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3FA9F5),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
                           ),
+                          child: const Text('CONFIRM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3FA9F5),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text('CONFIRM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
                 ],
               ),
             ),

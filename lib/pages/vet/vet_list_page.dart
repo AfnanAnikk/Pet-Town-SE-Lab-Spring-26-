@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/vet_model.dart';
+import '../../services/api_service.dart';
 import '../../widgets/vet_filter_sheet.dart';
 import 'vet_profile_page.dart';
 
@@ -16,6 +17,37 @@ class _VetListPageState extends State<VetListPage> {
   
   String? _filterLocation;
   String? _filterConcern;
+  String? _filterSpecies;
+
+  bool _isLoading = true;
+  List<VetModel> _vets = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchVets();
+  }
+
+  Future<void> _fetchVets({String? location, String? concern, String? species}) async {
+    setState(() {
+      _isLoading = true;
+    });
+    final result = await ApiService.getAllVets(location: location, concern: concern, species: species);
+    if (result['success']) {
+      final List<dynamic> data = result['data'];
+      setState(() {
+        _vets = data.map((json) => VetModel.fromJson(json)).toList();
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+      }
+    }
+  }
 
   Widget _buildFeatureIcon({
     required Widget icon,
@@ -36,40 +68,7 @@ class _VetListPageState extends State<VetListPage> {
 
   @override
   Widget build(BuildContext context) {
-    var vets = VetModel.generateDummyVets();
-    
-    // Apply Demo Filters
-    if (_filterLocation != null && _filterLocation!.isNotEmpty) {
-      vets = vets.where((vet) => vet.location.toLowerCase().contains(_filterLocation!.toLowerCase())).toList();
-    }
-    
-    if (_filterConcern != null) {
-      String requiredSkill = '';
-      switch (_filterConcern) {
-        case 'Vaccines & Preventive care':
-          requiredSkill = 'Vaccinologist';
-          break;
-        case 'Injury & Infection':
-          requiredSkill = 'Surgeon';
-          break;
-        case 'Cancer & Chronic Care':
-          requiredSkill = 'Oncologist';
-          break;
-        case 'Wellness & Checkups':
-          requiredSkill = 'General Practitioner';
-          break;
-        case 'Skin & Allergies':
-          requiredSkill = 'Dermatologist';
-          break;
-        case 'Dental Care':
-          requiredSkill = 'Dentist';
-          break;
-      }
-      
-      if (requiredSkill.isNotEmpty) {
-        vets = vets.where((vet) => vet.tags.contains(requiredSkill)).toList();
-      }
-    }
+    var filteredVets = List<VetModel>.from(_vets);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -103,7 +102,9 @@ class _VetListPageState extends State<VetListPage> {
                 setState(() {
                   _filterLocation = result['location'];
                   _filterConcern = result['concern'];
+                  _filterSpecies = result['species'];
                 });
+                _fetchVets(location: _filterLocation, concern: _filterConcern, species: _filterSpecies);
               }
             },
           ),
@@ -111,16 +112,21 @@ class _VetListPageState extends State<VetListPage> {
       ),
 
       body: SafeArea(
-        child: Stack(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Stack(
           children: [
-            ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              itemCount: vets.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 24),
-              itemBuilder: (context, index) {
-                return VetCard(vet: vets[index]);
-              },
-            ),
+            if (filteredVets.isEmpty)
+              const Center(child: Text("No vets found. Be the first to register!"))
+            else
+              ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                itemCount: filteredVets.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 24),
+                itemBuilder: (context, index) {
+                  return VetCard(vet: filteredVets[index]);
+                },
+              ),
 
             if (_showFeatureMenu)
               Positioned.fill(

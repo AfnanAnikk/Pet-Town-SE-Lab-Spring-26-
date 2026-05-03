@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'provider_profile_page.dart';
+import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
 
 class ProviderDashboardPage extends StatefulWidget {
   const ProviderDashboardPage({super.key});
@@ -10,6 +12,59 @@ class ProviderDashboardPage extends StatefulWidget {
 
 class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   int _selectedIndex = 0;
+  bool _isLoading = true;
+  List<dynamic> _bookings = [];
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBookings();
+  }
+
+  Future<void> _fetchBookings() async {
+    final userId = await AuthService.getUserId();
+    if (userId == null) {
+      setState(() {
+        _errorMessage = 'User not logged in';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final result = await ApiService.getVetBookings(userId);
+    
+    if (result['success']) {
+      setState(() {
+        _bookings = result['data'];
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _errorMessage = result['message'] ?? 'Failed to load bookings';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _updateStatus(int bookingId, String status) async {
+    // Optimistic UI update
+    final index = _bookings.indexWhere((b) => b['id'] == bookingId);
+    if (index != -1) {
+      setState(() {
+        _bookings[index]['status'] = status;
+      });
+    }
+    
+    final result = await ApiService.updateBookingStatus(bookingId, status);
+    if (!result['success']) {
+      // Revert if failed
+      _fetchBookings(); 
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,87 +186,139 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
             ],
           ),
           const SizedBox(height: 16),
-          
-          // Dummy Appointment Card representing the booking just made
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
+          _isLoading 
+              ? const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
+              : _errorMessage.isNotEmpty
+                  ? Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)))
+                  : _bookings.isEmpty
+                      ? const Center(child: Padding(padding: EdgeInsets.all(32), child: Text("No upcoming appointments.")))
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _bookings.length,
+                          itemBuilder: (context, index) {
+                            return _buildBookingCard(_bookings[index]);
+                          },
+                        ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingCard(dynamic booking) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: booking['status'] == 'pending' ? Colors.orange.shade50 : const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+                child: Text(
+                  (booking['status'] ?? 'pending').toUpperCase(),
+                  style: TextStyle(
+                    color: booking['status'] == 'pending' ? Colors.orange : Colors.green, 
+                    fontSize: 12, 
+                    fontWeight: FontWeight.bold
+                  ),
+                ),
+              ),
+              Text(
+                '${booking['booking_date']} • ${booking['slot_time']}',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const CircleAvatar(
+                radius: 24,
+                backgroundColor: Color(0xFFE0E0E0),
+                child: Icon(Icons.person, color: Colors.grey),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(booking['user_name'] ?? 'Client', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text('Patient: ${booking['pet_name']}, ${booking['pet_species']}', style: const TextStyle(fontSize: 14, color: Colors.black54)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(),
+          ),
+          _buildInfoRow(Icons.medical_services_outlined, 'Concern', booking['concern']),
+          const SizedBox(height: 8),
+          _buildInfoRow(Icons.folder_open_outlined, 'Reason', booking['reason']),
+          const SizedBox(height: 16),
+          if (booking['status'] == 'pending') ...[
+            Row(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Confirmed',
-                        style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
-                      ),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _updateStatus(booking['id'], 'rejected'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    const Text(
-                      '26 Jan 2026 • 5:00 PM',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-                    ),
-                  ],
+                    child: const Text('Reject'),
+                  ),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Color(0xFFE0E0E0),
-                      child: Icon(Icons.person, color: Colors.grey),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('Afnan Mehmud', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          Text('Patient: Dog, Golden Retriever', style: TextStyle(fontSize: 14, color: Colors.black54)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Divider(),
-                ),
-                _buildInfoRow(Icons.medical_services_outlined, 'Concern', 'Allergy'),
-                const SizedBox(height: 8),
-                _buildInfoRow(Icons.folder_open_outlined, 'Reason', 'Check my puppy\'s health'),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
+                const SizedBox(width: 16),
+                Expanded(
                   child: ElevatedButton(
-                    onPressed: _showAppointmentDetailsSheet,
+                    onPressed: () => _updateStatus(booking['id'], 'accepted'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3FA9F5),
+                      backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text('View Full Details'),
+                    child: const Text('Accept'),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+          ],
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => _showAppointmentDetailsSheet(booking),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3FA9F5),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              child: const Text('View Full Details'),
             ),
           ),
         ],
@@ -240,7 +347,7 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
     );
   }
 
-  void _showAppointmentDetailsSheet() {
+  void _showAppointmentDetailsSheet(dynamic booking) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -269,17 +376,17 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
               ],
             ),
             const SizedBox(height: 16),
-            const Text('26 Jan 2026 • 5:00 PM', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text('${booking['booking_date']} • ${booking['slot_time']}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
-            _buildInfoRow(Icons.person_outline, 'Client', 'Afnan Mehmud'),
+            _buildInfoRow(Icons.person_outline, 'Client', booking['user_name'] ?? 'Client'),
             const SizedBox(height: 16),
-            _buildInfoRow(Icons.pets_outlined, 'Patient', 'Dog, Golden Retriever, Male, 3 yrs'),
+            _buildInfoRow(Icons.pets_outlined, 'Patient', '${booking['pet_name']}, ${booking['pet_species']}, ${booking['pet_sex']}, ${booking['pet_age']}'),
             const SizedBox(height: 16),
-            _buildInfoRow(Icons.medical_services_outlined, 'Concern', 'Allergy'),
+            _buildInfoRow(Icons.medical_services_outlined, 'Concern', booking['concern']),
             const SizedBox(height: 16),
-            _buildInfoRow(Icons.folder_open_outlined, 'Reason', 'Check my puppy\'s health'),
+            _buildInfoRow(Icons.folder_open_outlined, 'Reason', booking['reason']),
             const SizedBox(height: 16),
-            _buildInfoRow(Icons.payments_outlined, 'Payment', 'BDT 9,035 (Master Card **** 7508)'),
+            _buildInfoRow(Icons.payments_outlined, 'Payment', booking['payment_method']),
             const Spacer(),
             Row(
               children: [

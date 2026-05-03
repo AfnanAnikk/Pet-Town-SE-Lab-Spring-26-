@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../widgets/primary_button.dart';
 import 'login_page.dart';
+import '../../services/api_service.dart';
 
 class SpVerificationPage extends StatefulWidget {
-  const SpVerificationPage({super.key});
+  final int userId;
+  const SpVerificationPage({super.key, required this.userId});
 
   @override
   State<SpVerificationPage> createState() => _SpVerificationPageState();
@@ -11,6 +13,42 @@ class SpVerificationPage extends StatefulWidget {
 
 class _SpVerificationPageState extends State<SpVerificationPage> {
   bool _agreedToTerms = false;
+  bool _isLoading = false;
+  
+  final _nameController = TextEditingController();
+  final _nidController = TextEditingController();
+  final _tinController = TextEditingController();
+  final _tradeController = TextEditingController();
+  final _bvcController = TextEditingController();
+  final _otherController = TextEditingController();
+
+  Future<void> _handleVerification() async {
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please agree to terms')));
+      return;
+    }
+    setState(() => _isLoading = true);
+    final result = await ApiService.submitVerification(
+      userId: widget.userId,
+      ownerName: _nameController.text,
+      nidNumber: _nidController.text,
+      tinNumber: _tinController.text,
+      tradeLicense: _tradeController.text,
+      bvcRegistration: _bvcController.text,
+      otherLicense: _otherController.text,
+    );
+    setState(() => _isLoading = false);
+    
+    if (result['success']) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+    }
+  }
 
   Widget _buildSectionTitle(String title) {
     return Padding(
@@ -26,10 +64,11 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
     );
   }
 
-  Widget _buildTextField(String hintText) {
+  Widget _buildTextField(String hintText, TextEditingController controller) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
+        controller: controller,
         style: const TextStyle(fontSize: 14),
         decoration: InputDecoration(
           hintText: hintText,
@@ -133,7 +172,7 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
 
               // Owner Verification
               _buildSectionTitle('Owner Verification'),
-              _buildTextField('Name'),
+              _buildTextField('Name', _nameController),
               const SizedBox(height: 4),
               Row(
                 children: [
@@ -143,7 +182,7 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildTextField('NID Number'),
+              _buildTextField('NID Number', _nidController),
 
               // Business Verification
               _buildSectionTitle('Business Verification (At least one)'),
@@ -155,8 +194,8 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildTextField('TIN Certificate Number'),
-              _buildTextField('Trade License Number'),
+              _buildTextField('TIN Certificate Number', _tinController),
+              _buildTextField('Trade License Number', _tradeController),
 
               // Professional License
               _buildSectionTitle('Professional License (Vet/Clinic)'),
@@ -168,8 +207,8 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildTextField('BVC Registration Number'),
-              _buildTextField('Other License Name/Number (optional)'),
+              _buildTextField('BVC Registration Number', _bvcController),
+              _buildTextField('Other License Name/Number (optional)', _otherController),
               const SizedBox(height: 14),
 
               // Terms and Conditions
@@ -211,10 +250,12 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
               const SizedBox(height: 24),
 
               // Actions
-              PrimaryButton(
-                text: 'Sign up',
-                onPressed: () {},
-              ),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : PrimaryButton(
+                      text: 'Complete Verification',
+                      onPressed: _handleVerification,
+                    ),
               const SizedBox(height: 10),
 
               // Bottom link

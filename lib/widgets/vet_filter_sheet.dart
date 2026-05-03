@@ -297,6 +297,7 @@ class _VetFilterSheetState extends State<VetFilterSheet> {
                         Navigator.pop(context, {
                           'location': null,
                           'concern': null,
+                          'species': null,
                         });
                       },
                       style: OutlinedButton.styleFrom(
@@ -323,6 +324,7 @@ class _VetFilterSheetState extends State<VetFilterSheet> {
                         Navigator.pop(context, {
                           'location': _locationController.text.isNotEmpty ? _locationController.text : null,
                           'concern': _selectedConcern,
+                          'species': _selectedSpecies,
                         });
                       },
                       style: ElevatedButton.styleFrom(

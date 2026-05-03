@@ -47,6 +47,26 @@ class VetModel {
     required this.reviews,
   });
 
+  factory VetModel.fromJson(Map<String, dynamic> json) {
+    return VetModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
+      degree: json['degree'] ?? '',
+      location: json['location'] ?? 'Unknown Location',
+      isVerified: json['is_verified'] == 1 || json['is_verified'] == true,
+      rating: (json['rating'] ?? 0.0).toDouble(),
+      reviewCount: json['review_count'] ?? 0,
+      price: json['price'] ?? 0,
+      profileDescription: json['profile_description'] ?? '',
+      tags: List<String>.from(json['tags'] ?? []),
+      availableSlots: List<String>.from(json['availableSlots'] ?? []),
+      licences: List<String>.from(json['licences'] ?? []),
+      speciesTreated: List<String>.from(json['speciesTreated'] ?? []),
+      areasOfInterest: List<String>.from(json['areasOfInterest'] ?? []),
+      reviews: [], // Skipping reviews parsing for brevity unless needed
+    );
+  }
+
   static List<VetModel> generateDummyVets() {
     final slots = [
       'Today at 10:00 AM', 

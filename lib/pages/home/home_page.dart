@@ -3,6 +3,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../models/post_model.dart';
 import '../../widgets/post_card.dart';
 import '../vet/vet_list_page.dart';
+import '../profile/user_profile_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -242,6 +243,13 @@ class _HomePageState extends State<HomePage> {
         elevation: 8,
         currentIndex: _selectedIndex,
         onTap: (index) {
+          if (index == 4) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const UserProfilePage()),
+            );
+            return;
+          }
           if (index == 2) {
             // Toggle feature menu
             setState(() {

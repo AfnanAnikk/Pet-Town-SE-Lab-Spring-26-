@@ -4,6 +4,7 @@ import '../../widgets/primary_button.dart';
 import '../home/home_page.dart';
 import 'user_signup_page.dart';
 import '../provider/provider_dashboard_page.dart';
+import '../../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,7 +14,62 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
   bool _rememberMe = true;
+
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await AuthService.login(email, password);
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      final role = result['data']['user']['role'];
+      if (role == 'service_provider') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const ProviderDashboardPage()),
+          (route) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+          (route) => false,
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Login failed')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,16 +106,18 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 32),
 
               // Form Fields
-              const CustomTextField(
+              CustomTextField(
                 label: 'Email',
                 hintText: 'demo@gmail.com',
                 keyboardType: TextInputType.emailAddress,
+                controller: _emailController,
               ),
               const SizedBox(height: 12),
-              const CustomTextField(
+              CustomTextField(
                 label: 'Password',
                 hintText: '••••••••••',
                 isPassword: true,
+                controller: _passwordController,
               ),
               const SizedBox(height: 2),
 
@@ -105,18 +163,12 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 16),
 
               // Actions
-              PrimaryButton(
-                text: 'Log in',
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const HomePage(),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : PrimaryButton(
+                      text: 'Log in',
+                      onPressed: _handleLogin,
                     ),
-                    (route) => false,
-                  );
-                },
-              ),
               const SizedBox(height: 8),
               Center(
                 child: TextButton(

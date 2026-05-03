@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/primary_button.dart';
 import 'login_page.dart';
+import '../../services/auth_service.dart';
 
 class UserSignupPage extends StatefulWidget {
   const UserSignupPage({super.key});
@@ -11,7 +12,79 @@ class UserSignupPage extends StatefulWidget {
 }
 
 class _UserSignupPageState extends State<UserSignupPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
   bool _agreedToTerms = true;
+
+  Future<void> _handleSignup() async {
+    final email = _emailController.text.trim();
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (email.isEmpty || username.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
+
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please agree to Terms and Conditions')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await AuthService.registerUser(
+      username: username,
+      email: email,
+      password: password,
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registration successful! Please login.')),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Registration failed')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,27 +121,31 @@ class _UserSignupPageState extends State<UserSignupPage> {
               const SizedBox(height: 32),
 
               // Form Fields
-              const CustomTextField(
+              CustomTextField(
                 label: 'Email',
                 hintText: 'user@gmail.com',
                 keyboardType: TextInputType.emailAddress,
+                controller: _emailController,
               ),
               const SizedBox(height: 8),
-              const CustomTextField(
+              CustomTextField(
                 label: 'Username',
                 hintText: 'Afnainna',
+                controller: _usernameController,
               ),
               const SizedBox(height: 8),
-              const CustomTextField(
+              CustomTextField(
                 label: 'Password',
                 hintText: '••••••••••',
                 isPassword: true,
+                controller: _passwordController,
               ),
               const SizedBox(height: 8),
-              const CustomTextField(
+              CustomTextField(
                 label: 'Confirm Password',
                 hintText: '••••••••••',
                 isPassword: true,
+                controller: _confirmPasswordController,
               ),
               const SizedBox(height: 14),
 
@@ -111,10 +188,12 @@ class _UserSignupPageState extends State<UserSignupPage> {
               const SizedBox(height: 24),
 
               // Actions
-              PrimaryButton(
-                text: 'Sign up',
-                onPressed: () {},
-              ),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : PrimaryButton(
+                      text: 'Sign up',
+                      onPressed: _handleSignup,
+                    ),
               const SizedBox(height: 10),
 
               // Bottom link

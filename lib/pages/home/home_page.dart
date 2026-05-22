@@ -4,6 +4,10 @@ import '../../models/post_model.dart';
 import '../../widgets/post_card.dart';
 import '../vet/vet_list_page.dart';
 import '../profile/user_profile_page.dart';
+import '../../services/api_service.dart';
+import '../messaging/message_list_page.dart';
+import '../marketplace/marketplace_home_page.dart';
+import '../post/create_post_flow.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,10 +26,12 @@ class _HomePageState extends State<HomePage> {
   bool _showFeatureMenu = false;
   int _selectedIndex = 0;
 
+  bool _hasMore = true;
+
   @override
   void initState() {
     super.initState();
-    _loadMorePosts();
+    _fetchInitialPosts();
     
     // Add scroll listener for endless scrolling
     _scrollController.addListener(() {
@@ -36,26 +42,34 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _loadMorePosts() {
-    if (_isLoading) return;
-    
+  Future<void> _fetchInitialPosts() async {
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate network delay then append dummy data
-    Future.delayed(const Duration(milliseconds: 500), () {
+    final result = await ApiService.getAllPosts();
+    if (result['success']) {
+      final List<dynamic> data = result['data'];
+      setState(() {
+        _posts.clear();
+        _posts.addAll(data.map((json) => PostModel.fromJson(json)).toList());
+        _isLoading = false;
+        _hasMore = false; // We loaded all posts from the db at once
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
       if (mounted) {
-        setState(() {
-          _posts.addAll(PostModel.generateDummyPosts(
-            10, 
-            startIndex: _currentPage * 10,
-          ));
-          _currentPage++;
-          _isLoading = false;
-        });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
       }
-    });
+    }
+  }
+
+  void _loadMorePosts() {
+    if (_isLoading || !_hasMore) return;
+    
+    // For now, getAllPosts fetches everything at once so we just return
   }
 
   @override
@@ -91,7 +105,15 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.add, color: Colors.black, size: 28),
-          onPressed: () {},
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CreatePostFlow()),
+            );
+            if (result == true) {
+              _fetchInitialPosts();
+            }
+          },
         ),
         actions: [
           Padding(
@@ -103,7 +125,12 @@ class _HomePageState extends State<HomePage> {
                           height: 28,
                           fit: BoxFit.contain,                       
                         ),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MessageListPage()),
+                );
+              },
             ),
           ),
         ],
@@ -186,7 +213,7 @@ class _HomePageState extends State<HomePage> {
                             onTap: () {
                               Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const VetListPage()),
+                                    MaterialPageRoute(builder: (context) => const MarketplaceHomePage()),
                                   );
                                   setState(() => _showFeatureMenu = false);
                                 },

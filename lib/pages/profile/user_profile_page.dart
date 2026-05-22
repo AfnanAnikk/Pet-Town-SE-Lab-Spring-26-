@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_page.dart';
+import 'user_history_page.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key});
@@ -10,40 +11,13 @@ class UserProfilePage extends StatefulWidget {
   State<UserProfilePage> createState() => _UserProfilePageState();
 }
 
-class _UserProfilePageState extends State<UserProfilePage> {
-  bool _isLoading = true;
-  List<dynamic> _bookings = [];
-  String _errorMessage = '';
+class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _fetchBookings();
-  }
-
-  Future<void> _fetchBookings() async {
-    final userId = await AuthService.getUserId();
-    if (userId == null) {
-      setState(() {
-        _errorMessage = 'User not logged in';
-        _isLoading = false;
-      });
-      return;
-    }
-
-    final result = await ApiService.getUserBookings(userId);
-    
-    if (result['success']) {
-      setState(() {
-        _bookings = result['data'];
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _errorMessage = result['message'] ?? 'Failed to load bookings';
-        _isLoading = false;
-      });
-    }
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   void _handleLogout() async {
@@ -56,138 +30,176 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
   }
 
-  Widget _buildBookingCard(dynamic booking) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history, color: Colors.black, size: 28),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const UserHistoryPage()));
+            },
+            tooltip: 'Booking & Order History',
           ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.red, size: 28),
+            onPressed: _handleLogout,
+            tooltip: 'Logout',
+          ),
+          const SizedBox(width: 8),
         ],
-        border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                booking['vet_name'] ?? 'Unknown Vet',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2C3E50),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: booking['status'] == 'pending' ? Colors.orange.shade100 : Colors.green.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  (booking['status'] ?? 'pending').toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: booking['status'] == 'pending' ? Colors.orange.shade800 : Colors.green.shade800,
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  // User Avatar
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey.shade200,
+                      image: const DecorationImage(
+                        image: AssetImage('assets/images/user1.png'), // Placeholder
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
+                  const SizedBox(height: 16),
+                  // User Name
+                  const Text(
+                    'Mehmud Afnan',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    '@afnan_petlover',
+                    style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 24),
+                  // Stats
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildStatColumn('12', 'Pins'),
+                      const SizedBox(width: 40),
+                      _buildStatColumn('148', 'Followers'),
+                      const SizedBox(width: 40),
+                      _buildStatColumn('56', 'Following'),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _SliverAppBarDelegate(
+                TabBar(
+                  controller: _tabController,
+                  labelColor: Colors.black,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.black,
+                  indicatorWeight: 3,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  tabs: const [
+                    Tab(text: 'Created'),
+                    Tab(text: 'Saved'),
+                  ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            booking['service_type'] ?? 'Service',
-            style: const TextStyle(color: Colors.black54, fontSize: 14),
-          ),
-          const Divider(height: 24),
-          Row(
-            children: [
-              const Icon(Icons.calendar_today, size: 16, color: Colors.black54),
-              const SizedBox(width: 8),
-              Text('${booking['booking_date']} at ${booking['slot_time']}'),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.pets, size: 16, color: Colors.black54),
-              const SizedBox(width: 8),
-              Text('Pet: ${booking['pet_name']} (${booking['pet_species']})'),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.medical_services, size: 16, color: Colors.black54),
-              const SizedBox(width: 8),
-              Text('Concern: ${booking['concern']}'),
-            ],
-          ),
-        ],
+            ),
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildCreatedTab(),
+            _buildSavedTab(),
+          ],
+        ),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          'My Profile & Bookings',
-          style: TextStyle(
-            color: Color(0xFF374957),
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.red),
-            onPressed: _handleLogout,
-            tooltip: 'Logout',
-          )
+  Widget _buildStatColumn(String count, String label) {
+    return Column(
+      children: [
+        Text(count, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+      ],
+    );
+  }
+
+  Widget _buildCreatedTab() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      child: MasonryGridView.count(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        itemCount: 8,
+        itemBuilder: (context, index) {
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              color: Colors.grey.shade200,
+              height: (index % 3 + 2) * 80.0, // Staggered height
+              child: Image.asset(
+                'assets/images/post_placeholder.png', // Placeholder
+                fit: BoxFit.cover,
+                errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image, color: Colors.grey, size: 40)),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSavedTab() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.bookmark_border, size: 64, color: Colors.grey.shade300),
+          const SizedBox(height: 16),
+          Text('No saved pins yet', style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
         ],
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : _errorMessage.isNotEmpty
-          ? Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)))
-          : RefreshIndicator(
-              onRefresh: _fetchBookings,
-              child: _bookings.isEmpty
-                ? ListView(
-                    padding: const EdgeInsets.all(24),
-                    children: const [
-                      SizedBox(height: 100),
-                      Center(
-                        child: Text(
-                          'No bookings found.',
-                          style: TextStyle(fontSize: 18, color: Colors.black54),
-                        ),
-                      ),
-                    ],
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(24),
-                    itemCount: _bookings.length,
-                    itemBuilder: (context, index) {
-                      return _buildBookingCard(_bookings[index]);
-                    },
-                  ),
-            ),
     );
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate(this._tabBar);
+
+  final TabBar _tabBar;
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Colors.white,
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
   }
 }

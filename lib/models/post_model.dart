@@ -23,36 +23,26 @@ class PostModel {
     required this.imagePath,
   });
 
-  static List<PostModel> generateDummyPosts(int count, {int startIndex = 0}) {
-    final colors = [
-      Colors.blueGrey.shade100,
-      Colors.brown.shade100,
-      Colors.teal.shade100,
-      Colors.orange.shade100,
-      Colors.purple.shade100,
-      Colors.red.shade100,
-    ];
+  factory PostModel.fromJson(Map<String, dynamic> json) {
+    // Parse color from string if available, else random
+    Color color = Colors.blueGrey.shade100;
+    if (json['placeholder_color'] != null && json['placeholder_color'].toString().isNotEmpty) {
+      String colorStr = json['placeholder_color'].toString().replaceAll('#', '0xFF');
+      if (colorStr.length == 10) {
+         try { color = Color(int.parse(colorStr)); } catch (e) {}
+      }
+    }
 
-    final heights = [180.0, 220.0, 260.0, 300.0, 150.0];
-
-    // random-looking order, then repeats
-    final imageOrder = [3, 8, 1, 10, 5, 2, 7, 4, 9, 6];
-
-    return List.generate(count, (index) {
-      final actualIndex = startIndex + index;
-      final imageNumber = imageOrder[actualIndex % imageOrder.length];
-
-      return PostModel(
-        id: 'post_$actualIndex',
-        title: 'Pookie cat $actualIndex',
-        authorName: 'Monica Teller',
-        tags: const ['#CatLover', '#SmallCat', '#CuteCat'],
-        likesCount: 138 + actualIndex * 2,
-        commentsCount: 6 + actualIndex,
-        placeholderColor: colors[actualIndex % colors.length],
-        placeholderHeight: heights[actualIndex % heights.length],
-        imagePath: 'assets/images/p$imageNumber.png',
-      );
-    });
+    return PostModel(
+      id: json['id']?.toString() ?? '',
+      title: json['title'] ?? 'Untitled',
+      authorName: json['author_name'] ?? 'Unknown',
+      tags: List<String>.from(json['tags'] ?? []),
+      likesCount: json['likes_count'] ?? 0,
+      commentsCount: json['comments_count'] ?? 0,
+      placeholderColor: color,
+      placeholderHeight: (json['placeholder_height'] ?? 200).toDouble(),
+      imagePath: json['image_path'] ?? 'assets/images/p1.png',
+    );
   }
 }

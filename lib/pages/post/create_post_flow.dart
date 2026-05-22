@@ -132,6 +132,7 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
     final res = await ApiService.createPost({
       'user_id': userId,
       'title': _titleController.text.trim(),
+      'description': _descController.text.trim(),
       'author_name': 'You',
       'image_path': imagePath,
       'placeholder_color': '#E0E0E0',

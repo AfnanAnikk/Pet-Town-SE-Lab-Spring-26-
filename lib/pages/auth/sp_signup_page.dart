@@ -65,7 +65,7 @@ class _SpSignupPageState extends State<SpSignupPage> {
       );
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => SpVerificationPage(userId: result['data']['userId'])),
+        MaterialPageRoute(builder: (_) => SpVerificationPage(userId: result['data']['userId'], serviceType: _selectedServiceType)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

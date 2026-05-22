@@ -7,7 +7,8 @@ import '../../services/api_service.dart';
 
 class SpVerificationPage extends StatefulWidget {
   final int userId;
-  const SpVerificationPage({super.key, required this.userId});
+  final String serviceType;
+  const SpVerificationPage({super.key, required this.userId, this.serviceType = ''});
 
   @override
   State<SpVerificationPage> createState() => _SpVerificationPageState();
@@ -234,15 +235,17 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
               ),
 
               // Professional License
-              _buildSectionTitle('Professional License (Vet/Clinic)'),
-              Row(
-                children: [
-                  _buildUploadBox('BVC Registration', _bvcCert, (f) => _bvcCert = f),
-                  const SizedBox(width: 16),
-                  _buildUploadBox('Other License\n(optional)', _otherCert, (f) => _otherCert = f),
-                ],
-              ),
-              const SizedBox(height: 24),
+              if (widget.serviceType == 'Vet' || widget.serviceType == 'Pet Salon' || widget.serviceType == '') ...[
+                _buildSectionTitle('Professional License (Vet/Clinic)'),
+                Row(
+                  children: [
+                    _buildUploadBox('BVC Registration', _bvcCert, (f) => _bvcCert = f),
+                    const SizedBox(width: 16),
+                    _buildUploadBox('Other License\n(optional)', _otherCert, (f) => _otherCert = f),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
 
               // Terms and Conditions
               Row(

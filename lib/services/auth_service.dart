@@ -97,6 +97,30 @@ class AuthService {
     return prefs.getInt('user_id');
   }
 
+  /// Get current user profile
+  static Future<Map<String, dynamic>> getProfile(int userId) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/profile/$userId'));
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Update user profile
+  static Future<Map<String, dynamic>> updateProfile(int userId, String displayName) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/profile/$userId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'display_name': displayName}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   /// Logout
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();

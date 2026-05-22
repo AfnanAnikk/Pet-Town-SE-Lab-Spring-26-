@@ -13,11 +13,32 @@ class UserProfilePage extends StatefulWidget {
 
 class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isLoading = true;
+  Map<String, dynamic>? _user;
+  List<dynamic> _posts = [];
+  int _postCount = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() => _isLoading = true);
+    final userId = await AuthService.getUserId();
+    if (userId != null) {
+      final result = await AuthService.getProfile(userId);
+      if (result['success']) {
+        setState(() {
+          _user = result['data']['user'];
+          _postCount = result['data']['postCount'];
+          _posts = result['data']['posts'];
+        });
+      }
+    }
+    setState(() => _isLoading = false);
   }
 
   void _handleLogout() async {
@@ -30,8 +51,56 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
     );
   }
 
+  Future<void> _editName() async {
+    if (_user == null) return;
+    
+    final controller = TextEditingController(text: _user!['display_name'] ?? _user!['username'] ?? '');
+    
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Name'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Enter your name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null && newName.isNotEmpty) {
+      setState(() => _isLoading = true);
+      final userId = await AuthService.getUserId();
+      if (userId != null) {
+        await AuthService.updateProfile(userId, newName);
+        await _loadProfile();
+      } else {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final displayName = _user?['display_name'] ?? _user?['username'] ?? 'No Name Set';
+    final handle = '@${_user?['username'] ?? 'user'}';
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -75,25 +144,33 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                   ),
                   const SizedBox(height: 16),
                   // User Name
-                  const Text(
-                    'Mehmud Afnan',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        displayName,
+                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                        onPressed: _editName,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    '@afnan_petlover',
-                    style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500),
+                  Text(
+                    handle,
+                    style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 24),
                   // Stats
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildStatColumn('12', 'Pins'),
+                      _buildStatColumn('$_postCount', 'Pins'),
                       const SizedBox(width: 40),
-                      _buildStatColumn('148', 'Followers'),
+                      _buildStatColumn('0', 'Followers'),
                       const SizedBox(width: 40),
-                      _buildStatColumn('56', 'Following'),
+                      _buildStatColumn('0', 'Following'),
                     ],
                   ),
                   const SizedBox(height: 32),
@@ -141,24 +218,45 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
   }
 
   Widget _buildCreatedTab() {
+    if (_posts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.photo_library_outlined, size: 64, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text('No pins created yet', style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       child: MasonryGridView.count(
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        itemCount: 8,
+        itemCount: _posts.length,
         itemBuilder: (context, index) {
+          final post = _posts[index];
+          String imageUrl = post['image_path'] ?? 'assets/images/post_placeholder.png';
           return ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: Container(
               color: Colors.grey.shade200,
               height: (index % 3 + 2) * 80.0, // Staggered height
-              child: Image.asset(
-                'assets/images/post_placeholder.png', // Placeholder
-                fit: BoxFit.cover,
-                errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image, color: Colors.grey, size: 40)),
-              ),
+              child: imageUrl.startsWith('http') 
+                ? Image.network(
+                    imageUrl, 
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image, color: Colors.grey, size: 40)),
+                  )
+                : Image.asset(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image, color: Colors.grey, size: 40)),
+                  ),
             ),
           );
         },

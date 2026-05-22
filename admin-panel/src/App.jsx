@@ -70,6 +70,40 @@ function Topbar() {
   );
 }
 
+// Helper for Document Preview
+function DocumentPreview({ title, url }) {
+  if (!url) return null;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <span style={{ fontSize: '14px', fontWeight: '600', color: '#475569' }}>{title}</span>
+      <a href={url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+        <div style={{ 
+          width: '100%', 
+          height: '160px', 
+          backgroundColor: '#F8FAFC', 
+          borderRadius: '8px', 
+          border: '1px solid #E2E8F0',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'zoom-in',
+          transition: 'border-color 0.2s',
+        }}>
+          {url.match(/\.(jpeg|jpg|gif|png|webp)$/i) || url.includes('res.cloudinary.com') ? (
+            <img src={url} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: '#64748B' }}>
+              <FileText size={32} />
+              <span style={{ fontSize: '12px' }}>View Document</span>
+            </div>
+          )}
+        </div>
+      </a>
+    </div>
+  );
+}
+
 // 1. Dashboard
 function Dashboard() {
   const [stats, setStats] = useState({ activeUsers: 0, verificationQueue: 0, totalPosts: 0 });
@@ -256,15 +290,23 @@ function MarketplaceOversight() {
       {selectedStore && (
         <div className="modal-overlay">
           <div className="modal-overlay" onClick={() => setSelectedStore(null)} style={{ background: 'transparent' }}></div>
-          <div className="modal-content" style={{ zIndex: 101 }}>
-            <h2>Verify Store: {selectedStore.store_name}</h2>
-            <div style={{ padding: '24px' }}>
-              <p><strong>Owner Name:</strong> {selectedStore.owner_name}</p>
-              <p><strong>NID Number:</strong> {selectedStore.nid_number}</p>
-              <p><strong>Trade License:</strong> {selectedStore.trade_license}</p>
-              <div style={{ display: 'flex', gap: '12px', marginTop: 24 }}>
-                <button style={{ padding: '10px 16px', background: '#10B981', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }} onClick={() => handleApprove(selectedStore.id)}>Approve</button>
-                <button style={{ padding: '10px 16px', background: '#EF4444', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }} onClick={() => handleDeny(selectedStore.id)}>Deny</button>
+          <div className="modal-content" style={{ zIndex: 101, width: '90%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>Verify Store: {selectedStore.store_name}</h2>
+              <X size={24} color="#64748B" style={{ cursor: 'pointer' }} onClick={() => setSelectedStore(null)} />
+            </div>
+            
+            <div style={{ padding: '0 0 24px 0' }}>
+              <p style={{ fontSize: '16px', marginBottom: '24px' }}><strong>Owner Name:</strong> {selectedStore.owner_name}</p>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                <DocumentPreview title="NID Front" url={selectedStore.nid_number} />
+                <DocumentPreview title="Trade License" url={selectedStore.trade_license} />
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: 32, paddingTop: 24, borderTop: '1px solid #E2E8F0' }}>
+                <button style={{ flex: 1, padding: '12px 16px', background: '#10B981', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleApprove(selectedStore.id)}>Approve Application</button>
+                <button style={{ flex: 1, padding: '12px 16px', background: '#EF4444', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleDeny(selectedStore.id)}>Deny Application</button>
               </div>
             </div>
           </div>
@@ -379,18 +421,23 @@ function VetServices() {
       {selectedVet && (
         <div className="modal-overlay">
           <div className="modal-overlay" onClick={() => setSelectedVet(null)} style={{ background: 'transparent' }}></div>
-          <div className="modal-content" style={{ zIndex: 101 }}>
-            <h2>Verify Vet: {selectedVet.vet_name}</h2>
-            <div style={{ padding: '24px' }}>
-              <p><strong>NID Front URL:</strong> <a href={selectedVet.nid_front_url} target="_blank">{selectedVet.nid_front_url}</a></p>
-              <p><strong>NID Back URL:</strong> <a href={selectedVet.nid_back_url} target="_blank">{selectedVet.nid_back_url}</a></p>
-              <p><strong>TIN URL:</strong> <a href={selectedVet.tin_url} target="_blank">{selectedVet.tin_url}</a></p>
-              <p><strong>Trade License URL:</strong> <a href={selectedVet.trade_url} target="_blank">{selectedVet.trade_url}</a></p>
-              <p><strong>BVC URL:</strong> <a href={selectedVet.bvc_url} target="_blank">{selectedVet.bvc_url}</a></p>
-              <div style={{ display: 'flex', gap: '12px', marginTop: 24 }}>
-                <button style={{ padding: '10px 16px', background: '#10B981', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }} onClick={() => handleApprove(selectedVet.id)}>Approve</button>
-                <button style={{ padding: '10px 16px', background: '#EF4444', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }} onClick={() => handleDeny(selectedVet.id)}>Deny</button>
-              </div>
+          <div className="modal-content" style={{ zIndex: 101, width: '90%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>Verify Vet: {selectedVet.vet_name}</h2>
+              <X size={24} color="#64748B" style={{ cursor: 'pointer' }} onClick={() => setSelectedVet(null)} />
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+              <DocumentPreview title="NID Front" url={selectedVet.nid_front_url} />
+              <DocumentPreview title="NID Back" url={selectedVet.nid_back_url} />
+              <DocumentPreview title="TIN Certificate" url={selectedVet.tin_url} />
+              <DocumentPreview title="Trade License" url={selectedVet.trade_url} />
+              <DocumentPreview title="BVC Certificate" url={selectedVet.bvc_url} />
+            </div>
+            
+            <div style={{ display: 'flex', gap: '16px', marginTop: 32, paddingTop: 24, borderTop: '1px solid #E2E8F0' }}>
+              <button style={{ flex: 1, padding: '12px 16px', background: '#10B981', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleApprove(selectedVet.id)}>Approve Application</button>
+              <button style={{ flex: 1, padding: '12px 16px', background: '#EF4444', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleDeny(selectedVet.id)}>Deny Application</button>
             </div>
           </div>
         </div>

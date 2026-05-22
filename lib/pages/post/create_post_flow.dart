@@ -108,6 +108,13 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
     final userId = await AuthService.getUserId();
     if (userId == null) return;
 
+    String authorName = 'Pet Town User';
+    final profileRes = await AuthService.getProfile(userId);
+    if (profileRes['success']) {
+      final user = profileRes['data']['user'];
+      authorName = user['display_name'] ?? user['username'] ?? 'Pet Town User';
+    }
+
     showDialog(
       context: context, 
       barrierDismissible: false,
@@ -133,7 +140,7 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
       'user_id': userId,
       'title': _titleController.text.trim(),
       'description': _descController.text.trim(),
-      'author_name': 'You',
+      'author_name': authorName,
       'image_path': imagePath,
       'placeholder_color': '#E0E0E0',
       'placeholder_height': 300.0,

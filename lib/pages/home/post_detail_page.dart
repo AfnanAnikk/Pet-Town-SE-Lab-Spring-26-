@@ -131,12 +131,23 @@ class _PostDetailPageState extends State<PostDetailPage> {
                       bottomLeft: Radius.circular(32),
                       bottomRight: Radius.circular(32),
                     ),
-                    child: Image.asset(
-                      post.imagePath,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, _, __) => const Center(
-                        child: Icon(Icons.image_outlined, color: Colors.black26, size: 64),
-                      ),
+                    child: Hero(
+                      tag: post.id,
+                      child: post.imagePath.startsWith('http')
+                        ? Image.network(
+                            post.imagePath,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Center(child: Icon(Icons.image_not_supported, color: Colors.grey, size: 64)),
+                          )
+                        : Image.asset(
+                            post.imagePath,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Center(child: Icon(Icons.image_not_supported, color: Colors.grey, size: 64)),
+                          ),
                     ),
                   ),
                 ),

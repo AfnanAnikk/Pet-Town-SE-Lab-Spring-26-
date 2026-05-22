@@ -56,11 +56,22 @@ class _PostCardState extends State<PostCard> {
               width: double.infinity,
               color: widget.post.placeholderColor,
               child: Center(
-                child: Image.asset(
+                child: widget.post.imagePath.startsWith('http')
+                    ? Image.network(
+                        widget.post.imagePath,
+                        width: 256,
+                        height: 256,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.image_not_supported, color: Colors.grey),
+                      )
+                    : Image.asset(
                          widget.post.imagePath,
                          width: 256,
                          height: 256,
                          fit: BoxFit.cover,
+                         errorBuilder: (context, error, stackTrace) =>
+                             const Icon(Icons.image_not_supported, color: Colors.grey),
                        ),
                       ),
             ),

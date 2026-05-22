@@ -4,6 +4,7 @@ import '../../services/cart_service.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'store_dashboard_page.dart';
 import 'cart_page.dart';
+import 'shop_details_page.dart';
 
 class MarketplaceHomePage extends StatefulWidget {
   const MarketplaceHomePage({super.key});
@@ -265,7 +266,12 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
   Widget _buildStoreCard(dynamic store) {
     return GestureDetector(
       onTap: () {
-        // Handle store tap (e.g., navigate to Store Details)
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ShopDetailsPage(store: store),
+          ),
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),

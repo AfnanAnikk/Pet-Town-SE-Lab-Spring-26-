@@ -5,6 +5,8 @@ import '../../services/api_service.dart';
 import '../auth/login_page.dart';
 import 'user_history_page.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import '../../models/post_model.dart';
+import '../home/post_detail_page.dart';
 
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key});
@@ -284,22 +286,32 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
         itemBuilder: (context, index) {
           final post = _posts[index];
           String imageUrl = post['image_path'] ?? 'assets/images/post_placeholder.png';
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              color: Colors.grey.shade200,
-              height: (index % 3 + 2) * 80.0, // Staggered height
-              child: imageUrl.startsWith('http') 
-                ? Image.network(
-                    imageUrl, 
-                    fit: BoxFit.cover,
-                    errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image, color: Colors.grey, size: 40)),
-                  )
-                : Image.asset(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image, color: Colors.grey, size: 40)),
-                  ),
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PostDetailPage(post: PostModel.fromJson(post)),
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                color: Colors.grey.shade200,
+                height: (index % 3 + 2) * 80.0, // Staggered height
+                child: imageUrl.startsWith('http') 
+                  ? Image.network(
+                      imageUrl, 
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image_not_supported, color: Colors.grey, size: 40)),
+                    )
+                  : Image.asset(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image_not_supported, color: Colors.grey, size: 40)),
+                    ),
+              ),
             ),
           );
         },

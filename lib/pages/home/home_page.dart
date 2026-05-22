@@ -222,34 +222,25 @@ class _HomePageState extends State<HomePage> {
                             icon: Image.asset('assets/images/adoption.png', width: 28),
                             tooltip: 'Adoption',
                             onTap: () {
-                              Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const VetListPage()),
-                                  );
-                                  setState(() => _showFeatureMenu = false);
-                                },
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Adoption Feature Coming Soon!')));
+                              setState(() => _showFeatureMenu = false);
+                            },
                           ),
                           _buildFeatureIcon(
                             icon: Image.asset('assets/images/events.png', width: 28),
                             tooltip: 'Events',
                             onTap: () {
-                              Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const VetListPage()),
-                                  );
-                                  setState(() => _showFeatureMenu = false);
-                                },
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Events Feature Coming Soon!')));
+                              setState(() => _showFeatureMenu = false);
+                            },
                           ),
                           _buildFeatureIcon(
                             icon: Image.asset('assets/images/grooming.png', width: 28),
                             tooltip: 'Grooming',
                             onTap: () {
-                              Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const VetListPage()),
-                                  );
-                                  setState(() => _showFeatureMenu = false);
-                                },
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Grooming Feature Coming Soon!')));
+                              setState(() => _showFeatureMenu = false);
+                            },
                           ),
                         ],
                       ),

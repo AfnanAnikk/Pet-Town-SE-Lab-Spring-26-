@@ -10,6 +10,7 @@ router.get('/dashboard', adminController.getDashboardStats);
 
 // Vets
 router.get('/vets/verifications', adminController.getVetVerifications);
+router.get('/vets/appointments', adminController.getVetAppointments);
 router.post('/vets/verifications/:id/approve', adminController.approveVet);
 router.post('/vets/verifications/:id/deny', adminController.denyVet);
 

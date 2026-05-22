@@ -227,19 +227,24 @@ function MarketplaceOversight() {
 
   useEffect(() => {
     fetch(`${API_BASE}/orders`).then(r => r.json()).then(d => setOrders(d.orders || []));
-    fetch(`${API_BASE}/stores/verifications`).then(r => r.json()).then(d => setStores(d.verifications || []));
+    fetch(`${API_BASE}/stores/verifications`)
+      .then(r => r.json())
+      .then(d => {
+        const pending = (d.verifications || []).filter(v => v.status === 'pending');
+        setStores(pending);
+      });
   }, []);
 
   const handleApprove = (id) => {
     fetch(`${API_BASE}/stores/verifications/${id}/approve`, { method: 'POST' }).then(() => {
-      setStores(stores.map(s => s.id === id ? { ...s, status: 'approved' } : s));
+      setStores(stores.filter(s => s.id !== id));
       setSelectedStore(null);
     });
   }
 
   const handleDeny = (id) => {
     fetch(`${API_BASE}/stores/verifications/${id}/deny`, { method: 'POST' }).then(() => {
-      setStores(stores.map(s => s.id === id ? { ...s, status: 'denied' } : s));
+      setStores(stores.filter(s => s.id !== id));
       setSelectedStore(null);
     });
   }
@@ -373,22 +378,33 @@ function Finance() {
 // 7. Vet Services
 function VetServices() {
   const [vets, setVets] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const [selectedVet, setSelectedVet] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/vets/verifications`).then(r => r.json()).then(d => setVets(d.verifications || []));
+    fetch(`${API_BASE}/vets/verifications`)
+      .then(r => r.json())
+      .then(d => {
+        // Only show pending verifications
+        const pending = (d.verifications || []).filter(v => v.status === 'pending');
+        setVets(pending);
+      });
+      
+    fetch(`${API_BASE}/vets/appointments`)
+      .then(r => r.json())
+      .then(d => setAppointments(d.appointments || []));
   }, []);
 
   const handleApprove = (id) => {
     fetch(`${API_BASE}/vets/verifications/${id}/approve`, { method: 'POST' }).then(() => {
-      setVets(vets.map(v => v.id === id ? { ...v, status: 'approved' } : v));
+      setVets(vets.filter(v => v.id !== id));
       setSelectedVet(null);
     });
   }
 
   const handleDeny = (id) => {
     fetch(`${API_BASE}/vets/verifications/${id}/deny`, { method: 'POST' }).then(() => {
-      setVets(vets.map(v => v.id === id ? { ...v, status: 'denied' } : v));
+      setVets(vets.filter(v => v.id !== id));
       setSelectedVet(null);
     });
   }
@@ -398,24 +414,59 @@ function VetServices() {
       <h1>Vet Services</h1>
       <p>Manage verified veterinary professionals and consultation quality.</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginTop: '24px' }}>
-        {vets.map((v, idx) => (
-          <div key={idx} className="card" style={{ border: '1px solid #E2E8F0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-              <div style={{ width: 48, height: 48, background: '#14B8A6', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Users size={24} color="white" />
+      {vets.length > 0 && (
+        <div className="card" style={{ marginTop: '24px', marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '16px' }}>Pending Verifications</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
+            {vets.map((v, idx) => (
+              <div key={idx} style={{ border: '1px solid #E2E8F0', padding: '16px', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <div style={{ width: 48, height: 48, background: '#14B8A6', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Users size={24} color="white" />
+                  </div>
+                  <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px', background: '#FEF3C7', color: '#F59E0B' }}>
+                    PENDING
+                  </span>
+                </div>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0F172A', marginBottom: '4px' }}>{v.vet_name}</h3>
+                <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '16px' }}>{v.degree}</p>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button style={{ flex: 1, padding: '8px', background: '#F1F5F9', border: 'none', borderRadius: '6px', color: '#475569', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => setSelectedVet(v)}>Review Documents</button>
+                </div>
               </div>
-              <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px', background: v.status === 'approved' ? '#D1FAE5' : '#FEF3C7', color: v.status === 'approved' ? '#10B981' : '#F59E0B' }}>
-                {v.status.toUpperCase()}
-              </span>
-            </div>
-            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0F172A', marginBottom: '4px' }}>{v.vet_name}</h3>
-            <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '16px' }}>{v.degree}</p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button style={{ flex: 1, padding: '8px', background: '#F1F5F9', border: 'none', borderRadius: '6px', color: '#475569', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => setSelectedVet(v)}>Review Documents</button>
-            </div>
+            ))}
           </div>
-        ))}
+        </div>
+      )}
+
+      <div className="card">
+        <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '24px', color: '#0F172A' }}>Appointments Revenue</h3>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead>
+            <tr>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Booking ID</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Doctor</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Patient</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Consultation Fee</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>App Commission (10%)</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Doctor Earns (90%)</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {appointments.map((a, i) => (
+              <tr key={i}>
+                <td style={{ padding: '16px 0', fontWeight: 'bold', color: '#0F172A', borderBottom: '1px solid #F1F5F9' }}>#{a.booking_id}</td>
+                <td style={{ padding: '16px 0', color: '#475569', borderBottom: '1px solid #F1F5F9' }}>{a.vet_name}</td>
+                <td style={{ padding: '16px 0', color: '#475569', borderBottom: '1px solid #F1F5F9' }}>{a.patient_name}</td>
+                <td style={{ padding: '16px 0', fontWeight: 'bold', color: '#0F172A', borderBottom: '1px solid #F1F5F9' }}>${Number(a.consultation_fee).toFixed(2)}</td>
+                <td style={{ padding: '16px 0', fontWeight: 'bold', color: '#10B981', borderBottom: '1px solid #F1F5F9' }}>${Number(a.platform_share).toFixed(2)}</td>
+                <td style={{ padding: '16px 0', fontWeight: 'bold', color: '#0F172A', borderBottom: '1px solid #F1F5F9' }}>${Number(a.doctor_share).toFixed(2)}</td>
+                <td style={{ padding: '16px 0', color: '#475569', borderBottom: '1px solid #F1F5F9' }}>{a.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {selectedVet && (

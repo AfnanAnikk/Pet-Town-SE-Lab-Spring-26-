@@ -96,6 +96,41 @@ exports.denyVet = async (req, res) => {
   }
 };
 
+exports.getVetAppointments = async (req, res) => {
+  try {
+    const [appointments] = await db.execute(`
+      SELECT 
+        b.id as booking_id, 
+        v.name as vet_name, 
+        u.username as patient_name, 
+        v.price as consultation_fee, 
+        b.status 
+      FROM bookings b
+      JOIN vets v ON b.vet_id = v.id
+      JOIN users u ON b.user_id = u.id
+      ORDER BY b.id DESC
+      LIMIT 50
+    `);
+    
+    // Calculate shares
+    const processed = appointments.map(a => {
+      const fee = Number(a.consultation_fee) || 0;
+      const platformShare = fee * 0.10;
+      const doctorShare = fee * 0.90;
+      return {
+        ...a,
+        platform_share: platformShare,
+        doctor_share: doctorShare
+      };
+    });
+    
+    res.json({ success: true, appointments: processed });
+  } catch (error) {
+    console.error('Error fetching appointments:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 // --- STORE VERIFICATIONS ---
 exports.getStoreVerifications = async (req, res) => {
   try {

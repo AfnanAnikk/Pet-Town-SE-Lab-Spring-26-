@@ -29,7 +29,7 @@ exports.uploadImage = async (req, res) => {
     // Cloudinary URL is returned in req.file.path
     res.json({ url: req.file.path });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Upload failed' });
+    console.error('Upload Error Detailed:', error);
+    res.status(500).json({ message: `Upload failed: ${error.message || JSON.stringify(error)}` });
   }
 };

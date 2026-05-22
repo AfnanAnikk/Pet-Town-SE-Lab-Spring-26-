@@ -12,25 +12,24 @@ exports.register = async (req, res) => {
   }
 
   try {
-    // Check if user exists
     const [existingUsers] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
     if (existingUsers.length > 0) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     const userRole = role === 'service_provider' ? 'service_provider' : 'user';
+    const userServiceType = userRole === 'service_provider' ? (service_type || '') : null;
 
-    // Insert user
+    // Insert user with service_type stored directly
     const [userResult] = await db.execute(
-      'INSERT INTO users (username, email, password_hash, phone_number, role) VALUES (?, ?, ?, ?, ?)',
-      [username || null, email, hashedPassword, phone_number || null, userRole]
+      'INSERT INTO users (username, email, password_hash, phone_number, role, service_type) VALUES (?, ?, ?, ?, ?, ?)',
+      [username || null, email, hashedPassword, phone_number || null, userRole, userServiceType]
     );
 
     const userId = userResult.insertId;
 
-    // If service provider, insert into vets table
+    // If service provider, also insert into service_providers (vets) table for profile data
     if (userRole === 'service_provider') {
       await db.execute(
         'INSERT INTO vets (user_id, name, service_type, degree, is_verified, rating, review_count, price, profile_description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -72,9 +71,18 @@ exports.login = async (req, res) => {
       }
     };
 
-    jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
+    jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
       if (err) throw err;
-      res.json({ token, user: { id: user.id, username: user.username, email: user.email, role: user.role } });
+      res.json({ 
+        token, 
+        user: { 
+          id: user.id, 
+          username: user.username, 
+          email: user.email, 
+          role: user.role,
+          service_type: user.service_type || ''
+        } 
+      });
     });
   } catch (error) {
     console.error(error);

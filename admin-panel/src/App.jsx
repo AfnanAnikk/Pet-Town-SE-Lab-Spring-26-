@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { LayoutDashboard, ShieldAlert, ShoppingBag, TrendingUp, Users, Scissors, Heart, Calendar, MessageSquare, Settings, Search, Bell, Activity, FileText, CheckCircle2, XCircle, X, Download } from 'lucide-react';
 import './index.css';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://pet-town-backend.onrender.com/api/admin';
+const API_BASE = 'http://localhost:5000/api/admin';
 
 function Sidebar() {
   const location = useLocation();

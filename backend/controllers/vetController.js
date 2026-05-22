@@ -150,7 +150,7 @@ exports.verifyVet = async (req, res) => {
     const vetId = vets[0].id;
 
     await db.execute(
-      'INSERT INTO vet_verifications (vet_id, owner_name, nid_number, tin_number, trade_license, bvc_registration, other_license) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO vet_verifications (vet_id, owner_name, nid_front_url, tin_url, trade_url, bvc_url, other_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [vetId, ownerName, nidNumber, tinNumber, tradeLicense, bvcRegistration, otherLicense || null]
     );
 

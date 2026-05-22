@@ -234,3 +234,26 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS store_verifications (
+    id SERIAL PRIMARY KEY,
+    store_id INT NOT NULL,
+    owner_name VARCHAR(255),
+    nid_number VARCHAR(255),
+    trade_license VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS adoptions (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    breed VARCHAR(255),
+    age VARCHAR(50),
+    species VARCHAR(50),
+    image_url VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'available',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

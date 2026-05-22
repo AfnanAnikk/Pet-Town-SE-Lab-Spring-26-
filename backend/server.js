@@ -18,6 +18,7 @@ const io = new Server(server, {
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 // Socket.io injection into req for controllers to emit events if needed
 app.use((req, res, next) => {

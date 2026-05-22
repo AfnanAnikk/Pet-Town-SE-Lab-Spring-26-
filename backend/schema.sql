@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     phone_number VARCHAR(50),
     role VARCHAR(50) NOT NULL DEFAULT 'user',
     service_type VARCHAR(255),
+    profile_picture_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

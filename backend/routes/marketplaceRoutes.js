@@ -8,6 +8,8 @@ router.get('/stores/:userId', marketplaceController.getStoreByUserId);
 router.post('/stores', marketplaceController.createStore);
 router.put('/stores/:id', marketplaceController.updateStore);
 
+router.post('/stores/verify', marketplaceController.verifyStore);
+
 // Products
 router.get('/products', marketplaceController.getAllProducts);
 router.get('/stores/:storeId/products', marketplaceController.getStoreProducts);

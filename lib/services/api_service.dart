@@ -13,10 +13,11 @@ class ApiService {
     };
   }
 
-  // Submit Vet Verification
+  // Submit Vet/Store Verification
   static Future<Map<String, dynamic>> submitVerification({
     required int userId,
     required String ownerName,
+    String? serviceType,
     String? nidFrontUrl,
     String? nidBackUrl,
     String? tinUrl,
@@ -25,21 +26,35 @@ class ApiService {
     String? otherUrl,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vets/verify')}'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'userId': userId,
-          'ownerName': ownerName,
-          'nidFrontUrl': nidFrontUrl,
-          'nidBackUrl': nidBackUrl,
-          'tinUrl': tinUrl,
-          'tradeUrl': tradeUrl,
-          'bvcUrl': bvcUrl,
-          'otherUrl': otherUrl,
-        }),
-      );
-      return _handleResponse(response);
+      if (serviceType == 'Marketplace Owner') {
+        final response = await http.post(
+          Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/marketplace/stores/verify')}'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'userId': userId,
+            'ownerName': ownerName,
+            'nidNumber': nidFrontUrl,
+            'tradeLicense': tradeUrl,
+          }),
+        );
+        return _handleResponse(response);
+      } else {
+        final response = await http.post(
+          Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vets/verify')}'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'userId': userId,
+            'ownerName': ownerName,
+            'nidFrontUrl': nidFrontUrl,
+            'nidBackUrl': nidBackUrl,
+            'tinUrl': tinUrl,
+            'tradeUrl': tradeUrl,
+            'bvcUrl': bvcUrl,
+            'otherUrl': otherUrl,
+          }),
+        );
+        return _handleResponse(response);
+      }
     } catch (e) {
       return {'success': false, 'message': e.toString()};
     }

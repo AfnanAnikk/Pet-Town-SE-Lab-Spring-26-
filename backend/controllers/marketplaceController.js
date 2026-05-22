@@ -57,6 +57,26 @@ exports.updateStore = async (req, res) => {
   }
 };
 
+exports.verifyStore = async (req, res) => {
+  const { userId, ownerName, nidNumber, tradeLicense } = req.body;
+  try {
+    const [stores] = await db.execute('SELECT id FROM stores WHERE user_id = ?', [userId]);
+    if (stores.length === 0) return res.status(404).json({ message: 'Store not found for this user' });
+    const storeId = stores[0].id;
+
+    await db.execute(
+      'INSERT INTO store_verifications (store_id, owner_name, nid_number, trade_license) VALUES (?, ?, ?, ?)',
+      [storeId, ownerName, nidNumber, tradeLicense]
+    );
+
+    await db.execute('UPDATE stores SET is_verified = TRUE WHERE id = ?', [storeId]);
+    res.status(201).json({ message: 'Store verification submitted' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error verifying store' });
+  }
+};
+
 // --- Products ---
 
 exports.getAllProducts = async (req, res) => {

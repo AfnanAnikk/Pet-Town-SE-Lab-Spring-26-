@@ -29,12 +29,19 @@ exports.register = async (req, res) => {
 
     const userId = userResult.insertId;
 
-    // If service provider, also insert into vets table for profile data
+    // If service provider, insert into vets or stores table based on service_type
     if (userRole === 'service_provider') {
-      await db.execute(
-        'INSERT INTO vets (user_id, name, service_type, degree, is_verified, rating, review_count, price, profile_description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, name || '', service_type || '', degree || '', is_verified || false, rating || 0.0, review_count || 0, price || 0, profile_description || '']
-      );
+      if (service_type === 'Marketplace Owner') {
+        await db.execute(
+          'INSERT INTO stores (user_id, name, description, category, banner_color, location, banner_url, contact_info, is_verified, rating, review_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [userId, name || '', profile_description || '', 'General', '#3293B3', '', null, '', false, 0.0, 0]
+        );
+      } else {
+        await db.execute(
+          'INSERT INTO vets (user_id, name, service_type, degree, is_verified, rating, review_count, price, profile_description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [userId, name || '', service_type || '', degree || '', is_verified || false, rating || 0.0, review_count || 0, price || 0, profile_description || '']
+        );
+      }
     }
 
     res.status(201).json({ message: 'User registered successfully', userId });
@@ -129,15 +136,23 @@ exports.getProfile = async (req, res) => {
 // PUT /api/auth/profile/:id
 exports.updateProfile = async (req, res) => {
   const { id } = req.params;
-  const { display_name } = req.body;
+  const { displayName, profilePictureUrl } = req.body;
   try {
-    await db.execute(
-      'UPDATE users SET display_name = ? WHERE id = ?',
-      [display_name, id]
-    );
+    let query = 'UPDATE users SET display_name = ?';
+    let params = [displayName];
+
+    if (profilePictureUrl !== undefined) {
+      query += ', profile_picture_url = ?';
+      params.push(profilePictureUrl);
+    }
+
+    query += ' WHERE id = ?';
+    params.push(id);
+
+    await db.execute(query, params);
     res.json({ message: 'Profile updated successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error updating profile' });
   }
 };

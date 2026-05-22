@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 import '../auth/login_page.dart';
 import 'user_history_page.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -89,6 +91,26 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
     }
   }
 
+  Future<void> _pickProfileImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() => _isLoading = true);
+      final uploadRes = await ApiService.uploadImage(picked.path);
+      if (uploadRes['success']) {
+        final userId = await AuthService.getUserId();
+        if (userId != null) {
+          final displayName = _user?['display_name'] ?? _user?['username'] ?? '';
+          await AuthService.updateProfile(userId, displayName, profilePictureUrl: uploadRes['data']['url']);
+          await _loadProfile();
+        }
+      } else {
+        setState(() => _isLoading = false);
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(uploadRes['message'])));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -130,17 +152,38 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                 children: [
                   const SizedBox(height: 20),
                   // User Avatar
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey.shade200,
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/user1.png'), // Placeholder
-                        fit: BoxFit.cover,
+                  Stack(
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey.shade200,
+                          image: DecorationImage(
+                            image: (_user?['profile_picture_url'] != null && _user!['profile_picture_url'].isNotEmpty)
+                                ? NetworkImage(_user!['profile_picture_url'])
+                                : const AssetImage('assets/images/user1.png') as ImageProvider,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: _pickProfileImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF3293B3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   // User Name

@@ -108,12 +108,16 @@ class AuthService {
   }
 
   /// Update user profile
-  static Future<Map<String, dynamic>> updateProfile(int userId, String displayName) async {
+  static Future<Map<String, dynamic>> updateProfile(int userId, String displayName, {String? profilePictureUrl}) async {
     try {
+      final body = <String, dynamic>{'displayName': displayName};
+      if (profilePictureUrl != null) {
+        body['profilePictureUrl'] = profilePictureUrl;
+      }
       final response = await http.put(
         Uri.parse('$baseUrl/profile/$userId'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'display_name': displayName}),
+        body: jsonEncode(body),
       );
       return _handleResponse(response);
     } catch (e) {

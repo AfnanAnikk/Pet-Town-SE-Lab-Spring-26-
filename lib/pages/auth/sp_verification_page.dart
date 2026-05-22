@@ -64,6 +64,7 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
     final result = await ApiService.submitVerification(
       userId: widget.userId,
       ownerName: _nameController.text,
+      serviceType: widget.serviceType,
       nidFrontUrl: nidFrontUrl,
       nidBackUrl: nidBackUrl,
       tinUrl: tinUrl,

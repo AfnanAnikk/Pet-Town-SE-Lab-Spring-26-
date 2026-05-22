@@ -1,20 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
 
 class AuthService {
-  // Use 10.0.2.2 for Android Emulator connecting to local server.
-  // Use localhost for iOS simulator or web.
-  // Use your computer's IP address (e.g., 192.168.x.x) for physical device.
-  static String get baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:5000/api/auth';
-    }
-    // Note: If you ever test on Windows Desktop app, use localhost too.
-    // Platform.isAndroid check would require dart:io which isn't web-compatible without universal_io
-    return 'http://10.0.2.2:5000/api/auth';
-  }
+  // Use 10.0.2.2 for Android Emulator
+  // Use localhost for iOS or web sim.
+  // Use computer IP for physical device.
+  static const String baseUrl = 'https://pet-town-backend.onrender.com/api/auth';
 
   /// Register a normal user
   static Future<Map<String, dynamic>> registerUser({
@@ -88,6 +80,9 @@ class AuthService {
         await prefs.setString('jwt_token', result['data']['token']);
         await prefs.setString('user_role', result['data']['user']['role']);
         await prefs.setInt('user_id', result['data']['user']['id']);
+        // Save service_type so login routing knows vet vs marketplace owner
+        final serviceType = result['data']['user']['service_type'] ?? '';
+        await prefs.setString('service_type', serviceType);
       }
 
       return result;

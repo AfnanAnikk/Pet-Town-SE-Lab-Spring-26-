@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class OptionsBottomSheet extends StatelessWidget {
   final String authorName;
+  final VoidCallback? onDownload;
 
-  const OptionsBottomSheet({super.key, required this.authorName});
+  const OptionsBottomSheet({super.key, required this.authorName, this.onDownload});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +45,10 @@ class OptionsBottomSheet extends StatelessWidget {
               // Options
               _buildOption('Follow $authorName'),
               _buildOption('Copy link'),
-              _buildOption('Download image'),
+              _buildOption('Download image', onTap: () {
+                Navigator.pop(context);
+                if (onDownload != null) onDownload!();
+              }),
               _buildOption('See more like this'),
               _buildOption('See less like this'),
               _buildOption('Report this pin'),
@@ -55,26 +59,29 @@ class OptionsBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildOption(String text) {
+  Widget _buildOption(String text, {VoidCallback? onTap}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w500,
-          color: Colors.black87,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
         ),
       ),
     );
   }
 }
 
-void showOptionsBottomSheet(BuildContext context, String authorName) {
+void showOptionsBottomSheet(BuildContext context, String authorName, {VoidCallback? onDownload}) {
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    builder: (context) => OptionsBottomSheet(authorName: authorName),
+    builder: (context) => OptionsBottomSheet(authorName: authorName, onDownload: onDownload),
   );
 }

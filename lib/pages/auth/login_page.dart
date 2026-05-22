@@ -4,6 +4,7 @@ import '../../widgets/primary_button.dart';
 import '../home/home_page.dart';
 import 'user_signup_page.dart';
 import '../provider/provider_dashboard_page.dart';
+import '../marketplace/store_dashboard_page.dart';
 import '../../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -44,12 +45,23 @@ class _LoginPageState extends State<LoginPage> {
 
     if (result['success']) {
       final role = result['data']['user']['role'];
+      final serviceType = result['data']['user']['service_type'] ?? '';
+
       if (role == 'service_provider') {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const ProviderDashboardPage()),
-          (route) => false,
-        );
+        if (serviceType == 'Marketplace Owner') {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const StoreDashboardPage()),
+            (route) => false,
+          );
+        } else {
+          // Vet, Pet Salon, or any other provider → vet dashboard
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const ProviderDashboardPage()),
+            (route) => false,
+          );
+        }
       } else {
         Navigator.pushAndRemoveUntil(
           context,
@@ -169,26 +181,7 @@ class _LoginPageState extends State<LoginPage> {
                       text: 'Log in',
                       onPressed: _handleLogin,
                     ),
-              const SizedBox(height: 8),
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProviderDashboardPage(),
-                      ),
-                      (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    'Login as Provider (Demo)',
-                    style: TextStyle(color: Color(0xFF3293B3), fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
               const SizedBox(height: 10),
-
               // Bottom link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

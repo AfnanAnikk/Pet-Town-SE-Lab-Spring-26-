@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../widgets/primary_button.dart';
 import 'login_page.dart';
 import '../../services/api_service.dart';
@@ -16,11 +18,32 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
   bool _isLoading = false;
   
   final _nameController = TextEditingController();
-  final _nidController = TextEditingController();
-  final _tinController = TextEditingController();
-  final _tradeController = TextEditingController();
-  final _bvcController = TextEditingController();
-  final _otherController = TextEditingController();
+
+  File? _nidFront;
+  File? _nidBack;
+  File? _tinCert;
+  File? _tradeCert;
+  File? _bvcCert;
+  File? _otherCert;
+
+  Future<void> _pickImage(Function(File) onPicked) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        onPicked(File(picked.path));
+      });
+    }
+  }
+
+  Future<String?> _uploadIfNotNull(File? file) async {
+    if (file == null) return null;
+    final res = await ApiService.uploadImage(file.path);
+    if (res['success']) {
+      return res['data']['url'];
+    }
+    return null;
+  }
 
   Future<void> _handleVerification() async {
     if (!_agreedToTerms) {
@@ -28,15 +51,26 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
       return;
     }
     setState(() => _isLoading = true);
+
+    // Upload images first
+    final nidFrontUrl = await _uploadIfNotNull(_nidFront);
+    final nidBackUrl = await _uploadIfNotNull(_nidBack);
+    final tinUrl = await _uploadIfNotNull(_tinCert);
+    final tradeUrl = await _uploadIfNotNull(_tradeCert);
+    final bvcUrl = await _uploadIfNotNull(_bvcCert);
+    final otherUrl = await _uploadIfNotNull(_otherCert);
+
     final result = await ApiService.submitVerification(
       userId: widget.userId,
       ownerName: _nameController.text,
-      nidNumber: _nidController.text,
-      tinNumber: _tinController.text,
-      tradeLicense: _tradeController.text,
-      bvcRegistration: _bvcController.text,
-      otherLicense: _otherController.text,
+      nidFrontUrl: nidFrontUrl,
+      nidBackUrl: nidBackUrl,
+      tinUrl: tinUrl,
+      tradeUrl: tradeUrl,
+      bvcUrl: bvcUrl,
+      otherUrl: otherUrl,
     );
+    
     setState(() => _isLoading = false);
     
     if (result['success']) {
@@ -91,32 +125,39 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
     );
   }
 
-  Widget _buildUploadBox(String title) {
+  Widget _buildUploadBox(String title, File? selectedFile, Function(File) onPicked) {
     return Expanded(
-      child: Container(
-        height: 100,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade400),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Icon(
-              Icons.image_outlined,
-              color: Colors.black54,
-              size: 24,
-            ),
-          ],
+      child: GestureDetector(
+        onTap: () => _pickImage(onPicked),
+        child: Container(
+          height: 100,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade400),
+            borderRadius: BorderRadius.circular(16),
+            color: Colors.grey.shade50,
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: selectedFile != null
+              ? Image.file(selectedFile, fit: BoxFit.cover)
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Icon(
+                      Icons.camera_alt_outlined,
+                      color: Colors.black54,
+                      size: 24,
+                    ),
+                  ],
+                ),
         ),
       ),
     );
@@ -150,7 +191,7 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Help us verify your business.',
+                        'Upload photos of your documents',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.black87,
@@ -172,44 +213,36 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
 
               // Owner Verification
               _buildSectionTitle('Owner Verification'),
-              _buildTextField('Name', _nameController),
+              _buildTextField('Owner Name', _nameController),
               const SizedBox(height: 4),
               Row(
                 children: [
-                  _buildUploadBox('Upload NID\nFront'),
+                  _buildUploadBox('NID Front', _nidFront, (f) => _nidFront = f),
                   const SizedBox(width: 16),
-                  _buildUploadBox('Upload NID\nBack'),
+                  _buildUploadBox('NID Back', _nidBack, (f) => _nidBack = f),
                 ],
               ),
-              const SizedBox(height: 12),
-              _buildTextField('NID Number', _nidController),
 
               // Business Verification
               _buildSectionTitle('Business Verification (At least one)'),
               Row(
                 children: [
-                  _buildUploadBox('Upload TIN\nCertificate'),
+                  _buildUploadBox('TIN Certificate', _tinCert, (f) => _tinCert = f),
                   const SizedBox(width: 16),
-                  _buildUploadBox('Upload Trade\nCertificate'),
+                  _buildUploadBox('Trade License', _tradeCert, (f) => _tradeCert = f),
                 ],
               ),
-              const SizedBox(height: 12),
-              _buildTextField('TIN Certificate Number', _tinController),
-              _buildTextField('Trade License Number', _tradeController),
 
               // Professional License
               _buildSectionTitle('Professional License (Vet/Clinic)'),
               Row(
                 children: [
-                  _buildUploadBox('Upload BVC\nCertificate'),
+                  _buildUploadBox('BVC Registration', _bvcCert, (f) => _bvcCert = f),
                   const SizedBox(width: 16),
-                  _buildUploadBox('Upload Other\nCertificate\n(optional)'),
+                  _buildUploadBox('Other License\n(optional)', _otherCert, (f) => _otherCert = f),
                 ],
               ),
-              const SizedBox(height: 12),
-              _buildTextField('BVC Registration Number', _bvcController),
-              _buildTextField('Other License Name/Number (optional)', _otherController),
-              const SizedBox(height: 14),
+              const SizedBox(height: 24),
 
               // Terms and Conditions
               Row(
@@ -253,7 +286,7 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : PrimaryButton(
-                      text: 'Complete Verification',
+                      text: 'Submit for Review',
                       onPressed: _handleVerification,
                     ),
               const SizedBox(height: 10),

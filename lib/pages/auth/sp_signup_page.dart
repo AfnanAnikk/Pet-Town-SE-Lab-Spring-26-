@@ -19,7 +19,7 @@ class _SpSignupPageState extends State<SpSignupPage> {
   final TextEditingController _phoneController = TextEditingController();
   bool _isLoading = false;
   bool _agreedToTerms = true;
-  String _selectedServiceType = 'Pet Salon';
+  String _selectedServiceType = '';
 
   Future<void> _handleSignup() async {
     final name = _nameController.text.trim();
@@ -173,7 +173,7 @@ class _SpSignupPageState extends State<SpSignupPage> {
 
               // Form Fields
               CustomTextField(
-                label: 'Service/ Vet Name',
+                label: 'Service Name',
                 hintText: 'PawPatrol',
                 controller: _nameController,
               ),
@@ -193,7 +193,7 @@ class _SpSignupPageState extends State<SpSignupPage> {
                 runSpacing: 8,
                 children: [
                   _buildServiceTypeOption('Pet Salon'),
-                  _buildServiceTypeOption('Vet Clinic'),
+                  _buildServiceTypeOption('Marketplace Owner'),
                   _buildServiceTypeOption('Vet'),
                 ],
               ),

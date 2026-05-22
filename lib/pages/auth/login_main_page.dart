@@ -111,18 +111,6 @@ class LoginMainPage extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               PrimaryButton(
-                text: 'Sign Up As A Business',
-                isOutlined: true,
-                color: const Color(0xFFFF7A7A), // Pinkish outline
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SpSignupPage()),
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
-              PrimaryButton(
                 text: 'Join As Service Provider',
                 isOutlined: true,
                 color: const Color(0xFF3293B3), // Teal outline

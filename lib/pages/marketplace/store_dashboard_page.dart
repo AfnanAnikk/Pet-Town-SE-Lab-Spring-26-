@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import 'add_product_page.dart';
-import 'package:intl/intl.dart';
+import '../auth/login_page.dart';
 
 class StoreDashboardPage extends StatefulWidget {
   const StoreDashboardPage({super.key});
@@ -120,18 +120,47 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
 
     if (_storeData == null) {
       // Create Store View
-      return Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
+      return WillPopScope(
+        onWillPop: () async {
+          if (Navigator.canPop(context)) {
+            return true;
+          } else {
+            await AuthService.logout();
+            if (mounted) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+                (route) => false,
+              );
+            }
+            return false;
+          }
+        },
+        child: Scaffold(
           backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
-            onPressed: () => Navigator.pop(context),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+              onPressed: () async {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  await AuthService.logout();
+                  if (mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                      (route) => false,
+                    );
+                  }
+                }
+              },
+            ),
+            title: const Text('Set Up Your Shop', style: TextStyle(color: Color(0xFF374957))),
           ),
-          title: const Text('Set Up Your Shop', style: TextStyle(color: Color(0xFF374957))),
-        ),
-        body: SingleChildScrollView(
+          body: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,19 +249,48 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
             ],
           ),
         ),
-      );
+      ));
     }
 
     // Dashboard View
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+    return WillPopScope(
+      onWillPop: () async {
+        if (Navigator.canPop(context)) {
+          return true;
+        } else {
+          await AuthService.logout();
+          if (mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+              (route) => false,
+            );
+          }
+          return false;
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 1,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+            onPressed: () async {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              } else {
+                await AuthService.logout();
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false,
+                  );
+                }
+              }
+            },
+          ),
         title: Text(_storeData!['name'], style: const TextStyle(color: Color(0xFF374957))),
         actions: [
           IconButton(
@@ -339,7 +397,12 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
                           color: Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.image, color: Colors.grey),
+                        clipBehavior: Clip.hardEdge,
+                        child: p['image_path'] != null
+                            ? (p['image_path'].toString().startsWith('http')
+                                ? Image.network(p['image_path'], fit: BoxFit.cover)
+                                : Image.asset(p['image_path'], fit: BoxFit.cover, errorBuilder: (_,__,___) => const Icon(Icons.image, color: Colors.grey)))
+                            : const Icon(Icons.image, color: Colors.grey),
                       ),
                       title: Text(p['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Text('৳${p['price']} • Stock: ${p['quantity']}'),
@@ -454,7 +517,7 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
           ],
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildStatCard(String label, String value) {

@@ -155,8 +155,10 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             height: 140,
             width: double.infinity,
             color: Colors.grey.shade100,
-            child: product['image_url'] != null
-                ? Image.network(product['image_url'], fit: BoxFit.cover)
+            child: product['image_path'] != null
+                ? (product['image_path'].toString().startsWith('http')
+                    ? Image.network(product['image_path'], fit: BoxFit.cover)
+                    : Image.asset(product['image_path'], fit: BoxFit.cover, errorBuilder: (_,__,___) => const Icon(Icons.shopping_bag, color: Colors.grey, size: 40)))
                 : const Icon(Icons.shopping_bag, color: Colors.grey, size: 40),
           ),
           Padding(
@@ -184,7 +186,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                         'id': product['id'],
                         'name': product['name'],
                         'price': product['price'],
-                        'image_url': product['image_url'],
+                        'image_path': product['image_path'],
                         'store_id': widget.store['id'],
                         'store_name': widget.store['name'],
                       });

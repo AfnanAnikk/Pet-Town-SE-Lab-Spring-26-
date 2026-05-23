@@ -85,13 +85,31 @@ class _CartPageState extends State<CartPage> {
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.asset(
-                                item.product['image_path'] ?? 'assets/images/p1.png',
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_,__,___) => Container(width: 60, height: 60, color: Colors.grey.shade200),
-                              ),
+                              child: item.product['image_path'] != null && item.product['image_path'].toString().startsWith('http')
+                                  ? Image.network(
+                                      item.product['image_path'],
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_,__,___) => Container(
+                                        width: 60,
+                                        height: 60,
+                                        color: Colors.grey.shade200,
+                                        child: const Icon(Icons.shopping_bag, color: Colors.grey),
+                                      ),
+                                    )
+                                  : Image.asset(
+                                      item.product['image_path'] ?? 'assets/images/p1.png',
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_,__,___) => Container(
+                                        width: 60,
+                                        height: 60,
+                                        color: Colors.grey.shade200,
+                                        child: const Icon(Icons.shopping_bag, color: Colors.grey),
+                                      ),
+                                    ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(

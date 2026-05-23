@@ -289,44 +289,57 @@ class _VetBookingPageState extends State<VetBookingPage> {
                     ),
                   ),
 
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      children: availableSlotsByDate.keys.map((date) {
-                        final isSelected = date == selectedDate;
+                  if (availableSlotsByDate.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      child: Text(
+                        'No available dates',
+                        style: TextStyle(fontSize: 15, color: Colors.black54),
+                      ),
+                    )
+                  else
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        children: availableSlotsByDate.keys.map((date) {
+                          final isSelected = date == selectedDate;
 
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedDate = date;
-                              selectedTime = null;
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 12),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected ? const Color(0xFF3FA9F5) : Colors.grey.shade300,
-                                width: isSelected ? 2 : 1,
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedDate = date;
+                                selectedTime = null;
+                              });
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF3FA9F5)
+                                      : Colors.grey.shade300,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                              ),
+                              child: Text(
+                                date,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected
+                                      ? const Color(0xFF3FA9F5)
+                                      : Colors.black87,
+                                ),
                               ),
                             ),
-                            child: Text(
-                              date,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? const Color(0xFF3FA9F5) : Colors.black87,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                          );
+                        }).toList(),
+                      ),
                     ),
-                  ),
 
                   // Time Section
                   if (selectedDate != null)

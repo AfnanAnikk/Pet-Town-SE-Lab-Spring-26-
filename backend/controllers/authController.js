@@ -156,3 +156,15 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error updating profile' });
   }
 };
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const [users] = await db.execute(
+      'SELECT id, username, display_name, email, role, profile_picture_url FROM users ORDER BY username ASC'
+    );
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching users' });
+  }
+};

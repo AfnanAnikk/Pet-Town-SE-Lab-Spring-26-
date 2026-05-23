@@ -6,6 +6,7 @@ import '../../services/auth_service.dart';
 import '../../widgets/post_card.dart';
 import '../../widgets/options_bottom_sheet.dart';
 import '../messaging/message_list_page.dart';
+import '../profile/user_profile_page.dart';
 
 class PostDetailPage extends StatefulWidget {
   final PostModel post;
@@ -338,24 +339,38 @@ class _PostDetailPageState extends State<PostDetailPage> {
             ),
 
             // Author Info
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 16,
-                    backgroundColor: Color(0xFFE0E0E0),
-                    child: Icon(Icons.person, color: Colors.grey, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    post.authorName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+            GestureDetector(
+              onTap: () {
+                if (post.userId.isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => UserProfilePage(userId: int.tryParse(post.userId)),
                     ),
-                  ),
-                ],
+                  );
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    const CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Color(0xFFE0E0E0),
+                      child: Icon(Icons.person, color: Colors.grey, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      post.authorName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        decoration: TextDecoration.underline,
+                        color: Color(0xFF3293B3),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),

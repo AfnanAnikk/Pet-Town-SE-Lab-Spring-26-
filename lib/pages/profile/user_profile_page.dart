@@ -7,9 +7,11 @@ import 'user_history_page.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../models/post_model.dart';
 import '../home/post_detail_page.dart';
+import '../messaging/chat_page.dart';
 
 class UserProfilePage extends StatefulWidget {
-  const UserProfilePage({super.key});
+  final int? userId;
+  const UserProfilePage({super.key, this.userId});
 
   @override
   State<UserProfilePage> createState() => _UserProfilePageState();
@@ -22,6 +24,8 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
   List<dynamic> _posts = [];
   List<dynamic> _savedPosts = [];
   int _postCount = 0;
+  bool _isOwnProfile = true;
+  int? _loggedInUserId;
 
   @override
   void initState() {
@@ -32,19 +36,43 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
 
   Future<void> _loadProfile() async {
     setState(() => _isLoading = true);
-    final userId = await AuthService.getUserId();
-    if (userId != null) {
-      final result = await AuthService.getProfile(userId);
+    _loggedInUserId = await AuthService.getUserId();
+    
+    final targetUserId = widget.userId ?? _loggedInUserId;
+    _isOwnProfile = (targetUserId == _loggedInUserId);
+
+    if (targetUserId != null) {
+      final result = await AuthService.getProfile(targetUserId);
       if (result['success']) {
         setState(() {
           _user = result['data']['user'];
           _postCount = result['data']['postCount'];
           _posts = result['data']['posts'];
         });
-        _fetchSavedPosts(userId);
+        _fetchSavedPosts(targetUserId);
       }
     }
     setState(() => _isLoading = false);
+  }
+
+  void _contactUser() {
+    if (_loggedInUserId == null || _user == null) return;
+    
+    final otherUserId = _user!['id'] as int;
+    final otherUserName = _user!['display_name'] ?? _user!['username'] ?? 'User';
+    final imageNumber = (otherUserId % 10) + 1;
+    final otherUserImage = 'assets/images/p$imageNumber.png';
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatPage(
+          otherUserId: otherUserId,
+          otherUserName: otherUserName,
+          otherUserImage: otherUserImage,
+        ),
+      ),
+    );
   }
 
   Future<void> _fetchSavedPosts(int userId) async {
@@ -141,21 +169,29 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history, color: Colors.black, size: 28),
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const UserHistoryPage()));
-            },
-            tooltip: 'Booking & Order History',
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.red, size: 28),
-            onPressed: _handleLogout,
-            tooltip: 'Logout',
-          ),
-          const SizedBox(width: 8),
-        ],
+        leading: !_isOwnProfile 
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        actions: _isOwnProfile 
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.history, color: Colors.black, size: 28),
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const UserHistoryPage()));
+                  },
+                  tooltip: 'Booking & Order History',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.logout, color: Colors.red, size: 28),
+                  onPressed: _handleLogout,
+                  tooltip: 'Logout',
+                ),
+                const SizedBox(width: 8),
+              ]
+            : null,
       ),
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -181,21 +217,22 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                           ),
                         ),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: _pickProfileImage,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF3293B3),
-                              shape: BoxShape.circle,
+                      if (_isOwnProfile)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: _pickProfileImage,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF3293B3),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                             ),
-                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                           ),
                         ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -207,10 +244,11 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                         displayName,
                         style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
-                        onPressed: _editName,
-                      ),
+                      if (_isOwnProfile)
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                          onPressed: _editName,
+                        ),
                     ],
                   ),
                   Text(
@@ -229,6 +267,26 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                       _buildStatColumn('0', 'Following'),
                     ],
                   ),
+                  if (!_isOwnProfile) ...[
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _contactUser,
+                      icon: const Icon(Icons.message_rounded, color: Colors.white, size: 18),
+                      label: const Text(
+                        'Message',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3293B3),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 32),
                 ],
               ),

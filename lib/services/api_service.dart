@@ -381,6 +381,19 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getAllUsers() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/auth/users')}'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   // Marketplace - Stores
   static Future<Map<String, dynamic>> getAllStores() async {
     try {

@@ -45,8 +45,24 @@ class _ChatPageState extends State<ChatPage> {
     }
     _currentUserId = userId;
 
-    if (widget.conversationId != null) {
-      final res = await ApiService.getMessages(widget.conversationId!);
+    // If no conversationId passed, look for an existing one with this user
+    int? resolvedConversationId = widget.conversationId;
+    if (resolvedConversationId == null) {
+      final convsRes = await ApiService.getConversations(userId);
+      if (convsRes['success'] && convsRes['data'] != null) {
+        final List<dynamic> convs = convsRes['data'];
+        final existing = convs.firstWhere(
+          (c) => c['other_user_id'] == widget.otherUserId,
+          orElse: () => null,
+        );
+        if (existing != null) {
+          resolvedConversationId = existing['conversation_id'];
+        }
+      }
+    }
+
+    if (resolvedConversationId != null) {
+      final res = await ApiService.getMessages(resolvedConversationId);
       if (res['success']) {
         setState(() {
           _messages = res['data'];

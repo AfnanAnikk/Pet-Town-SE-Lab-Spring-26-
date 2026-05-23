@@ -42,6 +42,129 @@ class _MessageListPageState extends State<MessageListPage> {
     });
   }
 
+  Future<void> _showNewMessageSheet() async {
+    final res = await ApiService.getAllUsers();
+    if (!res['success'] || res['data'] == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not load users')),
+        );
+      }
+      return;
+    }
+
+    final List<dynamic> allUsers = (res['data'] as List)
+        .where((u) => u['id'] != _currentUserId)
+        .toList();
+
+    if (!mounted) return;
+
+    final TextEditingController searchCtrl = TextEditingController();
+    List<dynamic> filtered = List.from(allUsers);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              ),
+              child: SizedBox(
+                height: MediaQuery.of(ctx).size.height * 0.6,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'New Message',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF3293B3)),
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TextField(
+                        controller: searchCtrl,
+                        decoration: InputDecoration(
+                          hintText: 'Search users...',
+                          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                          filled: true,
+                          fillColor: Colors.grey.shade100,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                        ),
+                        onChanged: (q) {
+                          setSheetState(() {
+                            filtered = allUsers.where((u) {
+                              final name = (u['username'] ?? u['email'] ?? '').toLowerCase();
+                              return name.contains(q.toLowerCase());
+                            }).toList();
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? const Center(child: Text('No users found', style: TextStyle(color: Colors.grey)))
+                          : ListView.builder(
+                              itemCount: filtered.length,
+                              itemBuilder: (_, i) {
+                                final user = filtered[i];
+                                final name = user['username'] ?? user['email']?.split('@')[0] ?? 'User';
+                                final imageNumber = (user['id'] % 10) + 1;
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    radius: 22,
+                                    backgroundImage: AssetImage('assets/images/p$imageNumber.png'),
+                                    backgroundColor: Colors.grey.shade200,
+                                  ),
+                                  title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                  subtitle: Text(user['email'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ChatPage(
+                                          otherUserId: user['id'],
+                                          otherUserName: name,
+                                          otherUserImage: 'assets/images/p$imageNumber.png',
+                                        ),
+                                      ),
+                                    ).then((_) => _fetchConversations());
+                                  },
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,9 +207,7 @@ class _MessageListPageState extends State<MessageListPage> {
                       'New Message',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF374957)),
                     ),
-                    onTap: () {
-                      // Navigate to contact selection
-                    },
+                    onTap: _showNewMessageSheet,
                   ),
                   const SizedBox(height: 12),
                   
@@ -118,7 +239,9 @@ class _MessageListPageState extends State<MessageListPage> {
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.all(32.0),
-                        child: Text("No conversations yet.", style: TextStyle(color: Colors.grey)),
+                        child: Text("No conversations yet.\nTap 'New Message' to start chatting!", 
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey)),
                       ),
                     ),
 

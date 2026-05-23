@@ -36,6 +36,7 @@ class _VetBookingPageState extends State<VetBookingPage> {
 
     final userId = await AuthService.getUserId();
     if (userId == null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please log in first.')));
       return;
     }
@@ -90,11 +91,51 @@ class _VetBookingPageState extends State<VetBookingPage> {
     if (widget.selectedSlot != null) {
       final parts = widget.selectedSlot!.split(' at ');
       if (parts.length == 2) {
-        selectedDate = DateTime.now();
+        if (parts[0].toLowerCase().contains('today')) {
+          selectedDate = DateTime.now();
+        } else {
+          try {
+            final dateParts = parts[0].split('/');
+            if (dateParts.length == 3) {
+              final day = int.parse(dateParts[0]);
+              final month = int.parse(dateParts[1]);
+              final year = int.parse(dateParts[2]);
+              selectedDate = DateTime(year, month, day);
+            } else {
+              selectedDate = DateTime.now();
+            }
+          } catch (_) {
+            selectedDate = DateTime.now();
+          }
+        }
         selectedTime = parts[1];
       } else {
         selectedTime = widget.selectedSlot;
       }
+    }
+  }
+
+  void _pickCustomTime() async {
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF3FA9F5),
+              onPrimary: Colors.white,
+              onSurface: Colors.black87,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (pickedTime != null && mounted) {
+      setState(() {
+        selectedTime = pickedTime.format(context);
+      });
     }
   }
 
@@ -298,52 +339,141 @@ class _VetBookingPageState extends State<VetBookingPage> {
                   _buildField(
                     icon: Icons.calendar_month_outlined,
                     title: 'Date',
-                    value: formattedDate,
+                    value: selectedDate == null
+                        ? 'Tap to select'
+                        : () {
+                            final months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                            return '${selectedDate!.day} ${months[selectedDate!.month - 1]} ${selectedDate!.year}';
+                          }(),
                     onTap: _pickDate,
                   ),
-                  
-                  // Time Selector (only show if Date is selected)
-                  if (selectedDate != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16, bottom: 8),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Row(
-                          children: availableTimes.map((time) {
-                            final isSelected = time == selectedTime;
-                            return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  selectedTime = time;
-                                });
-                              },
-                              child: Container(
-                                margin: const EdgeInsets.only(right: 12),
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isSelected ? const Color(0xFF3FA9F5) : Colors.grey.shade300,
-                                    width: isSelected ? 2 : 1,
-                                  ),
+
+                  // Time Section — always visible
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.access_time, color: Colors.black87, size: 24),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Time',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFE5E5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFFFB3B3)),
+                          ),
+                          child: const Text(
+                            'Required',
+                            style: TextStyle(fontSize: 10, color: Color(0xFFD32F2F), fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Slot chips (if any) + custom time picker button
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      children: [
+                        // Pre-defined slot chips
+                        ...availableTimes.map((time) {
+                          final isSelected = time == selectedTime;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedTime = time;
+                              });
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: isSelected ? const Color(0xFF3FA9F5) : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected ? const Color(0xFF3FA9F5) : Colors.grey.shade300,
+                                  width: isSelected ? 2 : 1,
                                 ),
-                                child: Text(
-                                  time,
+                              ),
+                              child: Text(
+                                time,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+
+                        // Custom Time Picker button — always shown
+                        GestureDetector(
+                          onTap: _pickCustomTime,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: (selectedTime != null && !availableTimes.contains(selectedTime))
+                                  ? const Color(0xFF3FA9F5)
+                                  : const Color(0xFFE6F4FF),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFF3FA9F5),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  color: (selectedTime != null && !availableTimes.contains(selectedTime))
+                                      ? Colors.white
+                                      : const Color(0xFF3FA9F5),
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  (selectedTime != null && !availableTimes.contains(selectedTime))
+                                      ? selectedTime!
+                                      : 'Choose Time',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    color: isSelected ? const Color(0xFF3FA9F5) : Colors.black87,
+                                    color: (selectedTime != null && !availableTimes.contains(selectedTime))
+                                        ? Colors.white
+                                        : const Color(0xFF3FA9F5),
                                   ),
                                 ),
-                              ),
-                            );
-                          }).toList(),
+                              ],
+                            ),
+                          ),
                         ),
+                      ],
+                    ),
+                  ),
+
+                  // Show selected time summary
+                  if (selectedTime != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                      child: Text(
+                        'Selected: $selectedTime',
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF3FA9F5), fontWeight: FontWeight.w500),
                       ),
                     ),
-                  
+
+                  const SizedBox(height: 8),
+                  const Divider(height: 1, color: Color(0xFFEEEEEE)),
+
+
                   _buildField(
                     icon: Icons.pets_outlined,
                     title: 'Pet',

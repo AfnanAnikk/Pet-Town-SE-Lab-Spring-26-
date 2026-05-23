@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class PostModel {
   final String id;
+  final String userId;
   final String title;
   final String authorName;
   final List<String> tags;
@@ -13,6 +14,7 @@ class PostModel {
 
   PostModel({
     required this.id,
+    required this.userId,
     required this.title,
     required this.authorName,
     required this.tags,
@@ -29,12 +31,13 @@ class PostModel {
     if (json['placeholder_color'] != null && json['placeholder_color'].toString().isNotEmpty) {
       String colorStr = json['placeholder_color'].toString().replaceAll('#', '0xFF');
       if (colorStr.length == 10) {
-         try { color = Color(int.parse(colorStr)); } catch (e) {}
+         try { color = Color(int.parse(colorStr)); } catch (_) { /* ignore invalid color */ }
       }
     }
 
     return PostModel(
       id: json['id']?.toString() ?? '',
+      userId: json['user_id']?.toString() ?? '',
       title: json['title'] ?? 'Untitled',
       authorName: json['author_name'] ?? 'Unknown',
       tags: List<String>.from(json['tags'] ?? []),

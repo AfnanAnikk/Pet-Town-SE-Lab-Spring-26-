@@ -3,8 +3,16 @@ import 'package:flutter/material.dart';
 class OptionsBottomSheet extends StatelessWidget {
   final String authorName;
   final VoidCallback? onDownload;
+  final bool showDelete;
+  final VoidCallback? onDelete;
 
-  const OptionsBottomSheet({super.key, required this.authorName, this.onDownload});
+  const OptionsBottomSheet({
+    super.key, 
+    required this.authorName, 
+    this.onDownload,
+    this.showDelete = false,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +51,11 @@ class OptionsBottomSheet extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Options
+              if (showDelete)
+                _buildOption('Delete post', color: Colors.red, onTap: () {
+                  Navigator.pop(context);
+                  if (onDelete != null) onDelete!();
+                }),
               _buildOption('Follow $authorName'),
               _buildOption('Copy link'),
               _buildOption('Download image', onTap: () {
@@ -59,17 +72,17 @@ class OptionsBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildOption(String text, {VoidCallback? onTap}) {
+  Widget _buildOption(String text, {VoidCallback? onTap, Color color = Colors.black87}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: GestureDetector(
         onTap: onTap,
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w500,
-            color: Colors.black87,
+            color: color,
           ),
         ),
       ),
@@ -77,11 +90,24 @@ class OptionsBottomSheet extends StatelessWidget {
   }
 }
 
-void showOptionsBottomSheet(BuildContext context, String authorName, {VoidCallback? onDownload}) {
+void showOptionsBottomSheet(
+  BuildContext context, 
+  String authorName, 
+  {
+    VoidCallback? onDownload,
+    bool showDelete = false,
+    VoidCallback? onDelete,
+  }
+) {
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    builder: (context) => OptionsBottomSheet(authorName: authorName, onDownload: onDownload),
+    builder: (context) => OptionsBottomSheet(
+      authorName: authorName, 
+      onDownload: onDownload,
+      showDelete: showDelete,
+      onDelete: onDelete,
+    ),
   );
 }

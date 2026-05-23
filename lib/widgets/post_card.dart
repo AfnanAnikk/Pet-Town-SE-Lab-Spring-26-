@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/post_model.dart';
 import '../pages/home/post_detail_page.dart';
+import '../services/api_service.dart';
+import '../services/auth_service.dart';
 
 class PostCard extends StatefulWidget {
   final PostModel post;
@@ -14,6 +16,109 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> {
   bool _isDarkened = false;
   bool _isLoved = false;
+  bool _isSaved = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSaveStatus();
+    _checkLikeStatus();
+  }
+
+  Future<void> _checkSaveStatus() async {
+    final userId = await AuthService.getUserId();
+    if (userId != null) {
+      final res = await ApiService.isPostSaved(int.parse(widget.post.id), userId);
+      if (res['success'] && mounted) {
+        setState(() {
+          _isSaved = res['data']['isSaved'] ?? false;
+        });
+      }
+    }
+  }
+
+  Future<void> _checkLikeStatus() async {
+    final userId = await AuthService.getUserId();
+    if (userId != null) {
+      final res = await ApiService.isPostLiked(int.parse(widget.post.id), userId);
+      if (res['success'] && mounted) {
+        setState(() {
+          _isLoved = res['data']['isLiked'] ?? false;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    final userId = await AuthService.getUserId();
+    if (userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in to like posts.')),
+        );
+      }
+      return;
+    }
+    
+    final wasLoved = _isLoved;
+    setState(() {
+      _isLoved = !_isLoved;
+    });
+
+    final res = wasLoved
+        ? await ApiService.unlikePost(int.parse(widget.post.id), userId)
+        : await ApiService.likePost(int.parse(widget.post.id), userId);
+
+    if (!res['success']) {
+      setState(() {
+        _isLoved = wasLoved; // revert
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update like status')),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleSave() async {
+    final userId = await AuthService.getUserId();
+    if (userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in to save posts.')),
+        );
+      }
+      return;
+    }
+    
+    final wasSaved = _isSaved;
+    setState(() {
+      _isSaved = !_isSaved;
+    });
+
+    final res = wasSaved 
+        ? await ApiService.unsavePost(int.parse(widget.post.id), userId)
+        : await ApiService.savePost(int.parse(widget.post.id), userId);
+
+    if (!res['success']) {
+      setState(() {
+        _isSaved = wasSaved; // revert
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update save status')),
+        );
+      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isSaved ? 'Saved to your board!' : 'Removed from your board.'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
 
   void _handleTap() {
     if (!_isDarkened) {
@@ -91,11 +196,7 @@ class _PostCardState extends State<PostCard> {
                         children: [
                           // Love React Button
                           GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isLoved = !_isLoved;
-                              });
-                            },
+                            onTap: _toggleLike,
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
@@ -112,16 +213,9 @@ class _PostCardState extends State<PostCard> {
                           
                           // Save Button
                           ElevatedButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Saved to your board!'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            },
+                            onPressed: _toggleSave,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF3293B3),
+                              backgroundColor: _isSaved ? Colors.grey : const Color(0xFF3293B3),
                               foregroundColor: Colors.white,
                               elevation: 0,
                               minimumSize: const Size(60, 36),
@@ -130,9 +224,9 @@ class _PostCardState extends State<PostCard> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text(
-                              'Save',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                            child: Text(
+                              _isSaved ? 'Saved' : 'Save',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],

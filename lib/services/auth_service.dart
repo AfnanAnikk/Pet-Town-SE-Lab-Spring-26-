@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -6,7 +7,15 @@ class AuthService {
   // Use 10.0.2.2 for Android Emulator
   // Use localhost for iOS or web sim.
   // Use computer IP for physical device.
-  static const String baseUrl = 'https://pet-town-backend.onrender.com/api/auth';
+  static String get baseUrl {
+    if (kReleaseMode) {
+      return 'https://pet-town-backend.onrender.com/api/auth';
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:5000/api/auth';
+    }
+    return 'http://localhost:5000/api/auth';
+  }
 
   /// Register a normal user
   static Future<Map<String, dynamic>> registerUser({

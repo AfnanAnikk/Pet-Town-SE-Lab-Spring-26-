@@ -22,14 +22,28 @@ const execute = async (query, params = []) => {
     finalQuery += ' RETURNING id';
   }
 
-  const result = await pool.query(finalQuery, params);
-  
-  if (isInsert && result.rows.length > 0 && result.rows[0].id) {
-    result.insertId = result.rows[0].id;
-    return [result, result.fields];
+  try {
+    const result = await pool.query(finalQuery, params);
+    
+    if (isInsert && result.rows.length > 0 && result.rows[0].id) {
+      result.insertId = result.rows[0].id;
+      return [result, result.fields];
+    }
+    
+    return [result.rows, result.fields];
+  } catch (err) {
+    if (isInsert && err.message.includes('column "id" does not exist')) {
+      try {
+        const result = await pool.query(pgQuery, params);
+        return [result.rows, result.fields];
+      } catch (retryErr) {
+        console.error('DB ERROR (Retry):', retryErr.message);
+        throw retryErr;
+      }
+    }
+    console.error('DB ERROR:', err.message);
+    throw err;
   }
-  
-  return [result.rows, result.fields];
 };
 
 module.exports = {

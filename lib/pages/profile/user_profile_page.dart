@@ -20,6 +20,7 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
   bool _isLoading = true;
   Map<String, dynamic>? _user;
   List<dynamic> _posts = [];
+  List<dynamic> _savedPosts = [];
   int _postCount = 0;
 
   @override
@@ -40,9 +41,19 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
           _postCount = result['data']['postCount'];
           _posts = result['data']['posts'];
         });
+        _fetchSavedPosts(userId);
       }
     }
     setState(() => _isLoading = false);
+  }
+
+  Future<void> _fetchSavedPosts(int userId) async {
+    final res = await ApiService.getSavedPosts(userId);
+    if (res['success'] && mounted) {
+      setState(() {
+        _savedPosts = res['data'];
+      });
+    }
   }
 
   void _handleLogout() async {
@@ -320,14 +331,62 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
   }
 
   Widget _buildSavedTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.bookmark_border, size: 64, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text('No saved pins yet', style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
-        ],
+    if (_savedPosts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bookmark_border, size: 64, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text('No saved pins yet', style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      child: MasonryGridView.count(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        itemCount: _savedPosts.length,
+        itemBuilder: (context, index) {
+          final post = _savedPosts[index];
+          String imageUrl = post['image_path'] ?? 'assets/images/post_placeholder.png';
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PostDetailPage(post: PostModel.fromJson(post)),
+                ),
+              ).then((_) {
+                // Refresh if a post was unsaved
+                final userId = _user?['id'];
+                if (userId != null) _fetchSavedPosts(userId);
+              });
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                color: Colors.grey.shade200,
+                height: (index % 3 + 2) * 80.0, // Staggered height
+                child: imageUrl.startsWith('http') 
+                  ? Image.network(
+                      imageUrl, 
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image_not_supported, color: Colors.grey, size: 40)),
+                    )
+                  : Image.asset(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) => const Center(child: Icon(Icons.image_not_supported, color: Colors.grey, size: 40)),
+                    ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

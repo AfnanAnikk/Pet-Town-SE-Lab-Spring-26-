@@ -1,6 +1,10 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:crop_your_image/crop_your_image.dart';
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 
@@ -21,54 +25,60 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
   final _descController = TextEditingController();
   final _tagsController = TextEditingController();
 
+  final _cropController = CropController();
+  Uint8List? _croppedImageData;
+  bool _isCropping = false;
+
   // Named filters for display in UI
   final List<String> _filterNames = ['Normal', 'B&W', 'Warm', 'Cool', 'Fade', 'Vivid'];
 
   // Proper ColorFilter matrices — each is a 4x5 RGBA matrix
-  final List<ColorFilter> _filters = [
+  final List<List<double>> _rawMatrices = [
     // Normal — identity
-    const ColorFilter.matrix(<double>[
+    <double>[
       1, 0, 0, 0, 0,
       0, 1, 0, 0, 0,
       0, 0, 1, 0, 0,
       0, 0, 0, 1, 0,
-    ]),
+    ],
     // B&W (grayscale)
-    const ColorFilter.matrix(<double>[
+    <double>[
       0.2126, 0.7152, 0.0722, 0, 0,
       0.2126, 0.7152, 0.0722, 0, 0,
       0.2126, 0.7152, 0.0722, 0, 0,
       0,      0,      0,      1, 0,
-    ]),
+    ],
     // Warm — boost red/green, reduce blue
-    const ColorFilter.matrix(<double>[
+    <double>[
       1.2, 0,   0,    0, 10,
       0,   1.1, 0,    0, 5,
       0,   0,   0.8,  0, -10,
       0,   0,   0,    1, 0,
-    ]),
+    ],
     // Cool — boost blue, reduce red
-    const ColorFilter.matrix(<double>[
+    <double>[
       0.8, 0,   0,   0, -10,
       0,   1.0, 0,   0, 0,
       0,   0,   1.3, 0, 15,
       0,   0,   0,   1, 0,
-    ]),
+    ],
     // Fade — reduce contrast
-    const ColorFilter.matrix(<double>[
+    <double>[
       0.7, 0,   0,   0, 40,
       0,   0.7, 0,   0, 40,
       0,   0,   0.7, 0, 40,
       0,   0,   0,   1, 0,
-    ]),
+    ],
     // Vivid — saturate
-    const ColorFilter.matrix(<double>[
+    <double>[
       1.5, -0.3, -0.2, 0, 0,
       -0.2, 1.5, -0.3, 0, 0,
       -0.3, -0.2, 1.5, 0, 0,
       0,    0,    0,   1, 0,
-    ]),
+    ],
   ];
+
+  late final List<ColorFilter> _filters = _rawMatrices.map((m) => ColorFilter.matrix(m)).toList();
 
   int _selectedFilterIndex = 0;
 
@@ -123,8 +133,39 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
 
     // Upload image first if one is selected
     String imagePath = 'assets/images/p1.png';
-    if (_imageFile != null) {
-      final uploadRes = await ApiService.uploadImage(_imageFile!.path);
+    if (_imageFile != null || _croppedImageData != null) {
+      Uint8List finalImageBytes = _croppedImageData ?? _imageFile!.readAsBytesSync();
+      
+      if (_selectedFilterIndex != 0) {
+        final img.Image? decodedImg = img.decodeImage(finalImageBytes);
+        if (decodedImg != null) {
+          final m = _rawMatrices[_selectedFilterIndex];
+          for (final pixel in decodedImg) {
+            final num r = pixel.r;
+            final num g = pixel.g;
+            final num b = pixel.b;
+            final num a = pixel.a;
+
+            num newR = (r * m[0] + g * m[1] + b * m[2] + a * m[3] + m[4]).clamp(0, 255);
+            num newG = (r * m[5] + g * m[6] + b * m[7] + a * m[8] + m[9]).clamp(0, 255);
+            num newB = (r * m[10] + g * m[11] + b * m[12] + a * m[13] + m[14]).clamp(0, 255);
+            num newA = (r * m[15] + g * m[16] + b * m[17] + a * m[18] + m[19]).clamp(0, 255);
+
+            pixel.r = newR;
+            pixel.g = newG;
+            pixel.b = newB;
+            pixel.a = newA;
+          }
+          finalImageBytes = Uint8List.fromList(img.encodeJpg(decodedImg, quality: 90));
+        }
+      }
+
+      // Save to temp file
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/upload_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      await tempFile.writeAsBytes(finalImageBytes);
+
+      final uploadRes = await ApiService.uploadImage(tempFile.path);
       if (uploadRes['success']) {
         imagePath = uploadRes['data']['url'];
       } else {
@@ -206,42 +247,41 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
   Widget _buildStep2Crop() {
     return Column(
       children: [
-        _buildAppBar(title: 'Crop', actionText: 'Next', onAction: _nextStep),
+        _buildAppBar(title: 'Crop', actionText: 'Next', onAction: () {
+          setState(() => _isCropping = true);
+          _cropController.crop();
+        }),
         Expanded(
           child: Container(
-            color: Colors.white,
-            child: _imageFile == null ? const SizedBox() : Stack(
-              children: [
-                InteractiveViewer(
-                  boundaryMargin: const EdgeInsets.all(20.0),
-                  minScale: 0.5,
-                  maxScale: 4.0,
-                  child: Center(child: Image.file(_imageFile!, fit: BoxFit.contain)),
-                ),
-                Positioned(
-                  bottom: 16,
-                  left: 16,
-                  child: Row(
+            color: Colors.black,
+            child: _imageFile == null 
+                ? const SizedBox() 
+                : Stack(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.7), shape: BoxShape.circle),
-                        child: const Icon(Icons.zoom_in, size: 20),
+                      Crop(
+                        image: _imageFile!.readAsBytesSync(),
+                        controller: _cropController,
+                        onCropped: (result) {
+                          if (result is CropSuccess) {
+                            setState(() {
+                              _croppedImageData = result.croppedImage;
+                              _isCropping = false;
+                            });
+                            _nextStep();
+                          } else {
+                            setState(() => _isCropping = false);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to crop image')));
+                            }
+                          }
+                        },
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.7), shape: BoxShape.circle),
-                        child: const Icon(Icons.zoom_out, size: 20),
-                      ),
+                      if (_isCropping)
+                        const Center(child: CircularProgressIndicator()),
                     ],
                   ),
-                )
-              ],
-            ),
           ),
         ),
-        const Expanded(flex: 0, child: SizedBox(height: 100)), // Bottom padding matching design
       ],
     );
   }
@@ -252,11 +292,11 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
         _buildAppBar(title: 'Edit', actionText: 'Next', onAction: _nextStep),
         Expanded(
           flex: 2,
-          child: _imageFile == null
+          child: _croppedImageData == null
               ? const SizedBox()
               : ColorFiltered(
                   colorFilter: _filters[_selectedFilterIndex],
-                  child: Image.file(_imageFile!, fit: BoxFit.cover, width: double.infinity),
+                  child: Image.memory(_croppedImageData!, fit: BoxFit.cover, width: double.infinity),
                 ),
         ),
         Container(
@@ -288,7 +328,9 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
                           borderRadius: BorderRadius.circular(8),
                           child: ColorFiltered(
                             colorFilter: _filters[index],
-                            child: Image.file(_imageFile!, fit: BoxFit.cover),
+                            child: _croppedImageData != null 
+                                ? Image.memory(_croppedImageData!, fit: BoxFit.cover)
+                                : const SizedBox(),
                           ),
                         ),
                       ),
@@ -329,11 +371,11 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
                     child: SizedBox(
                       width: 200,
                       height: 200,
-                      child: _imageFile == null
+                      child: _croppedImageData == null
                           ? Container(color: Colors.grey)
                           : ColorFiltered(
                               colorFilter: _filters[_selectedFilterIndex],
-                              child: Image.file(_imageFile!, fit: BoxFit.cover),
+                              child: Image.memory(_croppedImageData!, fit: BoxFit.cover),
                             ),
                     ),
                   ),

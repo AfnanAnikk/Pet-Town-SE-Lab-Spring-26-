@@ -21,6 +21,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   List<dynamic> _comments = [];
   bool _isLoading = true;
   bool _isLiked = false;
+  bool _isSaved = false;
   int _likesCount = 0;
   int _commentsCount = 0;
   
@@ -33,6 +34,32 @@ class _PostDetailPageState extends State<PostDetailPage> {
     _commentsCount = widget.post.commentsCount;
     _fetchRelatedPosts();
     _fetchComments();
+    _checkSaveStatus();
+    _checkLikeStatus();
+  }
+
+  Future<void> _checkSaveStatus() async {
+    final userId = await AuthService.getUserId();
+    if (userId != null) {
+      final res = await ApiService.isPostSaved(int.parse(widget.post.id), userId);
+      if (res['success'] && mounted) {
+        setState(() {
+          _isSaved = res['data']['isSaved'] ?? false;
+        });
+      }
+    }
+  }
+
+  Future<void> _checkLikeStatus() async {
+    final userId = await AuthService.getUserId();
+    if (userId != null) {
+      final res = await ApiService.isPostLiked(int.parse(widget.post.id), userId);
+      if (res['success'] && mounted) {
+        setState(() {
+          _isLiked = res['data']['isLiked'] ?? false;
+        });
+      }
+    }
   }
 
   Future<void> _fetchRelatedPosts() async {
@@ -62,16 +89,62 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Future<void> _toggleLike() async {
     final userId = await AuthService.getUserId();
     if (userId == null) return;
-    
+
+    final wasLiked = _isLiked;
     setState(() {
       _isLiked = !_isLiked;
       _likesCount += _isLiked ? 1 : -1;
     });
 
-    if (_isLiked) {
-      await ApiService.likePost(int.parse(widget.post.id), userId);
-    } else {
-      await ApiService.unlikePost(int.parse(widget.post.id), userId);
+    final res = wasLiked
+        ? await ApiService.unlikePost(int.parse(widget.post.id), userId)
+        : await ApiService.likePost(int.parse(widget.post.id), userId);
+
+    if (!res['success'] && mounted) {
+      // Revert on failure
+      setState(() {
+        _isLiked = wasLiked;
+        _likesCount += wasLiked ? 1 : -1;
+      });
+    }
+  }
+
+  Future<void> _toggleSave() async {
+    final userId = await AuthService.getUserId();
+    if (userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in to save posts.')),
+        );
+      }
+      return;
+    }
+    
+    final wasSaved = _isSaved;
+    setState(() {
+      _isSaved = !_isSaved;
+    });
+
+    final res = wasSaved 
+        ? await ApiService.unsavePost(int.parse(widget.post.id), userId)
+        : await ApiService.savePost(int.parse(widget.post.id), userId);
+
+    if (!res['success']) {
+      setState(() {
+        _isSaved = wasSaved; // revert
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update save status')),
+        );
+      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isSaved ? 'Saved to your board!' : 'Removed from your board.'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
     }
   }
 
@@ -101,6 +174,33 @@ class _PostDetailPageState extends State<PostDetailPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Image downloaded to gallery!')),
     );
+  }
+
+  Future<void> _deletePost() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Post'),
+        content: const Text('Are you sure you want to delete this post?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final res = await ApiService.deletePost(int.parse(widget.post.id));
+      if (res['success'] && mounted) {
+        Navigator.pop(context); // Go back after deletion
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted')));
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete post')));
+      }
+    }
   }
 
   @override
@@ -159,7 +259,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -204,25 +304,34 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   const SizedBox(width: 16),
 
                   GestureDetector(
-                    onTap: () => showOptionsBottomSheet(context, post.authorName, onDownload: _downloadImage),
+                    onTap: () async {
+                      final userId = await AuthService.getUserId();
+                      final isAuthor = userId != null && userId.toString() == post.userId;
+                      if (!mounted) return;
+                      showOptionsBottomSheet(
+                        context, 
+                        post.authorName, 
+                        onDownload: _downloadImage,
+                        showDelete: isAuthor,
+                        onDelete: _deletePost,
+                      );
+                    },
                     child: const Icon(Icons.more_horiz, size: 28),
                   ),
 
                   const Spacer(),
 
                   ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved to your board!')));
-                    },
+                    onPressed: _toggleSave,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3293B3),
+                      backgroundColor: _isSaved ? Colors.grey : const Color(0xFF3293B3),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text(_isSaved ? 'Saved' : 'Save', style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -323,7 +432,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const CircleAvatar(radius: 12, backgroundColor: Color(0xFFE0E0E0), child: Icon(Icons.person, size: 14, color: Colors.white)),
+                          CircleAvatar(
+                            radius: 12, 
+                            backgroundColor: const Color(0xFFE0E0E0), 
+                            backgroundImage: c['profile_picture_url'] != null ? NetworkImage(c['profile_picture_url']) : null,
+                            child: c['profile_picture_url'] == null ? const Icon(Icons.person, size: 14, color: Colors.white) : null,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Column(
@@ -336,7 +450,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           )
                         ],
                       ),
-                    )).toList(),
+                    )),
                   ],
                 ),
               ),

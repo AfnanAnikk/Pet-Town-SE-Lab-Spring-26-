@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 exports.getAllPosts = async (req, res) => {
   try {
-    const [posts] = await db.execute('SELECT * FROM posts ORDER BY id DESC');
+    const [posts] = await db.execute("SELECT * FROM posts WHERE LOWER(title) NOT LIKE '%test%' ORDER BY id DESC");
 
     for (let post of posts) {
       const [tags] = await db.execute('SELECT tag_name FROM post_tags WHERE post_id = ?', [post.id]);
@@ -48,7 +48,14 @@ exports.likePost = async (req, res) => {
   const { userId } = req.body;
   const postId = req.params.id;
   try {
-    // PostgreSQL: use ON CONFLICT DO NOTHING instead of INSERT IGNORE
+    // Check if already liked
+    const [existing] = await db.execute(
+      'SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?',
+      [postId, userId]
+    );
+    if (existing.length > 0) {
+      return res.json({ message: 'Already liked' });
+    }
     await db.execute(
       'INSERT INTO post_likes (post_id, user_id) VALUES (?, ?) ON CONFLICT (post_id, user_id) DO NOTHING',
       [postId, userId]
@@ -65,11 +72,15 @@ exports.unlikePost = async (req, res) => {
   const { userId } = req.body;
   const postId = req.params.id;
   try {
-    const [result] = await db.execute('DELETE FROM post_likes WHERE post_id = ? AND user_id = ?', [postId, userId]);
-    const affected = result?.rowCount ?? result?.affectedRows ?? 0;
-    if (affected > 0) {
-      await db.execute('UPDATE posts SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = ?', [postId]);
+    const [existing] = await db.execute(
+      'SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?',
+      [postId, userId]
+    );
+    if (existing.length === 0) {
+      return res.json({ message: 'Not liked' });
     }
+    await db.execute('DELETE FROM post_likes WHERE post_id = ? AND user_id = ?', [postId, userId]);
+    await db.execute('UPDATE posts SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = ?', [postId]);
     res.json({ message: 'Post unliked' });
   } catch (error) {
     console.error(error);
@@ -94,7 +105,7 @@ exports.getComments = async (req, res) => {
   const postId = req.params.id;
   try {
     const [comments] = await db.execute(`
-      SELECT c.*, u.username as author_name 
+      SELECT c.*, u.username as author_name, u.profile_picture_url 
       FROM post_comments c 
       JOIN users u ON c.user_id = u.id 
       WHERE c.post_id = ? 
@@ -106,3 +117,87 @@ exports.getComments = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+exports.deletePost = async (req, res) => {
+  const postId = req.params.id;
+  try {
+    await db.execute('DELETE FROM posts WHERE id = ?', [postId]);
+    res.json({ message: 'Post deleted' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.savePost = async (req, res) => {
+  const { userId } = req.body;
+  const postId = req.params.id;
+  try {
+    await db.execute(
+      'INSERT INTO post_saves (post_id, user_id) VALUES (?, ?) ON CONFLICT (post_id, user_id) DO NOTHING',
+      [postId, userId]
+    );
+    res.json({ message: 'Post saved' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.unsavePost = async (req, res) => {
+  const { userId } = req.body;
+  const postId = req.params.id;
+  try {
+    await db.execute('DELETE FROM post_saves WHERE post_id = ? AND user_id = ?', [postId, userId]);
+    res.json({ message: 'Post unsaved' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getSavedPosts = async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const [posts] = await db.execute(`
+      SELECT p.* 
+      FROM posts p
+      JOIN post_saves s ON p.id = s.post_id
+      WHERE s.user_id = ?
+      ORDER BY s.created_at DESC
+    `, [userId]);
+
+    for (let post of posts) {
+      const [tags] = await db.execute('SELECT tag_name FROM post_tags WHERE post_id = ?', [post.id]);
+      post.tags = tags.map(t => t.tag_name);
+    }
+
+    res.json(posts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.isPostSaved = async (req, res) => {
+  const { userId, postId } = req.params;
+  try {
+    const [result] = await db.execute('SELECT 1 FROM post_saves WHERE post_id = ? AND user_id = ?', [postId, userId]);
+    res.json({ isSaved: result.length > 0 });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.isPostLiked = async (req, res) => {
+  const { id: postId, userId } = req.params;
+  try {
+    const [result] = await db.execute('SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?', [postId, userId]);
+    res.json({ isLiked: result.length > 0 });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+

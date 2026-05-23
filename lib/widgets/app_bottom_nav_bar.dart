@@ -1,0 +1,155 @@
+import 'package:flutter/material.dart';
+import '../pages/profile/user_profile_page.dart';
+import '../pages/vet/vet_list_page.dart';
+import '../pages/marketplace/marketplace_home_page.dart';
+
+class AppBottomNavBar extends StatelessWidget {
+  final int currentIndex;
+
+  const AppBottomNavBar({
+    super.key,
+    required this.currentIndex,
+  });
+
+  void _go(BuildContext context, Widget page) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => page),
+    );
+  }
+
+  void _showFeatureMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return SafeArea(
+          child: Container(
+            margin: const EdgeInsets.only(left: 24, right: 24, bottom: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(40),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _featureButton(context, 'assets/images/vet1.png', 'Pet Vet', const VetListPage()),
+                _featureButton(context, 'assets/images/marketplace.png', 'Marketplace', const MarketplaceHomePage()),
+                _comingSoon(context, 'assets/images/adoption.png', 'Adoption'),
+                _comingSoon(context, 'assets/images/events.png', 'Events'),
+                _comingSoon(context, 'assets/images/grooming.png', 'Grooming'),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _featureButton(BuildContext context, String asset, String tooltip, Widget page) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        _go(context, page);
+      },
+      child: Tooltip(
+        message: tooltip,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Image.asset(asset, width: 28, height: 28),
+        ),
+      ),
+    );
+  }
+
+  Widget _comingSoon(BuildContext context, String asset, String name) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$name Feature Coming Soon!')),
+        );
+      },
+      child: Tooltip(
+        message: name,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Image.asset(asset, width: 28, height: 28),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: Colors.white,
+      selectedItemColor: Colors.black,
+      unselectedItemColor: const Color.fromARGB(255, 124, 124, 124),
+      showSelectedLabels: false,
+      showUnselectedLabels: false,
+      elevation: 8,
+      currentIndex: currentIndex,
+      onTap: (index) {
+        if (index == 0) {
+          if (currentIndex != 0) {
+            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+          }
+        } else if (index == 2) {
+          _showFeatureMenu(context);
+        } else if (index == 4) {
+          if (currentIndex != 4) _go(context, const UserProfilePage());
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Feature Coming Soon!')),
+          );
+        }
+      },
+      items: [
+        BottomNavigationBarItem(
+          icon: Image.asset('assets/images/home.png', width: 28, height: 28),
+          activeIcon: Image.asset('assets/images/home1.png', width: 28, height: 28),
+          label: 'Home',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.search, size: 28),
+          label: 'Search',
+        ),
+        BottomNavigationBarItem(
+          icon: Image.asset('assets/images/features.png', width: 28, height: 28),
+          activeIcon: Image.asset('assets/images/features1.png', width: 28, height: 28),
+          label: 'Features',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.notifications_none, size: 28),
+          label: 'Notifications',
+        ),
+        BottomNavigationBarItem(
+          icon: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade300, width: 2),
+            ),
+            child: const CircleAvatar(
+              radius: 12,
+              backgroundColor: Color(0xFFE0E0E0),
+              child: Icon(Icons.person, size: 16, color: Colors.grey),
+            ),
+          ),
+          label: 'Profile',
+        ),
+      ],
+    );
+  }
+}

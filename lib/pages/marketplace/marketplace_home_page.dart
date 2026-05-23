@@ -5,6 +5,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'store_dashboard_page.dart';
 import 'cart_page.dart';
 import 'shop_details_page.dart';
+import '../../widgets/app_bottom_nav_bar.dart';
 
 class MarketplaceHomePage extends StatefulWidget {
   const MarketplaceHomePage({super.key});
@@ -260,6 +261,7 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
               ],
             ),
+            bottomNavigationBar: AppBottomNavBar(currentIndex: 2),
     );
   }
 

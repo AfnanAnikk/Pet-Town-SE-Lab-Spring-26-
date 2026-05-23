@@ -5,14 +5,16 @@ import '../pages/marketplace/marketplace_home_page.dart';
 
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
+  final bool isOutsideTab;
 
   const AppBottomNavBar({
     super.key,
     required this.currentIndex,
+    this.isOutsideTab = false,
   });
 
   void _go(BuildContext context, Widget page) {
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => page),
     );
@@ -25,7 +27,7 @@ class AppBottomNavBar extends StatelessWidget {
       builder: (_) {
         return SafeArea(
           child: Container(
-            margin: const EdgeInsets.only(left: 24, right: 24, bottom: 16),
+            margin: const EdgeInsets.only(left: 24, right: 24, bottom: 65),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -94,7 +96,9 @@ class AppBottomNavBar extends StatelessWidget {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       backgroundColor: Colors.white,
-      selectedItemColor: Colors.black,
+      selectedItemColor: isOutsideTab
+          ? const Color.fromARGB(255, 124, 124, 124)
+          : Colors.black,
       unselectedItemColor: const Color.fromARGB(255, 124, 124, 124),
       showSelectedLabels: false,
       showUnselectedLabels: false,
@@ -102,9 +106,7 @@ class AppBottomNavBar extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: (index) {
         if (index == 0) {
-          if (currentIndex != 0) {
-            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-          }
+          Navigator.popUntil(context, (route) => route.isFirst);
         } else if (index == 2) {
           _showFeatureMenu(context);
         } else if (index == 4) {

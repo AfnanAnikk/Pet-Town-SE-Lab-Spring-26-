@@ -3,7 +3,7 @@ const db = require('../config/db');
 exports.getAllVets = async (req, res) => {
   try {
     const { location, concern, species } = req.query;
-    let query = 'SELECT DISTINCT v.* FROM vets v';
+    let query = 'SELECT DISTINCT v.*, u.profile_picture_url FROM vets v JOIN users u ON v.user_id = u.id';
     let params = [];
 
     let requiredSkill = '';
@@ -77,7 +77,7 @@ exports.getAllVets = async (req, res) => {
 exports.getVetById = async (req, res) => {
   const vetId = req.params.id;
   try {
-    const [vets] = await db.execute('SELECT * FROM vets WHERE id = ?', [vetId]);
+    const [vets] = await db.execute('SELECT v.*, u.profile_picture_url FROM vets v JOIN users u ON v.user_id = u.id WHERE v.id = ?', [vetId]);
     
     if (vets.length === 0) {
       return res.status(404).json({ message: 'Vet not found' });
@@ -110,7 +110,7 @@ exports.getVetById = async (req, res) => {
 exports.getVetByUserId = async (req, res) => {
   const userId = req.params.userId;
   try {
-    const [vets] = await db.execute('SELECT * FROM vets WHERE user_id = ?', [userId]);
+    const [vets] = await db.execute('SELECT v.*, u.profile_picture_url FROM vets v JOIN users u ON v.user_id = u.id WHERE v.user_id = ?', [userId]);
     
     if (vets.length === 0) {
       return res.status(404).json({ message: 'Vet profile not found' });
@@ -167,10 +167,13 @@ exports.verifyVet = async (req, res) => {
 exports.updateVetProfile = async (req, res) => {
   const { 
     userId, name, degree, location, fee, about, 
-    skills, species, areas, timeslots 
+    skills, species, areas, timeslots, profilePictureUrl 
   } = req.body;
 
   try {
+    if (profilePictureUrl) {
+      await db.execute('UPDATE users SET profile_picture_url = ? WHERE id = ?', [profilePictureUrl, userId]);
+    }
     // Check if vet exists for user, if not create one
     const [existingVets] = await db.execute('SELECT id FROM vets WHERE user_id = ?', [userId]);
     let vetId;

@@ -7,6 +7,7 @@ import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/app_bottom_nav_bar.dart';
 
 class CreatePostFlow extends StatefulWidget {
   const CreatePostFlow({super.key});
@@ -215,6 +216,7 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
           ],
         ),
       ),
+      bottomNavigationBar: AppBottomNavBar(currentIndex: 4),
     );
   }
 

@@ -16,4 +16,11 @@ router.get('/stores/:storeId/products', marketplaceController.getStoreProducts);
 router.post('/products', marketplaceController.createProduct);
 router.put('/products/:id', marketplaceController.updateProduct);
 
+// Coupons
+router.get('/stores/:storeId/coupons', marketplaceController.getStoreCoupons);
+router.post('/coupons', marketplaceController.createCoupon);
+router.put('/coupons/:id', marketplaceController.updateCoupon);
+router.delete('/coupons/:id', marketplaceController.deleteCoupon);
+router.post('/coupons/validate', marketplaceController.validateCoupon);
+
 module.exports = router;

@@ -13,6 +13,7 @@ class ProviderProfilePage extends StatefulWidget {
 
 class _ProviderProfilePageState extends State<ProviderProfilePage> {
   File? _profileImage;
+  String? _profileImageUrl;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
@@ -65,6 +66,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
           _locationController.text = data['location'] ?? '';
           _feeController.text = data['price']?.toString() ?? '0';
           _aboutController.text = data['profile_description'] ?? '';
+          _profileImageUrl = data['profile_picture_url'];
           
           _selectedSkills = List<String>.from(data['tags'] ?? []);
           _speciesTreated = List<String>.from(data['speciesTreated'] ?? []);
@@ -144,8 +146,14 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: const Color(0xFFE0E0E0),
-                  backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-                  child: _profileImage == null ? const Icon(Icons.person, size: 60, color: Colors.grey) : null,
+                  backgroundImage: _profileImage != null
+                      ? FileImage(_profileImage!)
+                      : (_profileImageUrl != null && _profileImageUrl!.isNotEmpty
+                          ? NetworkImage(_profileImageUrl!) as ImageProvider
+                          : null),
+                  child: _profileImage == null && (_profileImageUrl == null || _profileImageUrl!.isEmpty)
+                      ? const Icon(Icons.person, size: 60, color: Colors.grey)
+                      : null,
                 ),
                 Positioned(
                   bottom: 0,
@@ -377,6 +385,27 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
               onPressed: () async {
                 final userId = await AuthService.getUserId();
                 if (userId == null) return;
+
+                setState(() => _isLoading = true);
+
+                String? uploadedUrl = _profileImageUrl;
+                if (_profileImage != null) {
+                  final uploadRes = await ApiService.uploadImage(_profileImage!.path);
+                  if (uploadRes['success']) {
+                    uploadedUrl = uploadRes['data']['url'];
+                    setState(() {
+                      _profileImageUrl = uploadedUrl;
+                    });
+                  } else {
+                    setState(() => _isLoading = false);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(uploadRes['message'] ?? 'Image upload failed')),
+                      );
+                    }
+                    return;
+                  }
+                }
                 
                 final payload = {
                   'userId': userId,
@@ -388,6 +417,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                   'skills': _selectedSkills,
                   'species': _speciesTreated,
                   'areas': _areasOfInterest,
+                  'profilePictureUrl': uploadedUrl,
                   'timeslots': _timeslots.map((slot) {
                     final timeStr = TimeOfDay.fromDateTime(slot).format(context);
                     final dateStr = '${slot.day}/${slot.month}/${slot.year}';
@@ -396,6 +426,8 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                 };
                 
                 final res = await ApiService.updateVetProfile(payload);
+                setState(() => _isLoading = false);
+
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(res['data']?['message'] ?? res['message'] ?? 'Profile updated successfully!')),

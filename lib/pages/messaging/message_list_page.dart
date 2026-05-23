@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import 'chat_page.dart';
+import '../../widgets/app_bottom_nav_bar.dart';
 
 class MessageListPage extends StatefulWidget {
   const MessageListPage({super.key});
@@ -304,6 +305,10 @@ class _MessageListPageState extends State<MessageListPage> {
                   }),
                 ],
               ),
+            ),
+            bottomNavigationBar: const AppBottomNavBar(
+              currentIndex: 0,
+              isOutsideTab: true,
             ),
     );
   }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'provider_profile_page.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../auth/login_page.dart';
+
 
 class ProviderDashboardPage extends StatefulWidget {
   const ProviderDashboardPage({super.key});
@@ -47,6 +49,16 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
     }
   }
 
+  void _handleLogout() async {
+    await AuthService.logout();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
+
   Future<void> _updateStatus(int bookingId, String status) async {
     // Optimistic UI update
     final index = _bookings.indexWhere((b) => b['id'] == bookingId);
@@ -84,9 +96,11 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.black87),
-            onPressed: () {},
-          ),
+                  icon: const Icon(Icons.logout, color: Colors.red, size: 28),
+                  onPressed: _handleLogout,
+                  tooltip: 'Logout',
+                ),
+                const SizedBox(width: 8),
         ],
       ),
       body: Column(

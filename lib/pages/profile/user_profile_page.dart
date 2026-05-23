@@ -8,6 +8,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../models/post_model.dart';
 import '../home/post_detail_page.dart';
 import '../messaging/chat_page.dart';
+import '../../widgets/app_bottom_nav_bar.dart';
 
 class UserProfilePage extends StatefulWidget {
   final int? userId;
@@ -318,6 +319,7 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
           ],
         ),
       ),
+      bottomNavigationBar: AppBottomNavBar(currentIndex: 4),
     );
   }
 

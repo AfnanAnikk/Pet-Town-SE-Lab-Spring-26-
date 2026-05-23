@@ -3,6 +3,7 @@ import '../../models/vet_model.dart';
 import '../../services/api_service.dart';
 import '../../widgets/vet_filter_sheet.dart';
 import 'vet_profile_page.dart';
+import '../../widgets/app_bottom_nav_bar.dart';
 
 class VetListPage extends StatefulWidget {
   const VetListPage({super.key});
@@ -232,96 +233,7 @@ class _VetListPageState extends State<VetListPage> {
           ],
         ),
       ),
-
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: const Color.fromARGB(255, 124, 124, 124),
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        elevation: 8,
-        currentIndex: _selectedIndex,
-
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pop(context);
-            return;
-          }
-
-          if (index == 2) {
-            setState(() {
-              _showFeatureMenu = !_showFeatureMenu;
-              _selectedIndex = 2;
-            });
-          } else {
-            setState(() {
-              _showFeatureMenu = false;
-              _selectedIndex = index;
-            });
-          }
-        },
-
-        items: [
-          BottomNavigationBarItem(
-            icon: Image.asset(
-              'assets/images/home.png',
-              width: 28,
-              height: 28,
-              fit: BoxFit.contain,
-            ),
-            activeIcon: Image.asset(
-              'assets/images/home1.png',
-              width: 28,
-              height: 28,
-              fit: BoxFit.contain,
-            ),
-            label: 'Home',
-          ),
-
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.search, size: 28),
-            label: 'Search',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Image.asset(
-              'assets/images/features.png',
-              width: 28,
-              height: 28,
-              fit: BoxFit.contain,
-            ),
-            activeIcon: Image.asset(
-              'assets/images/features1.png',
-              width: 28,
-              height: 28,
-              fit: BoxFit.contain,
-            ),
-            label: 'Features',
-          ),
-
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_none, size: 28),
-            label: 'Notifications',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade300, width: 2),
-              ),
-              child: const CircleAvatar(
-                radius: 12,
-                backgroundColor: Color(0xFFE0E0E0),
-                child: Icon(Icons.person, size: 16, color: Colors.grey),
-              ),
-            ),
-            label: 'Profile',
-          ),
-        ],
-      ),
+      bottomNavigationBar: AppBottomNavBar(currentIndex: 2),
     );
   }
 }

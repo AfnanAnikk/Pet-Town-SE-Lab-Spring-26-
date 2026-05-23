@@ -3,6 +3,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import 'call_page.dart';
+import '../../widgets/app_bottom_nav_bar.dart';
 
 class ChatPage extends StatefulWidget {
   final int? conversationId;

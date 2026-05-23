@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/app_bottom_nav_bar.dart';
+
 
 class UserHistoryPage extends StatefulWidget {
   const UserHistoryPage({super.key});
@@ -173,6 +175,7 @@ class _UserHistoryPageState extends State<UserHistoryPage> {
                     },
                   ),
             ),
+            bottomNavigationBar: AppBottomNavBar(currentIndex: 4),
     );
   }
 }

@@ -564,6 +564,74 @@ class ApiService {
     }
   }
 
+  // --- Coupons ---
+  static Future<Map<String, dynamic>> getStoreCoupons(int storeId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/marketplace/stores/$storeId/coupons')}'),
+        headers: await _getHeaders(),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> createCoupon(Map<String, dynamic> payload) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/marketplace/coupons')}'),
+        headers: await _getHeaders(),
+        body: jsonEncode(payload),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateCoupon(int couponId, Map<String, dynamic> payload) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/marketplace/coupons/$couponId')}'),
+        headers: await _getHeaders(),
+        body: jsonEncode(payload),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteCoupon(int couponId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/marketplace/coupons/$couponId')}'),
+        headers: await _getHeaders(),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> validateCoupon(int storeId, String code, double orderAmount) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/marketplace/coupons/validate')}'),
+        headers: await _getHeaders(),
+        body: jsonEncode({
+          'storeId': storeId,
+          'code': code,
+          'orderAmount': orderAmount,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   static Map<String, dynamic> _handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return {

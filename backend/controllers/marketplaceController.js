@@ -129,3 +129,87 @@ exports.updateProduct = async (req, res) => {
     res.status(500).json({ message: 'Server error updating product' });
   }
 };
+
+// --- Coupons/Vouchers ---
+
+exports.getStoreCoupons = async (req, res) => {
+  try {
+    const [coupons] = await db.execute('SELECT * FROM coupons WHERE store_id = ? ORDER BY id DESC', [req.params.storeId]);
+    res.json(coupons);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching store coupons' });
+  }
+};
+
+exports.createCoupon = async (req, res) => {
+  const { storeId, code, discountPercent, minOrderAmount, maxUses, expiresAt } = req.body;
+  try {
+    const [result] = await db.execute(
+      'INSERT INTO coupons (store_id, code, discount_percent, min_order_amount, max_uses, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [storeId, code, discountPercent, minOrderAmount || 0, maxUses || 100, expiresAt || null]
+    );
+    const [newCoupon] = await db.execute('SELECT * FROM coupons WHERE id = ?', [result.insertId]);
+    res.status(201).json(newCoupon[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error creating coupon' });
+  }
+};
+
+exports.updateCoupon = async (req, res) => {
+  const { code, discountPercent, minOrderAmount, maxUses, expiresAt, isActive } = req.body;
+  try {
+    await db.execute(
+      'UPDATE coupons SET code = ?, discount_percent = ?, min_order_amount = ?, max_uses = ?, expires_at = ?, is_active = ? WHERE id = ?',
+      [code, discountPercent, minOrderAmount, maxUses, expiresAt || null, isActive, req.params.id]
+    );
+    res.json({ message: 'Coupon updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error updating coupon' });
+  }
+};
+
+exports.deleteCoupon = async (req, res) => {
+  try {
+    await db.execute('DELETE FROM coupons WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Coupon deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error deleting coupon' });
+  }
+};
+
+exports.validateCoupon = async (req, res) => {
+  const { storeId, code, orderAmount } = req.body;
+  try {
+    if (!storeId || !code) {
+      return res.status(400).json({ valid: false, message: 'Store ID and coupon code are required' });
+    }
+    const [coupons] = await db.execute(
+      'SELECT * FROM coupons WHERE store_id = ? AND LOWER(code) = LOWER(?)',
+      [storeId, code.trim()]
+    );
+    if (coupons.length === 0) {
+      return res.json({ valid: false, message: 'Invalid coupon code for this shop' });
+    }
+    const coupon = coupons[0];
+    if (coupon.is_active === false || coupon.is_active === 0) {
+      return res.json({ valid: false, message: 'This coupon is currently inactive' });
+    }
+    if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+      return res.json({ valid: false, message: 'This coupon has expired' });
+    }
+    if (coupon.max_uses > 0 && coupon.used_count >= coupon.max_uses) {
+      return res.json({ valid: false, message: 'This coupon has reached its usage limit' });
+    }
+    if (orderAmount !== undefined && parseFloat(orderAmount) < parseFloat(coupon.min_order_amount)) {
+      return res.json({ valid: false, message: `Minimum order amount to use this coupon is ৳${coupon.min_order_amount}` });
+    }
+    res.json({ valid: true, coupon });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error validating coupon' });
+  }
+};

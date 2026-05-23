@@ -19,8 +19,9 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
   Map<String, dynamic>? _storeData;
   List<dynamic> _products = [];
   List<dynamic> _orders = [];
+  List<dynamic> _coupons = [];
   
-  // Tab index: 0 = Products, 1 = Orders
+  // Tab index: 0 = Products, 1 = Orders, 2 = Coupons
   int _currentTab = 0; 
 
   final _storeNameController = TextEditingController();
@@ -58,11 +59,13 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
       final store = storeRes['data'];
       final productsRes = await ApiService.getStoreProducts(store['id']);
       final ordersRes = await ApiService.getStoreOrders(store['id']);
+      final couponsRes = await ApiService.getStoreCoupons(store['id']);
       
       setState(() {
         _storeData = store;
         _products = productsRes['success'] ? productsRes['data'] : [];
         _orders = ordersRes['success'] ? ordersRes['data'] : [];
+        _coupons = couponsRes['success'] ? couponsRes['data'] : [];
       });
     }
 
@@ -351,6 +354,21 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _currentTab = 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _currentTab == 2 ? const Color(0xFF3293B3) : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _currentTab == 2 ? const Color(0xFF3293B3) : Colors.grey.shade300),
+                        ),
+                        child: Center(child: Text('Coupons', style: TextStyle(color: _currentTab == 2 ? Colors.white : Colors.black, fontWeight: FontWeight.bold))),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -420,7 +438,7 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
                 childCount: _products.length,
               ),
             ),
-          ] else ...[
+          ] else if (_currentTab == 1) ...[
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -448,34 +466,39 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: order['status'] == 'pending' ? Colors.orange.shade100 : Colors.green.shade100,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  (order['status'] ?? 'pending').toUpperCase(),
+                                  order['status'].toString().toUpperCase(),
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
                                     color: order['status'] == 'pending' ? Colors.orange.shade800 : Colors.green.shade800,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const Divider(),
-                          Text('Customer: ${order['customer_name']}'),
-                          Text('Address: ${order['delivery_address']}'),
                           const SizedBox(height: 8),
-                          const Text('Items:', style: TextStyle(fontWeight: FontWeight.bold)),
-                          ...items.map((i) => Padding(
-                            padding: const EdgeInsets.only(left: 8.0, top: 4),
-                            child: Text('${i['quantity']}x ${i['product_name']} (৳${i['price']})'),
+                          Text('Customer: ${order['customer_name']}', style: const TextStyle(color: Colors.grey)),
+                          Text('Address: ${order['delivery_address']}', style: const TextStyle(color: Colors.grey)),
+                          const Divider(height: 24),
+                          ...items.map((item) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('${item['product_name']} x${item['quantity']}', style: const TextStyle(fontWeight: FontWeight.w500)),
+                                Text('৳${item['price']}'),
+                              ],
+                            ),
                           )),
-                          const SizedBox(height: 8),
+                          const Divider(height: 24),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Total:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              Text('৳${order['total_price']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF3293B3))),
+                              const Text('Total (inc. tip & fees)', style: TextStyle(fontWeight: FontWeight.bold)),
+                              Text('৳${order['total_price']}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF3293B3))),
                             ],
                           ),
                           if (order['status'] == 'pending') ...[
@@ -514,6 +537,132 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
                 childCount: _orders.length,
               ),
             ),
+          ] else if (_currentTab == 2) ...[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Manage Coupons', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    ElevatedButton.icon(
+                      onPressed: _showAddCouponDialog,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Add Coupon'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3293B3),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+            if (_coupons.isEmpty)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: Center(
+                    child: Text('No coupons active. Add a unique coupon for your shop!', style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)),
+                  ),
+                ),
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final c = _coupons[index];
+                    final expiry = c['expires_at'] != null ? DateTime.tryParse(c['expires_at']) : null;
+                    final expiryStr = expiry != null ? '${expiry.day}/${expiry.month}/${expiry.year}' : 'Never';
+                    
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F5E9),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '${c['discount_percent']}%',
+                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
+                                  ),
+                                  const Text(
+                                    'OFF',
+                                    style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    c['code'],
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF374957)),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text('Min Order: ৳${c['min_order_amount']}'),
+                                  Text('Expires: $expiryStr • Uses: ${c['used_count']}/${c['max_uses']}'),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              children: [
+                                Switch(
+                                  value: c['is_active'] == 1 || c['is_active'] == true,
+                                  onChanged: (val) async {
+                                    await ApiService.updateCoupon(c['id'], {...c, 'isActive': val});
+                                    _fetchStoreData();
+                                  },
+                                  activeColor: const Color(0xFF3293B3),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text('Delete Coupon'),
+                                        content: const Text('Are you sure you want to delete this coupon?'),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, true),
+                                            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      final res = await ApiService.deleteCoupon(c['id']);
+                                      if (res['success']) {
+                                        _fetchStoreData();
+                                      }
+                                    }
+                                  },
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  childCount: _coupons.length,
+                ),
+              ),
           ],
         ],
       ),
@@ -527,6 +676,118 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
         const SizedBox(height: 4),
         Text(label, style: const TextStyle(color: Colors.grey)),
       ],
+    );
+  }
+
+  void _showAddCouponDialog() {
+    final codeController = TextEditingController();
+    final discountController = TextEditingController();
+    final minAmountController = TextEditingController();
+    final maxUsesController = TextEditingController();
+    DateTime? selectedExpiry;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text('Add Coupon', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF3293B3))),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: codeController,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: const InputDecoration(labelText: 'Coupon Code *', hintText: 'e.g. SAVE20'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: discountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Discount Percent *', hintText: 'e.g. 20'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: minAmountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Min Order Amount (৳)', hintText: 'e.g. 100'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: maxUsesController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Max Uses Limit', hintText: 'e.g. 100'),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(selectedExpiry == null
+                              ? 'No Expiry Date Set'
+                              : 'Expires: ${selectedExpiry!.day}/${selectedExpiry!.month}/${selectedExpiry!.year}'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now().add(const Duration(days: 7)),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(const Duration(days: 365)),
+                            );
+                            if (picked != null) {
+                              setDialogState(() => selectedExpiry = picked);
+                            }
+                          },
+                          child: const Text('Select Date'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3293B3)),
+                  onPressed: () async {
+                    final code = codeController.text.trim().toUpperCase();
+                    final discount = int.tryParse(discountController.text) ?? 0;
+                    if (code.isEmpty || discount <= 0 || discount > 100) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill required fields (discount 1-100%)')));
+                      return;
+                    }
+                    
+                    final res = await ApiService.createCoupon({
+                      'storeId': _storeData!['id'],
+                      'code': code,
+                      'discountPercent': discount,
+                      'minOrderAmount': double.tryParse(minAmountController.text) ?? 0.0,
+                      'maxUses': int.tryParse(maxUsesController.text) ?? 100,
+                      'expiresAt': selectedExpiry?.toIso8601String(),
+                    });
+
+                    if (mounted) Navigator.pop(context);
+                    
+                    if (res['success']) {
+                      _fetchStoreData();
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coupon created successfully!')));
+                    } else {
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Failed to create coupon')));
+                    }
+                  },
+                  child: const Text('Create', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          }
+        );
+      },
     );
   }
 }

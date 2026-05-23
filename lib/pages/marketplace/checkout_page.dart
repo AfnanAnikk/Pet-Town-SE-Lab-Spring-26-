@@ -13,16 +13,21 @@ class CheckoutPage extends StatefulWidget {
 class _CheckoutPageState extends State<CheckoutPage> {
   final _addressController = TextEditingController();
   final _couponController = TextEditingController();
+
+  bool _isLoading = false;
+  
   String _paymentMethod = 'Cash on Delivery';
   double _tipAmount = 0.0;
-  bool _isLoading = false;
+  int _discountPercent = 0;
+  String? _appliedCouponCode;
 
   final double _serviceFee = 20.0;
   final double _packagingFee = 10.0;
   
   double get _subtotal => CartService().subtotal;
-  double get _vat => _subtotal * 0.05; // 5% VAT
-  double get _total => _subtotal + _serviceFee + _packagingFee + _vat + _tipAmount;
+  double get _discountAmount => _subtotal * (_discountPercent / 100.0);
+  double get _vat => (_subtotal - _discountAmount) * 0.05; // 5% VAT
+  double get _total => (_subtotal - _discountAmount) + _serviceFee + _packagingFee + _vat + _tipAmount;
 
   Future<void> _placeOrder() async {
     final cart = CartService();
@@ -50,7 +55,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       'deliveryAddress': _addressController.text.trim(),
       'paymentMethod': _paymentMethod,
       'tipAmount': _tipAmount,
-      'couponCode': _couponController.text.isNotEmpty ? _couponController.text : null,
+      'couponCode': _appliedCouponCode,
     });
 
     setState(() => _isLoading = false);
@@ -144,9 +149,85 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   _buildSectionCard(
                     title: 'Available Vouchers',
                     icon: Icons.local_offer_outlined,
-                    child: TextField(
-                      controller: _couponController,
-                      decoration: const InputDecoration(hintText: 'Enter voucher code', border: InputBorder.none),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _couponController,
+                                textCapitalization: TextCapitalization.characters,
+                                decoration: const InputDecoration(
+                                  hintText: 'Enter voucher code',
+                                  border: InputBorder.none,
+                                ),
+                                enabled: _appliedCouponCode == null,
+                              ),
+                            ),
+                            if (_appliedCouponCode == null)
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF3293B3),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                onPressed: () async {
+                                  final code = _couponController.text.trim();
+                                  if (code.isEmpty) return;
+                                  
+                                  setState(() => _isLoading = true);
+                                  final cart = CartService();
+                                  
+                                  final res = await ApiService.validateCoupon(
+                                    cart.storeId!,
+                                    code,
+                                    _subtotal,
+                                  );
+                                  
+                                  setState(() => _isLoading = false);
+                                  
+                                  if (res['success'] && res['data']?['valid'] == true) {
+                                    final coupon = res['data']['coupon'];
+                                    setState(() {
+                                      _discountPercent = coupon['discount_percent'] ?? 0;
+                                      _appliedCouponCode = coupon['code'];
+                                    });
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Voucher applied! ${coupon['discount_percent']}% off')),
+                                      );
+                                    }
+                                  } else {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(res['data']?['message'] ?? res['message'] ?? 'Invalid voucher code')),
+                                      );
+                                    }
+                                  }
+                                },
+                                child: const Text('Apply', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              )
+                            else
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _discountPercent = 0;
+                                    _appliedCouponCode = null;
+                                    _couponController.clear();
+                                  });
+                                },
+                                child: const Text('Remove', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                              )
+                          ],
+                        ),
+                        if (_appliedCouponCode != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Coupon "$_appliedCouponCode" applied successfully!',
+                            style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                          ),
+                        ]
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -156,6 +237,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     child: Column(
                       children: [
                         _buildSummaryRow('Subtotal', _subtotal),
+                        if (_discountAmount > 0) _buildSummaryRow('Voucher Discount ($_discountPercent%)', _discountAmount, isDiscount: true),
                         _buildSummaryRow('Service Fee', _serviceFee),
                         _buildSummaryRow('Packaging Fee', _packagingFee),
                         _buildSummaryRow('VAT (5%)', _vat),
@@ -216,14 +298,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _buildSummaryRow(String label, double amount) {
+  Widget _buildSummaryRow(String label, double amount, {bool isDiscount = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: Colors.grey)),
-          Text('৳${amount.toStringAsFixed(2)}'),
+          Text(isDiscount ? '-৳${amount.toStringAsFixed(2)}' : '৳${amount.toStringAsFixed(2)}',
+               style: TextStyle(color: isDiscount ? Colors.green : Colors.black, fontWeight: isDiscount ? FontWeight.bold : FontWeight.normal)),
         ],
       ),
     );

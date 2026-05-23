@@ -20,6 +20,10 @@ exports.createOrder = async (req, res) => {
       await db.execute('UPDATE products SET quantity = quantity - ? WHERE id = ?', [item.quantity, item.productId]);
     }
 
+    if (couponCode) {
+      await db.execute('UPDATE coupons SET used_count = used_count + 1 WHERE store_id = ? AND LOWER(code) = LOWER(?)', [storeId, couponCode.trim()]);
+    }
+
     res.status(201).json({ message: 'Order placed successfully', orderId });
   } catch (error) {
     console.error(error);

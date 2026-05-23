@@ -16,9 +16,9 @@ class VetBookingPage extends StatefulWidget {
 }
 
 class _VetBookingPageState extends State<VetBookingPage> {
-  DateTime? selectedDate;
+  String? selectedDate;
   String? selectedTime;
-  List<String> availableTimes = [];
+  Map<String, List<String>> availableSlotsByDate = {};
   
   Map<String, String>? petDetails;
   String? selectedConcern;
@@ -27,7 +27,7 @@ class _VetBookingPageState extends State<VetBookingPage> {
   bool _isBooking = false;
 
   void _handleBooking() async {
-    if (petDetails == null || selectedConcern == null || reasonForVisit == null || paymentMethod == null || selectedTime == null) {
+    if (petDetails == null || selectedConcern == null || reasonForVisit == null || paymentMethod == null || selectedDate == null || selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all required fields and select a time')),
       );
@@ -86,94 +86,35 @@ class _VetBookingPageState extends State<VetBookingPage> {
   @override
   void initState() {
     super.initState();
-    availableTimes = widget.vet.availableSlots.map((s) => s.split(' at ').last).toList();
+
+    for (final slot in widget.vet.availableSlots) {
+      final parts = slot.split(' at ');
+
+      if (parts.length == 2) {
+        final date = parts[0];
+        final time = parts[1];
+
+        availableSlotsByDate.putIfAbsent(date, () => []);
+        availableSlotsByDate[date]!.add(time);
+      }
+    }
 
     if (widget.selectedSlot != null) {
       final parts = widget.selectedSlot!.split(' at ');
-      if (parts.length == 2) {
-        if (parts[0].toLowerCase().contains('today')) {
-          selectedDate = DateTime.now();
-        } else {
-          try {
-            final dateParts = parts[0].split('/');
-            if (dateParts.length == 3) {
-              final day = int.parse(dateParts[0]);
-              final month = int.parse(dateParts[1]);
-              final year = int.parse(dateParts[2]);
-              selectedDate = DateTime(year, month, day);
-            } else {
-              selectedDate = DateTime.now();
-            }
-          } catch (_) {
-            selectedDate = DateTime.now();
-          }
-        }
-        selectedTime = parts[1];
-      } else {
-        selectedTime = widget.selectedSlot;
-      }
-    }
-  }
 
-  void _pickCustomTime() async {
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF3FA9F5),
-              onPrimary: Colors.white,
-              onSurface: Colors.black87,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (pickedTime != null && mounted) {
-      setState(() {
-        selectedTime = pickedTime.format(context);
-      });
+      if (parts.length == 2) {
+        selectedDate = parts[0];
+        selectedTime = parts[1];
+      }
     }
   }
 
   String get formattedDate {
     if (selectedDate == null) return "Tap to select";
-    // Quick simple format
-    final months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    final dateStr = "${selectedDate!.day} ${months[selectedDate!.month - 1]} ${selectedDate!.year}";
     if (selectedTime != null) {
-      return "$dateStr at $selectedTime";
+      return "$selectedDate at $selectedTime";
     }
-    return dateStr;
-  }
-
-  void _pickDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF3FA9F5),
-              onPrimary: Colors.white,
-              onSurface: Colors.black87,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (date != null) {
-      setState(() {
-        selectedDate = date;
-      });
-    }
+    return selectedDate!;
   }
 
   void _showPetSheet() async {
@@ -336,144 +277,99 @@ class _VetBookingPageState extends State<VetBookingPage> {
                     ),
                   ),
                   
-                  _buildField(
-                    icon: Icons.calendar_month_outlined,
-                    title: 'Date',
-                    value: selectedDate == null
-                        ? 'Tap to select'
-                        : () {
-                            final months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                            return '${selectedDate!.day} ${months[selectedDate!.month - 1]} ${selectedDate!.year}';
-                          }(),
-                    onTap: _pickDate,
-                  ),
-
-                  // Time Section — always visible
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.access_time, color: Colors.black87, size: 24),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Time',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFE5E5),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFFFB3B3)),
-                          ),
-                          child: const Text(
-                            'Required',
-                            style: TextStyle(fontSize: 10, color: Color(0xFFD32F2F), fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(24, 8, 24, 8),
+                    child: Text(
+                      'Available Dates',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
 
-                  // Slot chips (if any) + custom time picker button
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
-                      children: [
-                        // Pre-defined slot chips
-                        ...availableTimes.map((time) {
-                          final isSelected = time == selectedTime;
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedTime = time;
-                              });
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 12),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: isSelected ? const Color(0xFF3FA9F5) : Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected ? const Color(0xFF3FA9F5) : Colors.grey.shade300,
-                                  width: isSelected ? 2 : 1,
-                                ),
-                              ),
-                              child: Text(
-                                time,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: isSelected ? Colors.white : Colors.black87,
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
+                      children: availableSlotsByDate.keys.map((date) {
+                        final isSelected = date == selectedDate;
 
-                        // Custom Time Picker button — always shown
-                        GestureDetector(
-                          onTap: _pickCustomTime,
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedDate = date;
+                              selectedTime = null;
+                            });
+                          },
                           child: Container(
+                            margin: const EdgeInsets.only(right: 12),
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                             decoration: BoxDecoration(
-                              color: (selectedTime != null && !availableTimes.contains(selectedTime))
-                                  ? const Color(0xFF3FA9F5)
-                                  : const Color(0xFFE6F4FF),
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: const Color(0xFF3FA9F5),
-                                width: 1,
+                                color: isSelected ? const Color(0xFF3FA9F5) : Colors.grey.shade300,
+                                width: isSelected ? 2 : 1,
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.access_time,
-                                  color: (selectedTime != null && !availableTimes.contains(selectedTime))
-                                      ? Colors.white
-                                      : const Color(0xFF3FA9F5),
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  (selectedTime != null && !availableTimes.contains(selectedTime))
-                                      ? selectedTime!
-                                      : 'Choose Time',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: (selectedTime != null && !availableTimes.contains(selectedTime))
-                                        ? Colors.white
-                                        : const Color(0xFF3FA9F5),
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              date,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected ? const Color(0xFF3FA9F5) : Colors.black87,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        );
+                      }).toList(),
                     ),
                   ),
 
-                  // Show selected time summary
-                  if (selectedTime != null)
+                  // Time Section
+                  if (selectedDate != null)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                      child: Text(
-                        'Selected: $selectedTime',
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF3FA9F5), fontWeight: FontWeight.w500),
+                      padding: const EdgeInsets.only(top: 16, bottom: 8),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Row(
+                          children: availableSlotsByDate[selectedDate]!.map((time) {
+                            final isSelected = time == selectedTime;
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedTime = time;
+                                });
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 12),
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFF3FA9F5) : Colors.grey.shade300,
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  time,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected ? const Color(0xFF3FA9F5) : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
-
-                  const SizedBox(height: 8),
-                  const Divider(height: 1, color: Color(0xFFEEEEEE)),
-
-
+              
                   _buildField(
                     icon: Icons.pets_outlined,
                     title: 'Pet',
@@ -568,7 +464,7 @@ class _VetBookingPageState extends State<VetBookingPage> {
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                         ),
                         Text(
-                          'Incl. tax\n${selectedTime != null ? "Today at $selectedTime" : "No time selected"}',
+                          'Incl. tax\n${selectedDate != null && selectedTime != null ? "$selectedDate at $selectedTime" : "No slot selected"}',
                           style: const TextStyle(fontSize: 12, color: Colors.black54),
                         ),
                       ],

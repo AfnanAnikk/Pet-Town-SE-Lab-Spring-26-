@@ -247,6 +247,7 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
                 ),
                 const SizedBox(height: 24),
               ],
+              const SizedBox(height: 8),
 
               // Terms and Conditions
               Row(

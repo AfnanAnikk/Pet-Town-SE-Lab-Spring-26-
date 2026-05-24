@@ -169,8 +169,6 @@ class _ChatPageState extends State<ChatPage> {
     CallService.startCall(
       receiverId: widget.otherUserId,
       isVideo: isVideo,
-      otherUserName: widget.otherUserName,
-      otherUserImage: _otherUserProfilePictureUrl ?? widget.otherUserImage,
     );
   }
 

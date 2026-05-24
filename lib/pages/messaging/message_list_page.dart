@@ -18,11 +18,14 @@ class _MessageListPageState extends State<MessageListPage> {
   int? _currentUserId;
   IO.Socket? _socket;
 
+  final Map<int, String> _profileImageCache = {};
+
   @override
   void initState() {
     super.initState();
     _initMessageList();
   }
+
   Future<void> _initMessageList() async {
     await _fetchConversations();
     _connectSocket();
@@ -57,6 +60,26 @@ class _MessageListPageState extends State<MessageListPage> {
     super.dispose();
   }
 
+  Future<String?> _getUserProfilePicture(int userId) async {
+    if (_profileImageCache.containsKey(userId)) {
+      return _profileImageCache[userId];
+    }
+
+    final res = await AuthService.getProfile(userId);
+
+    if (res['success'] == true && res['data'] != null) {
+      final user = res['data']['user'] ?? res['data'];
+      final imageUrl = user['profile_picture_url'];
+
+      if (imageUrl != null && imageUrl.toString().isNotEmpty) {
+        _profileImageCache[userId] = imageUrl.toString();
+        return imageUrl.toString();
+      }
+    }
+
+    return null;
+  }
+
   Future<void> _fetchConversations() async {
     final userId = await AuthService.getUserId();
     if (userId == null) {
@@ -69,9 +92,26 @@ class _MessageListPageState extends State<MessageListPage> {
     final res = await ApiService.getConversations(userId);
 
     if (res['success'] && res['data'] != null) {
+      final List<dynamic> conversations = res['data'];
+
+      for (final conv in conversations) {
+        final otherUserIdRaw = conv['other_user_id'];
+        final otherUserId = otherUserIdRaw is int
+            ? otherUserIdRaw
+            : int.tryParse(otherUserIdRaw.toString());
+
+        if (otherUserId != null) {
+          final fetchedImageUrl = await _getUserProfilePicture(otherUserId);
+
+          if (fetchedImageUrl != null && fetchedImageUrl.isNotEmpty) {
+            conv['profile_picture_url'] = fetchedImageUrl;
+          }
+        }
+      }
+
       if (mounted) {
         setState(() {
-          _conversations = res['data'];
+          _conversations = conversations;
           _isLoading = false;
         });
       }
@@ -160,7 +200,9 @@ class _MessageListPageState extends State<MessageListPage> {
                         onChanged: (q) {
                           setSheetState(() {
                             filtered = allUsers.where((u) {
-                              final name = (u['username'] ?? u['email'] ?? '').toString().toLowerCase();
+                              final name = (u['username'] ?? u['email'] ?? '')
+                                  .toString()
+                                  .toLowerCase();
                               return name.contains(q.toLowerCase());
                             }).toList();
                           });
@@ -180,19 +222,25 @@ class _MessageListPageState extends State<MessageListPage> {
                               itemCount: filtered.length,
                               itemBuilder: (_, i) {
                                 final user = filtered[i];
-                                final name = user['username'] ?? user['email']?.split('@')[0] ?? 'User';
+                                final name = user['username'] ??
+                                    user['email']?.split('@')[0] ??
+                                    'User';
                                 final profileImageUrl = user['profile_picture_url'];
 
                                 return ListTile(
                                   leading: CircleAvatar(
                                     radius: 22,
                                     backgroundColor: Colors.grey.shade200,
-                                    backgroundImage: profileImageUrl != null && profileImageUrl.toString().isNotEmpty
+                                    backgroundImage: profileImageUrl != null &&
+                                            profileImageUrl.toString().isNotEmpty
                                         ? NetworkImage(profileImageUrl.toString())
                                         : null,
-                                    child: profileImageUrl == null || profileImageUrl.toString().isEmpty
+                                    child: profileImageUrl == null ||
+                                            profileImageUrl.toString().isEmpty
                                         ? Text(
-                                            name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                            name.isNotEmpty
+                                                ? name[0].toUpperCase()
+                                                : '?',
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               color: Colors.black87,
@@ -202,11 +250,16 @@ class _MessageListPageState extends State<MessageListPage> {
                                   ),
                                   title: Text(
                                     name,
-                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                   subtitle: Text(
                                     user['email'] ?? '',
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                   onTap: () {
                                     Navigator.pop(ctx);
@@ -216,7 +269,8 @@ class _MessageListPageState extends State<MessageListPage> {
                                         builder: (_) => ChatPage(
                                           otherUserId: user['id'],
                                           otherUserName: name,
-                                          otherUserImage: profileImageUrl?.toString() ?? '',
+                                          otherUserImage:
+                                              profileImageUrl?.toString() ?? '',
                                         ),
                                       ),
                                     ).then((_) => _fetchConversations());
@@ -244,7 +298,11 @@ class _MessageListPageState extends State<MessageListPage> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -269,19 +327,26 @@ class _MessageListPageState extends State<MessageListPage> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 children: [
-                  // New Message Row
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.mark_email_unread_outlined, size: 32, color: Color(0xFF2C3E50)),
+                    leading: const Icon(
+                      Icons.mark_email_unread_outlined,
+                      size: 32,
+                      color: Color(0xFF2C3E50),
+                    ),
                     title: const Text(
                       'New Message',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF374957)),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF374957),
+                      ),
                     ),
                     onTap: _showNewMessageSheet,
                   ),
+
                   const SizedBox(height: 12),
-                  
-                  // Invite Friends Row
+
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Container(
@@ -290,11 +355,19 @@ class _MessageListPageState extends State<MessageListPage> {
                         color: Colors.grey.shade200,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person_add_alt_1_rounded, size: 20, color: Color(0xFF5C6A79)),
+                      child: const Icon(
+                        Icons.person_add_alt_1_rounded,
+                        size: 20,
+                        color: Color(0xFF5C6A79),
+                      ),
                     ),
                     title: const Text(
                       'Invite your friends',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF374957)),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF374957),
+                      ),
                     ),
                     subtitle: const Text(
                       'Connect to start chatting',
@@ -302,22 +375,35 @@ class _MessageListPageState extends State<MessageListPage> {
                     ),
                     onTap: () {},
                   ),
+
                   const SizedBox(height: 24),
-                  
-                  // Conversations
+
                   if (_conversations.isEmpty)
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.all(32.0),
-                        child: Text("No conversations yet.\nTap 'New Message' to start chatting!", 
+                        child: Text(
+                          "No conversations yet.\nTap 'New Message' to start chatting!",
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey)),
+                          style: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     ),
 
                   ..._conversations.map((conv) {
-                    final otherName = conv['other_user_name'] ?? conv['other_user_email']?.split('@')[0] ?? 'User';
-                    final profileImageUrl = conv['other_user_profile_picture_url'] ?? conv['profile_picture_url'];
+                    final otherName = conv['other_user_name'] ??
+                        conv['other_user_email']?.split('@')[0] ??
+                        'User';
+
+                    final otherUserIdRaw = conv['other_user_id'];
+                    final otherUserId = otherUserIdRaw is int
+                        ? otherUserIdRaw
+                        : int.tryParse(otherUserIdRaw.toString());
+
+                    final profileImageUrl =
+                        conv['other_user_profile_picture_url'] ??
+                            conv['profile_picture_url'];
+
                     final lastMsg = conv['last_message'] ?? 'Start chatting...';
                     final isMe = conv['last_sender_id'] == _currentUserId;
                     final prefix = isMe ? 'You : ' : '';
@@ -329,12 +415,16 @@ class _MessageListPageState extends State<MessageListPage> {
                       leading: CircleAvatar(
                         radius: 24,
                         backgroundColor: Colors.grey.shade200,
-                        backgroundImage: profileImageUrl != null && profileImageUrl.toString().isNotEmpty
+                        backgroundImage: profileImageUrl != null &&
+                                profileImageUrl.toString().isNotEmpty
                             ? NetworkImage(profileImageUrl.toString())
                             : null,
-                        child: profileImageUrl == null || profileImageUrl.toString().isEmpty
+                        child: profileImageUrl == null ||
+                                profileImageUrl.toString().isEmpty
                             ? Text(
-                                otherName.isNotEmpty ? otherName[0].toUpperCase() : '?',
+                                otherName.isNotEmpty
+                                    ? otherName[0].toUpperCase()
+                                    : '?',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black87,
@@ -355,7 +445,8 @@ class _MessageListPageState extends State<MessageListPage> {
                         style: TextStyle(
                           fontSize: 14,
                           color: showUnreadDot ? Colors.black87 : Colors.grey,
-                          fontWeight: showUnreadDot ? FontWeight.bold : FontWeight.normal,
+                          fontWeight:
+                              showUnreadDot ? FontWeight.bold : FontWeight.normal,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -376,7 +467,7 @@ class _MessageListPageState extends State<MessageListPage> {
                           MaterialPageRoute(
                             builder: (context) => ChatPage(
                               conversationId: conv['conversation_id'],
-                              otherUserId: conv['other_user_id'],
+                              otherUserId: otherUserId ?? conv['other_user_id'],
                               otherUserName: otherName,
                               otherUserImage: profileImageUrl?.toString() ?? '',
                             ),
@@ -388,10 +479,10 @@ class _MessageListPageState extends State<MessageListPage> {
                 ],
               ),
             ),
-            bottomNavigationBar: const AppBottomNavBar(
-              currentIndex: 0,
-              isOutsideTab: true,
-            ),
+      bottomNavigationBar: const AppBottomNavBar(
+        currentIndex: 0,
+        isOutsideTab: true,
+      ),
     );
   }
 }

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -13,7 +12,6 @@ class CallService {
   static IO.Socket? _socket;
   static int? _currentUserId;
   static String _currentUserName = 'User';
-  static String _currentUserImage = '';
 
   static OverlayEntry? _incomingCallOverlay;
   static Timer? _callTimeoutTimer;
@@ -33,8 +31,6 @@ class CallService {
 
       _currentUserName =
           user['display_name'] ?? user['username'] ?? user['email'] ?? 'User';
-
-      _currentUserImage = user['profile_picture_url'] ?? '';
     }
 
     final backendUrl = AuthService.baseUrl.replaceAll('/api/auth', '');
@@ -69,8 +65,6 @@ class CallService {
   static void startCall({
     required int receiverId,
     required bool isVideo,
-    required String otherUserName,
-    required String otherUserImage,
   }) {
     if (_socket == null || _currentUserId == null) return;
 
@@ -83,7 +77,6 @@ class CallService {
       'call_id': callId,
       'is_video': isVideo,
       'caller_name': _currentUserName,
-      'caller_image': _currentUserImage,
     });
 
     final context = navigatorKey.currentContext;
@@ -96,9 +89,6 @@ class CallService {
           callId: callId,
           currentUserId: _currentUserId.toString(),
           currentUserName: _currentUserName,
-          currentUserImage: _currentUserImage,
-          otherUserId: receiverId.toString(),
-          otherUserImage: otherUserImage,
           isVideoCall: isVideo,
         ),
       ),
@@ -117,13 +107,9 @@ class CallService {
     final String callId = data['call_id'];
     final bool isVideo = data['is_video'] == true;
     final String callerName = data['caller_name'] ?? 'Someone';
-    final String callerImage = data['caller_image'] ?? '';
 
     _incomingCallOverlay = OverlayEntry(
       builder: (context) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        final popupWidth = math.min(340.0, screenWidth - 24);
-
         return Positioned(
           top: 55,
           right: 16,
@@ -151,15 +137,13 @@ class CallService {
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: const Color(0xFF3293B3),
-                    backgroundImage: callerImage.isNotEmpty ? NetworkImage(callerImage) : null,
-                    child: callerImage.isEmpty
-                        ? Icon(
-                            isVideo ? Icons.videocam : Icons.call,
-                            color: Colors.white,
-                            size: 22,
-                          )
-                        : null,
+                    child: Icon(
+                      isVideo ? Icons.videocam : Icons.call,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
+
                   const SizedBox(width: 12),
 
                   Expanded(
@@ -168,7 +152,9 @@ class CallService {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          isVideo ? 'Incoming video call' : 'Incoming voice call',
+                          isVideo
+                              ? 'Incoming video call'
+                              : 'Incoming voice call',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -215,8 +201,6 @@ class CallService {
                       _acceptCall(
                         callId: callId,
                         isVideo: isVideo,
-                        callerId: callerId,
-                        callerImage: callerImage,
                       );
                     },
                     borderRadius: BorderRadius.circular(8),
@@ -251,8 +235,6 @@ class CallService {
   static void _acceptCall({
     required String callId,
     required bool isVideo,
-    required int callerId,
-    required String callerImage,
   }) {
     _removeIncomingCallPopup();
 
@@ -266,9 +248,6 @@ class CallService {
           callId: callId,
           currentUserId: _currentUserId.toString(),
           currentUserName: _currentUserName,
-          currentUserImage: _currentUserImage,
-          otherUserId: callerId.toString(),
-          otherUserImage: callerImage,
           isVideoCall: isVideo,
         ),
       ),

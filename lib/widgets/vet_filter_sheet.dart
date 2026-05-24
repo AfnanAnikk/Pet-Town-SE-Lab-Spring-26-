@@ -8,7 +8,7 @@ class VetFilterSheet extends StatefulWidget {
 }
 
 class _VetFilterSheetState extends State<VetFilterSheet> {
-  String _selectedSpecies = 'Dog';
+  String _selectedSpecies = '';
   String? _selectedConcern;
   List<DateTime> _selectedDates = [];
   final TextEditingController _locationController = TextEditingController();

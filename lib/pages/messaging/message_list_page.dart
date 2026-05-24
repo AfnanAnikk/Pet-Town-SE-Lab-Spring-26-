@@ -45,6 +45,7 @@ class _MessageListPageState extends State<MessageListPage> {
 
   Future<void> _showNewMessageSheet() async {
     final res = await ApiService.getAllUsers();
+
     if (!res['success'] || res['data'] == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +94,11 @@ class _MessageListPageState extends State<MessageListPage> {
                     const SizedBox(height: 16),
                     const Text(
                       'New Message',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF3293B3)),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF3293B3),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Padding(
@@ -114,7 +119,7 @@ class _MessageListPageState extends State<MessageListPage> {
                         onChanged: (q) {
                           setSheetState(() {
                             filtered = allUsers.where((u) {
-                              final name = (u['username'] ?? u['email'] ?? '').toLowerCase();
+                              final name = (u['username'] ?? u['email'] ?? '').toString().toLowerCase();
                               return name.contains(q.toLowerCase());
                             }).toList();
                           });
@@ -124,21 +129,44 @@ class _MessageListPageState extends State<MessageListPage> {
                     const SizedBox(height: 8),
                     Expanded(
                       child: filtered.isEmpty
-                          ? const Center(child: Text('No users found', style: TextStyle(color: Colors.grey)))
+                          ? const Center(
+                              child: Text(
+                                'No users found',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            )
                           : ListView.builder(
                               itemCount: filtered.length,
                               itemBuilder: (_, i) {
                                 final user = filtered[i];
                                 final name = user['username'] ?? user['email']?.split('@')[0] ?? 'User';
-                                final imageNumber = (user['id'] % 10) + 1;
+                                final profileImageUrl = user['profile_picture_url'];
+
                                 return ListTile(
                                   leading: CircleAvatar(
                                     radius: 22,
-                                    backgroundImage: AssetImage('assets/images/p$imageNumber.png'),
                                     backgroundColor: Colors.grey.shade200,
+                                    backgroundImage: profileImageUrl != null && profileImageUrl.toString().isNotEmpty
+                                        ? NetworkImage(profileImageUrl.toString())
+                                        : null,
+                                    child: profileImageUrl == null || profileImageUrl.toString().isEmpty
+                                        ? Text(
+                                            name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black87,
+                                            ),
+                                          )
+                                        : null,
                                   ),
-                                  title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                  subtitle: Text(user['email'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                  title: Text(
+                                    name,
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  subtitle: Text(
+                                    user['email'] ?? '',
+                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                  ),
                                   onTap: () {
                                     Navigator.pop(ctx);
                                     Navigator.push(
@@ -147,7 +175,7 @@ class _MessageListPageState extends State<MessageListPage> {
                                         builder: (_) => ChatPage(
                                           otherUserId: user['id'],
                                           otherUserName: name,
-                                          otherUserImage: 'assets/images/p$imageNumber.png',
+                                          otherUserImage: profileImageUrl?.toString() ?? '',
                                         ),
                                       ),
                                     ).then((_) => _fetchConversations());

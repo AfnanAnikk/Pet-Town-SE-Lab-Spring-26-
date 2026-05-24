@@ -9,6 +9,7 @@ import '../messaging/message_list_page.dart';
 import '../marketplace/marketplace_home_page.dart';
 import '../post/create_post_flow.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
+import '../../services/call_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -32,6 +33,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    CallService.init();
     _fetchInitialPosts();
     
     // Add scroll listener for endless scrolling

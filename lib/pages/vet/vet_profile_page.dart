@@ -42,10 +42,15 @@ class _VetProfilePageState extends State<VetProfilePage> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CircleAvatar(
-                  radius: 36,
-                  backgroundColor: Color(0xFFE0E0E0),
-                  child: Icon(Icons.person, size: 40, color: Colors.grey),
+                CircleAvatar(
+                  radius: 32,
+                  backgroundColor: const Color(0xFFE0E0E0),
+                  backgroundImage: vet.profilePictureUrl != null && vet.profilePictureUrl!.isNotEmpty
+                      ? NetworkImage(vet.profilePictureUrl!)
+                      : null,
+                  child: vet.profilePictureUrl == null || vet.profilePictureUrl!.isEmpty
+                      ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                      : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -261,6 +266,7 @@ class _VetProfilePageState extends State<VetProfilePage> {
                                 style: const TextStyle(fontSize: 10, color: Colors.black87),
                               ),
                             ),
+                            
                             const SizedBox(width: 8),
                             Expanded(
                               child: Column(

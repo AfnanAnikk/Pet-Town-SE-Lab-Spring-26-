@@ -3,7 +3,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import 'call_page.dart';
-import '../../widgets/app_bottom_nav_bar.dart';
+import '../../services/call_service.dart';
 
 class ChatPage extends StatefulWidget {
   final int? conversationId;
@@ -145,23 +145,26 @@ class _ChatPageState extends State<ChatPage> {
 
   void _startCall({required bool isVideo}) {
     if (_currentUserId == null) return;
-    
-    // Create a unique call ID for this conversation
-    final callId = widget.conversationId != null 
-        ? 'room_${widget.conversationId}'
-        : 'room_${_currentUserId}_${widget.otherUserId}';
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CallPage(
-          callId: callId,
-          currentUserId: _currentUserId.toString(),
-          currentUserName: 'User $_currentUserId', // Or use actual name if available
-          isVideoCall: isVideo,
-        ),
-      ),
+    CallService.startCall(
+      receiverId: widget.otherUserId,
+      isVideo: isVideo,
+      callerName: 'User $_currentUserId',
     );
+  }
+
+  ImageProvider? _getOtherUserImageProvider() {
+    final image = widget.otherUserImage.trim();
+
+    if (image.isEmpty) {
+      return null;
+    }
+
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+      return NetworkImage(image);
+    }
+
+    return AssetImage(image);
   }
 
   @override
@@ -180,8 +183,19 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundImage: AssetImage(widget.otherUserImage),
               backgroundColor: Colors.grey.shade200,
+              backgroundImage: _getOtherUserImageProvider(),
+              child: _getOtherUserImageProvider() == null
+                  ? Text(
+                      widget.otherUserName.isNotEmpty
+                          ? widget.otherUserName[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    )
+                  : null,
             ),
             const SizedBox(width: 12),
             Expanded(

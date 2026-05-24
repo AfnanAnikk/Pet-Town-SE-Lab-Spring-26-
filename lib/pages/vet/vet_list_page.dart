@@ -19,6 +19,7 @@ class _VetListPageState extends State<VetListPage> {
   String? _filterLocation;
   String? _filterConcern;
   String? _filterSpecies;
+  List<String> _filterDates = [];
 
   bool _isLoading = true;
   List<VetModel> _vets = [];
@@ -29,11 +30,23 @@ class _VetListPageState extends State<VetListPage> {
     _fetchVets();
   }
 
-  Future<void> _fetchVets({String? location, String? concern, String? species}) async {
+  Future<void> _fetchVets({
+    String? location,
+    String? concern,
+    String? species,
+    List<String>? dates,
+  }) async {
     setState(() {
       _isLoading = true;
     });
-    final result = await ApiService.getAllVets(location: location, concern: concern, species: species);
+
+    final result = await ApiService.getAllVets(
+      location: location,
+      concern: concern,
+      species: species,
+      dates: dates,
+    );
+
     if (result['success']) {
       final List<dynamic> data = result['data'];
       setState(() {
@@ -44,8 +57,11 @@ class _VetListPageState extends State<VetListPage> {
       setState(() {
         _isLoading = false;
       });
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'])),
+        );
       }
     }
   }
@@ -99,13 +115,21 @@ class _VetListPageState extends State<VetListPage> {
             icon: const Icon(Icons.tune, color: Color(0xFF2C3E50)),
             onPressed: () async {
               final result = await showVetFilterSheet(context);
-              if (result != null && result is Map<String, String?>) {
+
+              if (result != null && result is Map) {
                 setState(() {
-                  _filterLocation = result['location'];
-                  _filterConcern = result['concern'];
-                  _filterSpecies = result['species'];
+                  _filterLocation = result['location'] as String?;
+                  _filterConcern = result['concern'] as String?;
+                  _filterSpecies = result['species'] as String?;
+                  _filterDates = List<String>.from(result['dates'] ?? []);
                 });
-                _fetchVets(location: _filterLocation, concern: _filterConcern, species: _filterSpecies);
+
+                _fetchVets(
+                  location: _filterLocation,
+                  concern: _filterConcern,
+                  species: _filterSpecies,
+                  dates: _filterDates,
+                );
               }
             },
           ),
@@ -267,10 +291,15 @@ class VetCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 32,
-                  backgroundColor: Color(0xFFE0E0E0),
-                  child: Icon(Icons.person, size: 40, color: Colors.grey),
+                  backgroundColor: const Color(0xFFE0E0E0),
+                  backgroundImage: vet.profilePictureUrl != null && vet.profilePictureUrl!.isNotEmpty
+                      ? NetworkImage(vet.profilePictureUrl!)
+                      : null,
+                  child: vet.profilePictureUrl == null || vet.profilePictureUrl!.isEmpty
+                      ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                      : null,
                 ),
 
                 const SizedBox(width: 16),

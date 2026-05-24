@@ -148,16 +148,37 @@ class ApiService {
   }
 
   // Get All Vets
-  static Future<Map<String, dynamic>> getAllVets({String? location, String? concern, String? species}) async {
+  static Future<Map<String, dynamic>> getAllVets({
+    String? location,
+    String? concern,
+    String? species,
+    List<String>? dates,
+  }) async {
     try {
       final headers = await _getHeaders();
-      
-      final queryParams = <String, dynamic>{};
-      if (location != null && location.isNotEmpty) queryParams['location'] = location;
-      if (concern != null && concern.isNotEmpty) queryParams['concern'] = concern;
-      if (species != null && species.isNotEmpty) queryParams['species'] = species;
-      
-      var uri = Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vets')}');
+
+      final queryParams = <String, String>{};
+
+      if (location != null && location.isNotEmpty) {
+        queryParams['location'] = location;
+      }
+
+      if (concern != null && concern.isNotEmpty) {
+        queryParams['concern'] = concern;
+      }
+
+      if (species != null && species.isNotEmpty) {
+        queryParams['species'] = species;
+      }
+
+      if (dates != null && dates.isNotEmpty) {
+        queryParams['dates'] = dates.join(',');
+      }
+
+      var uri = Uri.parse(
+        AuthService.baseUrl.replaceAll('/api/auth', '/api/vets'),
+      );
+
       if (queryParams.isNotEmpty) {
         uri = uri.replace(queryParameters: queryParams);
       }
@@ -166,6 +187,7 @@ class ApiService {
         uri,
         headers: headers,
       );
+
       return _handleResponse(response);
     } catch (e) {
       return {'success': false, 'message': e.toString()};

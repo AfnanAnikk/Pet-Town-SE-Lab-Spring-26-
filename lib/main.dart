@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'pages/landing_page.dart';
+import 'utils/app_navigator.dart';
 
 void main() {
   runApp(const PetTownApp());
@@ -12,6 +13,7 @@ class PetTownApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'PetTown',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -21,6 +23,7 @@ class PetTownApp extends StatelessWidget {
         textTheme: GoogleFonts.outfitTextTheme(Theme.of(context).textTheme),
       ),
       home: const LandingPage(),
+      
     );
   }
 }

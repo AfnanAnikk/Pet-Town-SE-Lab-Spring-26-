@@ -10,6 +10,7 @@ class VetFilterSheet extends StatefulWidget {
 class _VetFilterSheetState extends State<VetFilterSheet> {
   String _selectedSpecies = 'Dog';
   String? _selectedConcern;
+  List<DateTime> _selectedDates = [];
   final TextEditingController _locationController = TextEditingController();
 
   @override
@@ -18,52 +19,39 @@ class _VetFilterSheetState extends State<VetFilterSheet> {
     super.dispose();
   }
 
-  Widget _buildDateBox(String title, String subtitle, {bool isSelected = false, bool isNextAvailable = false}) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? const Color(0xFF3293B3) : Colors.grey.shade300,
-          width: isSelected ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (isNextAvailable)
-            Text(
-              'Next\navailable',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isSelected ? const Color(0xFF3293B3) : Colors.black87,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            )
-          else ...[
-            Text(
-              title,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 12,
-              ),
+  Future<void> _showAddDatePicker() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF3FA9F5),
+              onPrimary: Colors.white,
+              onSurface: Colors.black87,
             ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ],
-      ),
+          ),
+          child: child!,
+        );
+      },
     );
+
+    if (pickedDate != null && mounted) {
+      setState(() {
+        final alreadyExists = _selectedDates.any((date) =>
+            date.day == pickedDate.day &&
+            date.month == pickedDate.month &&
+            date.year == pickedDate.year);
+
+        if (!alreadyExists) {
+          _selectedDates.add(pickedDate);
+          _selectedDates.sort((a, b) => a.compareTo(b));
+        }
+      });
+    }
   }
 
   Widget _buildCategoryBox(String title, IconData icon, {bool isSelected = false, VoidCallback? onTap}) {
@@ -176,36 +164,40 @@ class _VetFilterSheetState extends State<VetFilterSheet> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     
                     // Date
                     const Text(
                       'Choose a date',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 12),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildDateBox('', '', isSelected: true, isNextAvailable: true),
-                          _buildDateBox('Today', '9'),
-                          _buildDateBox('Tomorrow', '10'),
-                          _buildDateBox('Sun', '11'),
-                          _buildDateBox('Monday', '12'),
-                          _buildDateBox('Tuesday', '13'),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: const [
-                        Icon(Icons.calendar_today, size: 16, color: Colors.black54),
-                        SizedBox(width: 8),
-                        Text('Next available', style: TextStyle(color: Colors.black87)),
+                    Wrap(
+                      children: [
+                        ..._selectedDates.map((date) {
+                          final dateStr = '${date.day}/${date.month}/${date.year}';
+
+                          return Chip(
+                            label: Text(dateStr),
+                            deleteIcon: const Icon(Icons.close, size: 18),
+                            onDeleted: () {
+                              setState(() {
+                                _selectedDates.remove(date);
+                              });
+                            },
+                            backgroundColor: const Color(0xFFEAF6FF),
+                            side: BorderSide(color: Colors.blue.shade100),
+                          );
+                        }),
+
+                        ActionChip(
+                          label: const Text('+ Add Date'),
+                          avatar: const Icon(Icons.calendar_today, size: 16),
+                          onPressed: _showAddDatePicker,
+                          backgroundColor: const Color.fromARGB(255, 255, 254, 254),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     
                     // Species
                     const Text(
@@ -298,6 +290,7 @@ class _VetFilterSheetState extends State<VetFilterSheet> {
                           'location': null,
                           'concern': null,
                           'species': null,
+                          'dates': [],
                         });
                       },
                       style: OutlinedButton.styleFrom(
@@ -325,6 +318,7 @@ class _VetFilterSheetState extends State<VetFilterSheet> {
                           'location': _locationController.text.isNotEmpty ? _locationController.text : null,
                           'concern': _selectedConcern,
                           'species': _selectedSpecies,
+                          'dates': _selectedDates.map((date) => '${date.day}/${date.month}/${date.year}').toList(),
                         });
                       },
                       style: ElevatedButton.styleFrom(

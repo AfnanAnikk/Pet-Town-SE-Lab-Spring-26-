@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/vet_model.dart';
 import '../home/home_page.dart';
+import '../../widgets/app_bottom_nav_bar.dart';
 
 class VetBookingSuccessPage extends StatelessWidget {
   final VetModel vet;
@@ -76,10 +77,15 @@ class VetBookingSuccessPage extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 32,
-                        backgroundColor: Colors.white,
-                        child: Icon(Icons.person, size: 40, color: Colors.grey),
+                        backgroundColor: const Color(0xFFE0E0E0),
+                        backgroundImage: vet.profilePictureUrl != null && vet.profilePictureUrl!.isNotEmpty
+                            ? NetworkImage(vet.profilePictureUrl!)
+                            : null,
+                        child: vet.profilePictureUrl == null || vet.profilePictureUrl!.isEmpty
+                            ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                            : null,
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -88,7 +94,7 @@ class VetBookingSuccessPage extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                Expanded(
+                                Flexible(
                                   child: Text(
                                     vet.name,
                                     style: const TextStyle(
@@ -96,12 +102,12 @@ class VetBookingSuccessPage extends StatelessWidget {
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFF3293B3),
                                     ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
+                                const SizedBox(width: 10),
                                 if (vet.isVerified)
                                   const Icon(Icons.verified, color: Colors.green, size: 20),
-                                const SizedBox(width: 8),
-                                const Icon(Icons.chevron_right, color: Colors.black87),
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -196,62 +202,7 @@ class VetBookingSuccessPage extends StatelessWidget {
           ],
         ),
       ),
-      
-      // Bottom Navigation Bar (Matching Home)
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: const Color.fromARGB(255, 124, 124, 124),
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        elevation: 8,
-        currentIndex: 0,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const HomePage()),
-              (route) => false,
-            );
-          }
-        },
-        items: [
-          BottomNavigationBarItem(
-            icon: Image.asset('assets/images/home.png', width: 28, height: 28, fit: BoxFit.contain),
-            activeIcon: Image.asset('assets/images/home1.png', width: 28, height: 28, fit: BoxFit.contain),
-            label: 'Home',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.search, size: 28),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Image.asset('assets/images/features.png', width: 28, height: 28, fit: BoxFit.contain),
-            activeIcon: Image.asset('assets/images/features1.png', width: 28, height: 28, fit: BoxFit.contain),
-            label: 'Features',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_none, size: 28),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
-            icon: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade300, width: 2),
-              ),
-              child: const CircleAvatar(
-                radius: 12,
-                backgroundColor: Color(0xFFE0E0E0),
-                child: Icon(Icons.person, size: 16, color: Colors.grey),
-              ),
-            ),
-            label: 'Profile',
-          ),
-        ],
-      ),
+      bottomNavigationBar: AppBottomNavBar(currentIndex: 2),
     );
   }
 }

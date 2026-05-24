@@ -46,6 +46,30 @@ io.on('connection', (socket) => {
     console.log(`User ${userId} joined their personal room.`);
   });
 
+  socket.on('start_call', (data) => {
+    const { receiver_id } = data;
+
+    console.log('start_call:', data);
+
+    io.to(`user_${receiver_id}`).emit('incoming_call', data);
+  });
+
+  socket.on('call_declined', (data) => {
+    const { caller_id } = data;
+
+    console.log('call_declined:', data);
+
+    io.to(`user_${caller_id}`).emit('call_declined', data);
+  });
+
+  socket.on('call_missed', (data) => {
+    const { caller_id } = data;
+
+    console.log('call_missed:', data);
+
+    io.to(`user_${caller_id}`).emit('call_missed', data);
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });

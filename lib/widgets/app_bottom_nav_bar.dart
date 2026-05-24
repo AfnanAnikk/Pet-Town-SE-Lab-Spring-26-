@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../pages/profile/user_profile_page.dart';
 import '../pages/vet/vet_list_page.dart';
 import '../pages/marketplace/marketplace_home_page.dart';
+import '../services/auth_service.dart';
 
-class AppBottomNavBar extends StatelessWidget {
+class AppBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final bool isOutsideTab;
 
@@ -12,6 +13,36 @@ class AppBottomNavBar extends StatelessWidget {
     required this.currentIndex,
     this.isOutsideTab = false,
   });
+
+  @override
+  State<AppBottomNavBar> createState() => _AppBottomNavBarState();
+}
+
+class _AppBottomNavBarState extends State<AppBottomNavBar> {
+  String? _profilePictureUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfilePicture();
+  }
+
+  Future<void> _loadProfilePicture() async {
+    final userId = await AuthService.getUserId();
+    if (userId == null) return;
+
+    final res = await AuthService.getProfile(userId);
+
+    if (res['success'] == true && res['data'] != null) {
+      final user = res['data']['user'];
+
+      if (mounted) {
+        setState(() {
+          _profilePictureUrl = user['profile_picture_url'];
+        });
+      }
+    }
+  }
 
   void _go(BuildContext context, Widget page) {
     Navigator.push(
@@ -91,26 +122,51 @@ class AppBottomNavBar extends StatelessWidget {
     );
   }
 
+  Widget _buildProfileIcon() {
+    final hasProfileImage =
+        _profilePictureUrl != null && _profilePictureUrl!.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.grey.shade300, width: 2),
+      ),
+      child: CircleAvatar(
+        radius: 12,
+        backgroundColor: const Color(0xFFE0E0E0),
+        backgroundImage: hasProfileImage
+            ? NetworkImage(_profilePictureUrl!)
+            : null,
+        child: hasProfileImage
+            ? null
+            : const Icon(Icons.person, size: 16, color: Colors.grey),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       backgroundColor: Colors.white,
-      selectedItemColor: isOutsideTab
+      selectedItemColor: widget.isOutsideTab
           ? const Color.fromARGB(255, 124, 124, 124)
           : Colors.black,
       unselectedItemColor: const Color.fromARGB(255, 124, 124, 124),
       showSelectedLabels: false,
       showUnselectedLabels: false,
       elevation: 8,
-      currentIndex: currentIndex,
+      currentIndex: widget.currentIndex,
       onTap: (index) {
         if (index == 0) {
           Navigator.popUntil(context, (route) => route.isFirst);
         } else if (index == 2) {
           _showFeatureMenu(context);
         } else if (index == 4) {
-          if (currentIndex != 4) _go(context, const UserProfilePage());
+          if (widget.currentIndex != 4) {
+            _go(context, const UserProfilePage());
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Feature Coming Soon!')),
@@ -120,7 +176,11 @@ class AppBottomNavBar extends StatelessWidget {
       items: [
         BottomNavigationBarItem(
           icon: Image.asset('assets/images/home.png', width: 28, height: 28),
-          activeIcon: Image.asset('assets/images/home1.png', width: 28, height: 28),
+          activeIcon: Image.asset(
+            widget.isOutsideTab ? 'assets/images/home.png' : 'assets/images/home1.png',
+            width: 28,
+            height: 28,
+          ),
           label: 'Home',
         ),
         const BottomNavigationBarItem(
@@ -129,7 +189,11 @@ class AppBottomNavBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Image.asset('assets/images/features.png', width: 28, height: 28),
-          activeIcon: Image.asset('assets/images/features1.png', width: 28, height: 28),
+          activeIcon: Image.asset(
+            widget.isOutsideTab ? 'assets/images/features.png' : 'assets/images/features1.png',
+            width: 28,
+            height: 28,
+          ),
           label: 'Features',
         ),
         const BottomNavigationBarItem(
@@ -137,18 +201,8 @@ class AppBottomNavBar extends StatelessWidget {
           label: 'Notifications',
         ),
         BottomNavigationBarItem(
-          icon: Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey.shade300, width: 2),
-            ),
-            child: const CircleAvatar(
-              radius: 12,
-              backgroundColor: Color(0xFFE0E0E0),
-              child: Icon(Icons.person, size: 16, color: Colors.grey),
-            ),
-          ),
+          icon: _buildProfileIcon(),
+          activeIcon: _buildProfileIcon(),
           label: 'Profile',
         ),
       ],

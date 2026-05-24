@@ -25,6 +25,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   bool _isSaved = false;
   int _likesCount = 0;
   int _commentsCount = 0;
+  String? _currentUserProfilePictureUrl;  
   
   final TextEditingController _commentController = TextEditingController();
 
@@ -37,6 +38,23 @@ class _PostDetailPageState extends State<PostDetailPage> {
     _fetchComments();
     _checkSaveStatus();
     _checkLikeStatus();
+    _loadCurrentUserProfilePicture();
+
+    
+  }
+  Future<void> _loadCurrentUserProfilePicture() async {
+    final userId = await AuthService.getUserId();
+    if (userId == null) return;
+
+    final res = await AuthService.getProfile(userId);
+
+    if (res['success'] == true && res['data'] != null && mounted) {
+      final user = res['data']['user'] ?? res['data'];
+
+      setState(() {
+        _currentUserProfilePictureUrl = user['profile_picture_url'];
+      });
+    }
   }
 
   Future<void> _checkSaveStatus() async {
@@ -204,6 +222,23 @@ class _PostDetailPageState extends State<PostDetailPage> {
     }
   }
 
+  Widget _buildProfileAvatar({
+    required String? imageUrl,
+    double radius = 16,
+    double iconSize = 20,
+  }) {
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: const Color(0xFFE0E0E0),
+      backgroundImage: hasImage ? NetworkImage(imageUrl) : null,
+      child: hasImage
+          ? null
+          : Icon(Icons.person, color: Colors.grey, size: iconSize),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
@@ -354,10 +389,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    const CircleAvatar(
+                    _buildProfileAvatar(
+                      imageUrl: post.authorProfilePictureUrl,
                       radius: 16,
-                      backgroundColor: Color(0xFFE0E0E0),
-                      child: Icon(Icons.person, color: Colors.grey, size: 20),
+                      iconSize: 20,
                     ),
                     const SizedBox(width: 12),
                     Text(
@@ -406,10 +441,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  const CircleAvatar(
+                  _buildProfileAvatar(
+                    imageUrl: _currentUserProfilePictureUrl,
                     radius: 16,
-                    backgroundColor: Color(0xFFE0E0E0),
-                    child: Icon(Icons.person, color: Colors.grey, size: 20),
+                    iconSize: 20,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

@@ -5,6 +5,7 @@ class PostModel {
   final String userId;
   final String title;
   final String authorName;
+  final String? authorProfilePictureUrl;
   final List<String> tags;
   final int likesCount;
   final int commentsCount;
@@ -17,6 +18,7 @@ class PostModel {
     required this.userId,
     required this.title,
     required this.authorName,
+    this.authorProfilePictureUrl,
     required this.tags,
     required this.likesCount,
     required this.commentsCount,
@@ -40,6 +42,7 @@ class PostModel {
       userId: json['user_id']?.toString() ?? '',
       title: json['title'] ?? 'Untitled',
       authorName: json['author_name'] ?? 'Unknown',
+      authorProfilePictureUrl: json['profile_picture_url'] ?? json['author_profile_picture_url'],
       tags: List<String>.from(json['tags'] ?? []),
       likesCount: json['likes_count'] ?? 0,
       commentsCount: json['comments_count'] ?? 0,

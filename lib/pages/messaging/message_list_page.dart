@@ -3,6 +3,7 @@ import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import 'chat_page.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class MessageListPage extends StatefulWidget {
   const MessageListPage({super.key});
@@ -15,11 +16,45 @@ class _MessageListPageState extends State<MessageListPage> {
   bool _isLoading = true;
   List<dynamic> _conversations = [];
   int? _currentUserId;
+  IO.Socket? _socket;
 
   @override
   void initState() {
     super.initState();
-    _fetchConversations();
+    _initMessageList();
+  }
+  Future<void> _initMessageList() async {
+    await _fetchConversations();
+    _connectSocket();
+  }
+
+  void _connectSocket() {
+    if (_currentUserId == null) return;
+
+    final backendUrl = AuthService.baseUrl.replaceAll('/api/auth', '');
+
+    _socket = IO.io(backendUrl, <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': false,
+    });
+
+    _socket!.connect();
+
+    _socket!.onConnect((_) {
+      _socket!.emit('join_chat', _currentUserId);
+    });
+
+    _socket!.on('receive_message', (data) {
+      if (!mounted) return;
+      _fetchConversations();
+    });
+  }
+
+  @override
+  void dispose() {
+    _socket?.disconnect();
+    _socket?.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchConversations() async {
@@ -30,17 +65,23 @@ class _MessageListPageState extends State<MessageListPage> {
     }
 
     _currentUserId = userId;
+
     final res = await ApiService.getConversations(userId);
-    
+
     if (res['success'] && res['data'] != null) {
-      setState(() {
-        _conversations = res['data'];
-      });
+      if (mounted) {
+        setState(() {
+          _conversations = res['data'];
+          _isLoading = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
-    
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   Future<void> _showNewMessageSheet() async {
@@ -276,25 +317,38 @@ class _MessageListPageState extends State<MessageListPage> {
 
                   ..._conversations.map((conv) {
                     final otherName = conv['other_user_name'] ?? conv['other_user_email']?.split('@')[0] ?? 'User';
+                    final profileImageUrl = conv['other_user_profile_picture_url'] ?? conv['profile_picture_url'];
                     final lastMsg = conv['last_message'] ?? 'Start chatting...';
                     final isMe = conv['last_sender_id'] == _currentUserId;
                     final prefix = isMe ? 'You : ' : '';
                     final isRead = conv['is_read'] == 1 || conv['is_read'] == true;
                     final showUnreadDot = !isMe && !isRead;
 
-                    // Pseudo-random avatar generation based on ID
-                    final imageNumber = (conv['other_user_id'] % 10) + 1;
-
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
                         radius: 24,
-                        backgroundImage: AssetImage('assets/images/p$imageNumber.png'),
                         backgroundColor: Colors.grey.shade200,
+                        backgroundImage: profileImageUrl != null && profileImageUrl.toString().isNotEmpty
+                            ? NetworkImage(profileImageUrl.toString())
+                            : null,
+                        child: profileImageUrl == null || profileImageUrl.toString().isEmpty
+                            ? Text(
+                                otherName.isNotEmpty ? otherName[0].toUpperCase() : '?',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              )
+                            : null,
                       ),
                       title: Text(
                         otherName,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF374957)),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF374957),
+                        ),
                       ),
                       subtitle: Text(
                         '$prefix$lastMsg',
@@ -324,7 +378,7 @@ class _MessageListPageState extends State<MessageListPage> {
                               conversationId: conv['conversation_id'],
                               otherUserId: conv['other_user_id'],
                               otherUserName: otherName,
-                              otherUserImage: 'assets/images/p$imageNumber.png',
+                              otherUserImage: profileImageUrl?.toString() ?? '',
                             ),
                           ),
                         ).then((_) => _fetchConversations());

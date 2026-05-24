@@ -255,32 +255,41 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
         }),
         Expanded(
           child: Container(
-            color: Colors.black,
-            child: _imageFile == null 
-                ? const SizedBox() 
-                : Stack(
-                    children: [
-                      Crop(
-                        image: _imageFile!.readAsBytesSync(),
-                        controller: _cropController,
-                        onCropped: (result) {
-                          if (result is CropSuccess) {
-                            setState(() {
-                              _croppedImageData = result.croppedImage;
-                              _isCropping = false;
-                            });
-                            _nextStep();
-                          } else {
-                            setState(() => _isCropping = false);
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to crop image')));
-                            }
-                          }
-                        },
+            color: Colors.transparent,
+            child: _imageFile == null
+                ? const SizedBox()
+                : Center(
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.85,
+                      height: MediaQuery.of(context).size.width * 0.85,
+                      child: Stack(
+                        children: [
+                          Crop(
+                            image: _imageFile!.readAsBytesSync(),
+                            controller: _cropController,
+                            aspectRatio: 1,
+                            onCropped: (result) {
+                              if (result is CropSuccess) {
+                                setState(() {
+                                  _croppedImageData = result.croppedImage;
+                                  _isCropping = false;
+                                });
+                                _nextStep();
+                              } else {
+                                setState(() => _isCropping = false);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Failed to crop image')),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                          if (_isCropping)
+                            const Center(child: CircularProgressIndicator()),
+                        ],
                       ),
-                      if (_isCropping)
-                        const Center(child: CircularProgressIndicator()),
-                    ],
+                    ),
                   ),
           ),
         ),

@@ -30,12 +30,32 @@ class _ChatPageState extends State<ChatPage> {
   bool _isLoading = true;
   List<dynamic> _messages = [];
   int? _currentUserId;
+  String? _otherUserProfilePictureUrl;
   late IO.Socket _socket;
 
   @override
   void initState() {
     super.initState();
+
+    if (widget.otherUserImage.startsWith('http://') ||
+        widget.otherUserImage.startsWith('https://')) {
+      _otherUserProfilePictureUrl = widget.otherUserImage;
+    }
+
     _initChat();
+    _loadOtherUserProfilePicture();
+  }
+
+  Future<void> _loadOtherUserProfilePicture() async {
+    final res = await AuthService.getProfile(widget.otherUserId);
+
+    if (res['success'] == true && res['data'] != null && mounted) {
+      final user = res['data']['user'] ?? res['data'];
+
+      setState(() {
+        _otherUserProfilePictureUrl = user['profile_picture_url'];
+      });
+    }
   }
 
   Future<void> _initChat() async {
@@ -149,14 +169,15 @@ class _ChatPageState extends State<ChatPage> {
     CallService.startCall(
       receiverId: widget.otherUserId,
       isVideo: isVideo,
-      callerName: 'User $_currentUserId',
+      otherUserName: widget.otherUserName,
+      otherUserImage: _otherUserProfilePictureUrl ?? widget.otherUserImage,
     );
   }
 
   ImageProvider? _getOtherUserImageProvider() {
-    final image = widget.otherUserImage.trim();
+    final image = _otherUserProfilePictureUrl?.trim();
 
-    if (image.isEmpty) {
+    if (image == null || image.isEmpty) {
       return null;
     }
 
@@ -164,7 +185,7 @@ class _ChatPageState extends State<ChatPage> {
       return NetworkImage(image);
     }
 
-    return AssetImage(image);
+    return null;
   }
 
   @override

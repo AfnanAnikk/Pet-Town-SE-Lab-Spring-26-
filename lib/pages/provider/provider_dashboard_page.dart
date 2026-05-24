@@ -446,6 +446,8 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
           ],
         ),
       ),
+    );
+  }
   Future<void> _fetchVouchers() async {
     setState(() {
       _isVouchersLoading = true;

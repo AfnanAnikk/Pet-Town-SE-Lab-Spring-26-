@@ -601,11 +601,12 @@ class _VetBookingPageState extends State<VetBookingPage> {
         ],
       ),
     );
+  }
   Future<void> _loadAvailableVouchers() async {
     setState(() {
       _isLoadingVouchers = true;
     });
-    final res = await ApiService.getAvailableVetVouchers(widget.vet.id);
+    final res = await ApiService.getAvailableVetVouchers(int.tryParse(widget.vet.id) ?? 0);
     if (res['success']) {
       setState(() {
         _availableVouchers = res['data'] ?? [];
@@ -686,7 +687,7 @@ class _VetBookingPageState extends State<VetBookingPage> {
                           final code = manualCodeController.text.trim();
                           if (code.isEmpty) return;
                           
-                          final res = await ApiService.validateVetVoucher(widget.vet.id, code);
+                          final res = await ApiService.validateVetVoucher(int.tryParse(widget.vet.id) ?? 0, code);
                           if (res['success'] && res['data']?['valid'] == true) {
                             final voucher = res['data']['voucher'];
                             setState(() {

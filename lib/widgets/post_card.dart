@@ -17,12 +17,15 @@ class _PostCardState extends State<PostCard> {
   bool _isDarkened = false;
   bool _isLoved = false;
   bool _isSaved = false;
+  late int _likesCount;
 
   @override
   void initState() {
     super.initState();
+    _likesCount = widget.post.likesCount;
     _checkSaveStatus();
     _checkLikeStatus();
+    _fetchLiveLikesCount();
   }
 
   Future<void> _checkSaveStatus() async {
@@ -49,6 +52,18 @@ class _PostCardState extends State<PostCard> {
     }
   }
 
+  Future<void> _fetchLiveLikesCount() async {
+    final res = await ApiService.getPostById(int.parse(widget.post.id));
+    if (res['success'] && res['data'] != null && mounted) {
+      final serverCount = res['data']['likes_count'] as int?;
+      if (serverCount != null) {
+        setState(() {
+          _likesCount = serverCount;
+        });
+      }
+    }
+  }
+
   Future<void> _toggleLike() async {
     final userId = await AuthService.getUserId();
     if (userId == null) {
@@ -63,6 +78,7 @@ class _PostCardState extends State<PostCard> {
     final wasLoved = _isLoved;
     setState(() {
       _isLoved = !_isLoved;
+      _likesCount += _isLoved ? 1 : -1;
     });
 
     final res = wasLoved
@@ -72,11 +88,20 @@ class _PostCardState extends State<PostCard> {
     if (!res['success']) {
       setState(() {
         _isLoved = wasLoved; // revert
+        _likesCount += wasLoved ? 1 : -1;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to update like status')),
         );
+      }
+    } else {
+      // Use server-authoritative count if returned
+      final serverCount = res['data'] is Map ? res['data']['likes_count'] as int? : null;
+      if (serverCount != null && mounted) {
+        setState(() {
+          _likesCount = serverCount;
+        });
       }
     }
   }
@@ -134,16 +159,24 @@ class _PostCardState extends State<PostCard> {
     _navigateToDetail();
   }
 
-  void _navigateToDetail() {
+  Future<void> _navigateToDetail() async {
     setState(() {
       _isDarkened = false;
     });
-    Navigator.push(
+    final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
         builder: (context) => PostDetailPage(post: widget.post),
       ),
     );
+    // Sync like/save state that may have changed inside the detail page
+    if (result != null && mounted) {
+      setState(() {
+        _isLoved = result['isLiked'] as bool? ?? _isLoved;
+        _isSaved = result['isSaved'] as bool? ?? _isSaved;
+        _likesCount = result['likesCount'] as int? ?? _likesCount;
+      });
+    }
   }
 
   @override
@@ -194,19 +227,33 @@ class _PostCardState extends State<PostCard> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Love React Button
+                          // Love React Button + like count
                           GestureDetector(
                             onTap: _toggleLike,
                             child: Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.9),
-                                shape: BoxShape.circle,
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Icon(
-                                _isLoved ? Icons.favorite : Icons.favorite_border,
-                                color: _isLoved ? Colors.red : Colors.black87,
-                                size: 20,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _isLoved ? Icons.favorite : Icons.favorite_border,
+                                    color: _isLoved ? Colors.red : Colors.black87,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$_likesCount',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

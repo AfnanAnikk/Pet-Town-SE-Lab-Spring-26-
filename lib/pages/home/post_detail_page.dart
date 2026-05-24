@@ -39,8 +39,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     _checkSaveStatus();
     _checkLikeStatus();
     _loadCurrentUserProfilePicture();
-
-    
+    _fetchLiveLikesCount(); // fetch real count from server
   }
   Future<void> _loadCurrentUserProfilePicture() async {
     final userId = await AuthService.getUserId();
@@ -54,6 +53,21 @@ class _PostDetailPageState extends State<PostDetailPage> {
       setState(() {
         _currentUserProfilePictureUrl = user['profile_picture_url'];
       });
+    }
+  }
+
+  /// Fetches the authoritative likes_count from the server so we never show
+  /// a stale cached value from when the home page last loaded.
+  Future<void> _fetchLiveLikesCount() async {
+    final res = await ApiService.getPostById(int.parse(widget.post.id));
+    if (res['success'] && res['data'] != null && mounted) {
+      final data = res['data'];
+      final serverCount = data['likes_count'] as int?;
+      if (serverCount != null) {
+        setState(() {
+          _likesCount = serverCount;
+        });
+      }
     }
   }
 
@@ -110,6 +124,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     if (userId == null) return;
 
     final wasLiked = _isLiked;
+    // Optimistic UI
     setState(() {
       _isLiked = !_isLiked;
       _likesCount += _isLiked ? 1 : -1;
@@ -125,6 +140,14 @@ class _PostDetailPageState extends State<PostDetailPage> {
         _isLiked = wasLiked;
         _likesCount += wasLiked ? 1 : -1;
       });
+    } else if (res['success']) {
+      // Try to use the authoritative count the server returns
+      final serverCount = res['data'] is Map ? res['data']['likes_count'] as int? : null;
+      if (serverCount != null && mounted) {
+        setState(() {
+          _likesCount = serverCount;
+        });
+      }
     }
   }
 
@@ -243,9 +266,20 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Widget build(BuildContext context) {
     final post = widget.post;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          Navigator.pop(context, {
+            'isLiked': _isLiked,
+            'isSaved': _isSaved,
+            'likesCount': _likesCount,
+          });
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -291,7 +325,11 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   top: MediaQuery.of(context).padding.top + 16,
                   left: 16,
                   child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () => Navigator.pop(context, {
+                    'isLiked': _isLiked,
+                    'isSaved': _isSaved,
+                    'likesCount': _likesCount,
+                  }),
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -552,6 +590,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
             const SizedBox(height: 40),
           ],
         ),
+      ),
       ),
     );
   }

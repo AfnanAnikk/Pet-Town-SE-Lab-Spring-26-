@@ -263,6 +263,19 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getPostById(int postId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/posts/$postId')}'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   static Future<Map<String, dynamic>> savePost(int postId, int userId) async {
     try {
       final headers = await _getHeaders();

@@ -150,18 +150,26 @@ class _HomePageState extends State<HomePage> {
         child: Stack(
           children: [
             // Main Content (Masonry Grid)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: MasonryGridView.count(
-                controller: _scrollController,
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                itemCount: _posts.length,
-                itemBuilder: (context, index) {
-                  return PostCard(post: _posts[index]);
-                },
-              ),
+            MasonryGridView.count(
+              controller: _scrollController,
+              padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
+              crossAxisCount: 2,
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 6,
+              itemCount: _posts.length,
+              itemBuilder: (context, index) {
+                final heights = [155.0, 205.0, 175.0, 145.0, 215.0, 185.0];
+
+                return Padding(
+                  padding: EdgeInsets.only(
+                    top: index == 1 ? 30 : 0,
+                  ),
+                  child: SizedBox(
+                    height: heights[index % heights.length],
+                    child: PostCard(post: _posts[index]),
+                  ),
+                );
+              },
             ),
             
             // Overlay to dismiss the menu when tapping outside

@@ -19,30 +19,77 @@ class _UserSignupPageState extends State<UserSignupPage> {
   bool _isLoading = false;
   bool _agreedToTerms = true;
 
+  // ── Validators ────────────────────────────────────────────────────────────
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[\w.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}$');
+    return emailRegex.hasMatch(email);
+  }
+
+  bool _isValidUsername(String username) {
+    // 3–30 chars, letters / digits / underscores only
+    final usernameRegex = RegExp(r'^[a-zA-Z0-9_]{3,30}$');
+    return usernameRegex.hasMatch(username);
+  }
+
+  bool _isStrongPassword(String password) {
+    // At least 8 chars, one uppercase letter, one digit
+    if (password.length < 8) return false;
+    if (!password.contains(RegExp(r'[A-Z]'))) return false;
+    if (!password.contains(RegExp(r'[0-9]'))) return false;
+    return true;
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   Future<void> _handleSignup() async {
     final email = _emailController.text.trim();
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
+    // ── Field presence ──
     if (email.isEmpty || username.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
-      );
+      _showError('Please fill in all fields');
       return;
     }
 
+    // ── Email format ──
+    if (!_isValidEmail(email)) {
+      _showError('Please enter a valid email address (e.g. user@example.com)');
+      return;
+    }
+
+    // ── Username rules ──
+    if (!_isValidUsername(username)) {
+      _showError('Username must be 3–30 characters and contain only letters, digits, or underscores');
+      return;
+    }
+
+    // ── Password strength ──
+    if (!_isStrongPassword(password)) {
+      _showError('Password must be at least 8 characters and include an uppercase letter and a number');
+      return;
+    }
+
+    // ── Passwords match ──
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
+      _showError('Passwords do not match');
       return;
     }
 
+    // ── Terms agreement ──
     if (!_agreedToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please agree to Terms and Conditions')),
-      );
+      _showError('Please agree to the Terms and Conditions to continue');
       return;
     }
 
@@ -71,9 +118,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
         MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'Registration failed')),
-      );
+      _showError(result['message'] ?? 'Registration failed');
     }
   }
 

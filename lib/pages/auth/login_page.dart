@@ -20,14 +20,43 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _rememberMe = true;
 
+  // ── Validators ──────────────────────────────────────────────────────────
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[\w.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}$');
+    return emailRegex.hasMatch(email);
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
   Future<void> _handleLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
+    // ── Field presence ──
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
-      );
+      _showError('Please fill in all fields');
+      return;
+    }
+
+    // ── Email format ──
+    if (!_isValidEmail(email)) {
+      _showError('Please enter a valid email address (e.g. user@example.com)');
+      return;
+    }
+
+    // ── Password length ──
+    if (password.length < 6) {
+      _showError('Password must be at least 6 characters');
       return;
     }
 
@@ -70,9 +99,7 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'Login failed')),
-      );
+      _showError(result['message'] ?? 'Login failed');
     }
   }
 

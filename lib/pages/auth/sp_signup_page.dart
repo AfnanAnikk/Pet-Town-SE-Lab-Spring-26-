@@ -21,23 +21,83 @@ class _SpSignupPageState extends State<SpSignupPage> {
   bool _agreedToTerms = true;
   String _selectedServiceType = '';
 
+  // ── Validators ────────────────────────────────────────────────────────────
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[\w.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}$');
+    return emailRegex.hasMatch(email);
+  }
+
+  bool _isValidPhone(String phone) {
+    // Digits only, 10–15 characters
+    final phoneRegex = RegExp(r'^[0-9]{10,15}$');
+    return phoneRegex.hasMatch(phone);
+  }
+
+  bool _isStrongPassword(String password) {
+    // At least 8 chars, one uppercase letter, one digit
+    if (password.length < 8) return false;
+    if (!password.contains(RegExp(r'[A-Z]'))) return false;
+    if (!password.contains(RegExp(r'[0-9]'))) return false;
+    return true;
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   Future<void> _handleSignup() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final phone = _phoneController.text.trim();
 
+    // ── Field presence ──
     if (name.isEmpty || email.isEmpty || password.isEmpty || phone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
-      );
+      _showError('Please fill in all fields');
       return;
     }
 
+    // ── Service name length ──
+    if (name.length < 2) {
+      _showError('Service name must be at least 2 characters');
+      return;
+    }
+
+    // ── Service type selection ──
+    if (_selectedServiceType.isEmpty) {
+      _showError('Please select a service type');
+      return;
+    }
+
+    // ── Email format ──
+    if (!_isValidEmail(email)) {
+      _showError('Please enter a valid email address (e.g. user@example.com)');
+      return;
+    }
+
+    // ── Password strength ──
+    if (!_isStrongPassword(password)) {
+      _showError('Password must be at least 8 characters and include an uppercase letter and a number');
+      return;
+    }
+
+    // ── Phone number ──
+    if (!_isValidPhone(phone)) {
+      _showError('Phone number must contain only digits and be 10–15 digits long');
+      return;
+    }
+
+    // ── Terms agreement ──
     if (!_agreedToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please agree to Terms and Conditions')),
-      );
+      _showError('Please agree to the Terms and Conditions to continue');
       return;
     }
 
@@ -68,9 +128,7 @@ class _SpSignupPageState extends State<SpSignupPage> {
         MaterialPageRoute(builder: (_) => SpVerificationPage(userId: result['data']['userId'], serviceType: _selectedServiceType)),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'Registration failed')),
-      );
+      _showError(result['message'] ?? 'Registration failed');
     }
   }
 

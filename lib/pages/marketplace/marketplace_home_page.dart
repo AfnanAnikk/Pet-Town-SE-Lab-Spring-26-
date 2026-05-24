@@ -18,6 +18,7 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
   bool _isLoading = true;
   List<dynamic> _stores = [];
   String _searchQuery = '';
+  String _selectedCategory = ''; // empty = no filter
 
   final List<Map<String, dynamic>> _categories = [
     {'name': 'Food', 'icon': Icons.pets},
@@ -57,12 +58,19 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Filter stores based on search
+    // Filter stores based on search query AND selected category
     final filteredStores = _stores.where((s) {
       final name = s['name'].toString().toLowerCase();
       final loc = s['location']?.toString().toLowerCase() ?? '';
       final q = _searchQuery.toLowerCase();
-      return name.contains(q) || loc.contains(q);
+      final matchesSearch = name.contains(q) || loc.contains(q);
+
+      // Category filter: match the store's category field (case-insensitive)
+      final storeCategory = s['category']?.toString().toLowerCase() ?? '';
+      final matchesCategory = _selectedCategory.isEmpty ||
+          storeCategory.contains(_selectedCategory.toLowerCase());
+
+      return matchesSearch && matchesCategory;
     }).toList();
 
     return Scaffold(
@@ -203,22 +211,56 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: _categories.map((cat) {
-                            return Column(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-                                    ],
+                            final isSelected = _selectedCategory == cat['name'];
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  // Tap same category again → deselect
+                                  _selectedCategory =
+                                      isSelected ? '' : cat['name'] as String;
+                                });
+                              },
+                              child: Column(
+                                children: [
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(0xFF3293B3)
+                                          : Colors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: isSelected
+                                              ? const Color(0xFF3293B3).withOpacity(0.35)
+                                              : Colors.black.withOpacity(0.05),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      cat['icon'] as IconData,
+                                      color: isSelected ? Colors.white : const Color(0xFF3293B3),
+                                      size: 28,
+                                    ),
                                   ),
-                                  child: Icon(cat['icon'], color: const Color(0xFF3293B3), size: 28),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(cat['name'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                              ],
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    cat['name'] as String,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? const Color(0xFF3293B3)
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             );
                           }).toList(),
                         ),
@@ -228,12 +270,35 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
                 ),
 
                 // Nearby Shops Header
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
-                    child: Text(
-                      'Nearby Shops',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF374957)),
+                    padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _selectedCategory.isEmpty
+                              ? 'Nearby Shops'
+                              : '$_selectedCategory Shops',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF374957),
+                          ),
+                        ),
+                        if (_selectedCategory.isNotEmpty)
+                          GestureDetector(
+                            onTap: () => setState(() => _selectedCategory = ''),
+                            child: const Text(
+                              'Clear filter',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF3293B3),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),

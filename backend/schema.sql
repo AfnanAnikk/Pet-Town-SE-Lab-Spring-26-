@@ -142,6 +142,8 @@ CREATE TABLE IF NOT EXISTS bookings (
     slot_time VARCHAR(255),
     booking_date VARCHAR(255),
     status VARCHAR(50) DEFAULT 'pending',
+    voucher_code VARCHAR(50),
+    discount_amount INT DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (vet_id) REFERENCES vets(id) ON DELETE CASCADE
 );
@@ -211,6 +213,19 @@ CREATE TABLE IF NOT EXISTS coupons (
     expires_at TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS vet_vouchers (
+    id SERIAL PRIMARY KEY,
+    vet_id INT NOT NULL,
+    code VARCHAR(50) NOT NULL,
+    discount_percent INT NOT NULL,
+    max_uses INT DEFAULT 100,
+    used_count INT DEFAULT 0,
+    expires_at TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (vet_id) REFERENCES vets(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS orders (

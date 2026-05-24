@@ -36,6 +36,7 @@ app.use('/api/marketplace', require('./routes/marketplaceRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/vouchers', require('./routes/voucherRoutes'));
 
 // Socket.io connection logic
 io.on('connection', (socket) => {

@@ -1,14 +1,33 @@
 const db = require('../config/db');
 
 exports.createBooking = async (req, res) => {
-  const { userId, vetId, petName, petSpecies, petBreed, petSex, petAge, concern, reason, paymentMethod, slotTime, bookingDate } = req.body;
+  const { userId, vetId, petName, petSpecies, petBreed, petSex, petAge, concern, reason, paymentMethod, slotTime, bookingDate, voucherCode, discountAmount } = req.body;
 
   try {
     const [result] = await db.execute(
-      `INSERT INTO bookings (user_id, vet_id, pet_name, pet_species, pet_breed, pet_sex, pet_age, concern, reason, payment_method, slot_time, booking_date) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId, vetId, petName, petSpecies, petBreed, petSex, petAge, concern, reason, paymentMethod, slotTime, bookingDate || new Date().toISOString().split('T')[0]]
+      `INSERT INTO bookings (user_id, vet_id, pet_name, pet_species, pet_breed, pet_sex, pet_age, concern, reason, payment_method, slot_time, booking_date, voucher_code, discount_amount) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId, 
+        vetId, 
+        petName, 
+        petSpecies, 
+        petBreed, 
+        petSex, 
+        petAge, 
+        concern, 
+        reason, 
+        paymentMethod, 
+        slotTime, 
+        bookingDate || new Date().toISOString().split('T')[0],
+        voucherCode || null,
+        discountAmount || 0
+      ]
     );
+
+    if (voucherCode) {
+      await db.execute('UPDATE vet_vouchers SET used_count = used_count + 1 WHERE vet_id = ? AND LOWER(code) = LOWER(?)', [vetId, voucherCode.trim()]);
+    }
 
     res.status(201).json({ message: 'Booking created successfully', bookingId: result.insertId });
   } catch (error) {

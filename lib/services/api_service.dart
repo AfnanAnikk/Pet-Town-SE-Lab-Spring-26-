@@ -667,6 +667,85 @@ class ApiService {
     }
   }
 
+  // --- Vet Vouchers ---
+  static Future<Map<String, dynamic>> getVetVouchers(int vetId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vouchers/vet/$vetId')}'),
+        headers: await _getHeaders(),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getAvailableVetVouchers(int vetId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vouchers/vet/$vetId/available')}'),
+        headers: await _getHeaders(),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> createVetVoucher(Map<String, dynamic> payload) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vouchers')}'),
+        headers: await _getHeaders(),
+        body: jsonEncode(payload),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateVetVoucher(int voucherId, Map<String, dynamic> payload) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vouchers/$voucherId')}'),
+        headers: await _getHeaders(),
+        body: jsonEncode(payload),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteVetVoucher(int voucherId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vouchers/$voucherId')}'),
+        headers: await _getHeaders(),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> validateVetVoucher(int vetId, String code) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vouchers/validate')}'),
+        headers: await _getHeaders(),
+        body: jsonEncode({
+          'vetId': vetId,
+          'code': code,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   static Map<String, dynamic> _handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return {

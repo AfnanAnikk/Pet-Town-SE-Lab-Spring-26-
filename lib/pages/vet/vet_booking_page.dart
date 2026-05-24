@@ -25,6 +25,12 @@ class _VetBookingPageState extends State<VetBookingPage> {
   String? reasonForVisit;
   String? paymentMethod;
   bool _isBooking = false;
+  
+  String? _appliedVoucherCode;
+  int _discountPercent = 0;
+  int _discountAmount = 0;
+  List<dynamic> _availableVouchers = [];
+  bool _isLoadingVouchers = false;
 
   void _handleBooking() async {
     if (petDetails == null || selectedConcern == null || reasonForVisit == null || paymentMethod == null || selectedDate == null || selectedTime == null) {
@@ -58,6 +64,8 @@ class _VetBookingPageState extends State<VetBookingPage> {
       'paymentMethod': paymentMethod,
       'slotTime': selectedTime,
       'bookingDate': formattedDate.split(' at ').first,
+      'voucherCode': _appliedVoucherCode,
+      'discountAmount': _discountAmount,
     };
 
     final result = await ApiService.createBooking(bookingData);
@@ -86,6 +94,7 @@ class _VetBookingPageState extends State<VetBookingPage> {
   @override
   void initState() {
     super.initState();
+    _loadAvailableVouchers();
 
     for (final slot in widget.vet.availableSlots) {
       final parts = slot.split(' at ');
@@ -427,23 +436,82 @@ class _VetBookingPageState extends State<VetBookingPage> {
                     onTap: _showPaymentSheet,
                   ),
                   
-                  InkWell(
-                    onTap: () {},
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                      decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.local_offer_outlined, color: Colors.black87, size: 28),
-                          const SizedBox(width: 16),
-                          const Text(
-                            'Apply voucher ( if any )',
-                            style: TextStyle(fontSize: 18, color: Colors.black87),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                    decoration: const BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.local_offer_outlined, color: Colors.black87, size: 28),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Voucher',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              if (_appliedVoucherCode != null) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE8F5E9),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        '$_appliedVoucherCode ($_discountPercent% OFF)',
+                                        style: const TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _appliedVoucherCode = null;
+                                          _discountPercent = 0;
+                                          _discountAmount = 0;
+                                        });
+                                      },
+                                      child: const Icon(Icons.cancel, color: Colors.red, size: 20),
+                                    ),
+                                  ],
+                                ),
+                              ] else ...[
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'No voucher applied',
+                                  style: TextStyle(fontSize: 15, color: Colors.black54),
+                                ),
+                              ]
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        if (_appliedVoucherCode == null)
+                          TextButton(
+                            onPressed: _showVoucherBottomSheet,
+                            child: const Text(
+                              'Apply',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF3FA9F5),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],
@@ -472,10 +540,38 @@ class _VetBookingPageState extends State<VetBookingPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'BDT ${widget.vet.price}',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-                        ),
+                        if (_discountAmount > 0) ...[
+                          Row(
+                            children: [
+                              Text(
+                                'BDT ${widget.vet.price}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  decoration: TextDecoration.lineThrough,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'BDT ${widget.vet.price - _discountAmount}',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            'Saved BDT $_discountAmount ($_discountPercent% off)',
+                            style: const TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold),
+                          ),
+                        ] else ...[
+                          Text(
+                            'BDT ${widget.vet.price}',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                          ),
+                        ],
                         Text(
                           'Incl. tax\n${selectedDate != null && selectedTime != null ? "$selectedDate at $selectedTime" : "No slot selected"}',
                           style: const TextStyle(fontSize: 12, color: Colors.black54),
@@ -504,6 +600,215 @@ class _VetBookingPageState extends State<VetBookingPage> {
           ),
         ],
       ),
+    );
+  Future<void> _loadAvailableVouchers() async {
+    setState(() {
+      _isLoadingVouchers = true;
+    });
+    final res = await ApiService.getAvailableVetVouchers(widget.vet.id);
+    if (res['success']) {
+      setState(() {
+        _availableVouchers = res['data'] ?? [];
+        _isLoadingVouchers = false;
+      });
+    } else {
+      setState(() {
+        _isLoadingVouchers = false;
+      });
+    }
+  }
+
+  void _showVoucherBottomSheet() {
+    final manualCodeController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.7,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Apply Voucher',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF374957)),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Manual code entry
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: manualCodeController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: InputDecoration(
+                            hintText: 'Enter Voucher Code',
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Color(0xFF3FA9F5)),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final code = manualCodeController.text.trim();
+                          if (code.isEmpty) return;
+                          
+                          final res = await ApiService.validateVetVoucher(widget.vet.id, code);
+                          if (res['success'] && res['data']?['valid'] == true) {
+                            final voucher = res['data']['voucher'];
+                            setState(() {
+                              _appliedVoucherCode = voucher['code'];
+                              _discountPercent = voucher['discount_percent'] ?? 0;
+                              _discountAmount = ((widget.vet.price * _discountPercent) / 100).round();
+                            });
+                            if (mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Voucher applied! $_discountPercent% off')),
+                              );
+                            }
+                          } else {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(res['data']?['message'] ?? res['message'] ?? 'Invalid voucher code')),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF3FA9F5),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  const Text(
+                    'Available Vouchers',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF374957)),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  Expanded(
+                    child: _isLoadingVouchers
+                        ? const Center(child: CircularProgressIndicator())
+                        : _availableVouchers.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'No vouchers available right now.',
+                                  style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: _availableVouchers.length,
+                                itemBuilder: (context, index) {
+                                  final v = _availableVouchers[index];
+                                  final expiry = v['expires_at'] != null ? DateTime.tryParse(v['expires_at']) : null;
+                                  final expiryStr = expiry != null ? '${expiry.day}/${expiry.month}/${expiry.year}' : 'Never';
+                                  
+                                  return Card(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    elevation: 1,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFE8F5E9),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              '${v['discount_percent']}% OFF',
+                                              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  v['code'],
+                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF374957)),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text('Expires: $expiryStr', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                              ],
+                                            ),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                _appliedVoucherCode = v['code'];
+                                                _discountPercent = v['discount_percent'] ?? 0;
+                                                _discountAmount = ((widget.vet.price * _discountPercent) / 100).round();
+                                              });
+                                              Navigator.pop(context);
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('Voucher applied! $_discountPercent% off')),
+                                              );
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.green,
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                            ),
+                                            child: const Text('Use', style: TextStyle(fontWeight: FontWeight.bold)),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

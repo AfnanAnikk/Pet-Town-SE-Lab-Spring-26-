@@ -17,6 +17,9 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   bool _isLoading = true;
   List<dynamic> _bookings = [];
   String _errorMessage = '';
+  int? _vetId;
+  List<dynamic> _vouchers = [];
+  bool _isVouchersLoading = true;
 
   @override
   void initState() {
@@ -127,9 +130,11 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
           Expanded(
             child: _selectedIndex == 0 
                 ? _buildDashboardContent() 
-                : _selectedIndex == 3
-                    ? const ProviderProfilePage()
-                    : const Center(child: Text("Feature coming soon")),
+                : _selectedIndex == 2
+                    ? _buildVouchersContent()
+                    : _selectedIndex == 4
+                        ? const ProviderProfilePage()
+                        : const Center(child: Text("Feature coming soon")),
           ),
         ],
       ),
@@ -149,6 +154,9 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
           setState(() {
             _selectedIndex = index;
           });
+          if (index == 2) {
+            _fetchVouchers();
+          }
         },
         items: const [
           BottomNavigationBarItem(
@@ -160,6 +168,11 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
             icon: Icon(Icons.calendar_month_outlined),
             activeIcon: Icon(Icons.calendar_month),
             label: 'Bookings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.discount_outlined),
+            activeIcon: Icon(Icons.discount),
+            label: 'Vouchers',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),
@@ -433,6 +446,298 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
           ],
         ),
       ),
+  Future<void> _fetchVouchers() async {
+    setState(() {
+      _isVouchersLoading = true;
+    });
+
+    if (_vetId == null) {
+      final userId = await AuthService.getUserId();
+      if (userId == null) {
+        setState(() {
+          _errorMessage = 'User not logged in';
+          _isVouchersLoading = false;
+        });
+        return;
+      }
+      final profileRes = await ApiService.getVetProfile(userId);
+      if (profileRes['success'] && profileRes['data'] != null) {
+        _vetId = profileRes['data']['id'];
+      } else {
+        setState(() {
+          _errorMessage = profileRes['message'] ?? 'Failed to load profile';
+          _isVouchersLoading = false;
+        });
+        return;
+      }
+    }
+
+    if (_vetId != null) {
+      final result = await ApiService.getVetVouchers(_vetId!);
+      if (result['success']) {
+        setState(() {
+          _vouchers = result['data'];
+          _isVouchersLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = result['message'] ?? 'Failed to load vouchers';
+          _isVouchersLoading = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildVouchersContent() {
+    return _isVouchersLoading
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Vouchers',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF374957),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: _showAddVoucherDialog,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Add Voucher'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3FA9F5),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: _vouchers.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No vouchers active. Add a unique voucher for your business!',
+                          style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        itemCount: _vouchers.length,
+                        itemBuilder: (context, index) {
+                          final v = _vouchers[index];
+                          final expiry = v['expires_at'] != null ? DateTime.tryParse(v['expires_at']) : null;
+                          final expiryStr = expiry != null ? '${expiry.day}/${expiry.month}/${expiry.year}' : 'Never';
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 1,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE8F5E9),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          '${v['discount_percent']}%',
+                                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
+                                        ),
+                                        const Text(
+                                          'OFF',
+                                          style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          v['code'],
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF374957)),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text('Expires: $expiryStr', style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                                        Text('Uses: ${v['used_count']}/${v['max_uses']}', style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ),
+                                  Column(
+                                    children: [
+                                      Switch(
+                                        value: v['is_active'] == 1 || v['is_active'] == true,
+                                        onChanged: (val) async {
+                                          final payload = {
+                                            'code': v['code'],
+                                            'discountPercent': v['discount_percent'],
+                                            'maxUses': v['max_uses'],
+                                            'expiresAt': v['expires_at'],
+                                            'isActive': val
+                                          };
+                                          await ApiService.updateVetVoucher(v['id'], payload);
+                                          _fetchVouchers();
+                                        },
+                                        activeColor: const Color(0xFF3FA9F5),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                        onPressed: () async {
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: const Text('Delete Voucher'),
+                                              content: const Text('Are you sure you want to delete this voucher?'),
+                                              actions: [
+                                                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(context, true),
+                                                  child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm == true) {
+                                            final res = await ApiService.deleteVetVoucher(v['id']);
+                                            if (res['success']) {
+                                              _fetchVouchers();
+                                            }
+                                          }
+                                        },
+                                      )
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+  }
+
+  void _showAddVoucherDialog() {
+    final codeController = TextEditingController();
+    final discountController = TextEditingController();
+    final maxUsesController = TextEditingController();
+    DateTime? selectedExpiry;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text('Add Voucher', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF3293B3))),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: codeController,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: const InputDecoration(labelText: 'Voucher Code *', hintText: 'e.g. SAVE20'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: discountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Discount Percent *', hintText: 'e.g. 20'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: maxUsesController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Max Uses Limit', hintText: 'e.g. 100'),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(selectedExpiry == null
+                              ? 'No Expiry Date Set'
+                              : 'Expires: ${selectedExpiry!.day}/${selectedExpiry!.month}/${selectedExpiry!.year}'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now().add(const Duration(days: 7)),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(const Duration(days: 365)),
+                            );
+                            if (picked != null) {
+                              setDialogState(() => selectedExpiry = picked);
+                            }
+                          },
+                          child: const Text('Select Date'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3FA9F5)),
+                  onPressed: () async {
+                    final code = codeController.text.trim().toUpperCase();
+                    final discount = int.tryParse(discountController.text) ?? 0;
+                    if (code.isEmpty || discount <= 0 || discount > 100) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill required fields (discount 1-100%)')));
+                      return;
+                    }
+
+                    if (_vetId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vet profile data missing.')));
+                      return;
+                    }
+                    
+                    final res = await ApiService.createVetVoucher({
+                      'vetId': _vetId,
+                      'code': code,
+                      'discountPercent': discount,
+                      'maxUses': int.tryParse(maxUsesController.text) ?? 100,
+                      'expiresAt': selectedExpiry?.toIso8601String(),
+                    });
+
+                    if (mounted) Navigator.pop(context);
+                    
+                    if (res['success']) {
+                      _fetchVouchers();
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Voucher created successfully!')));
+                    } else {
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Failed to create voucher')));
+                    }
+                  },
+                  child: const Text('Create', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          }
+        );
+      },
     );
   }
 }

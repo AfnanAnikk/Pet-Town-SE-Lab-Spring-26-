@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ShieldAlert, ShoppingBag, TrendingUp, Users, Scissors, Heart, Calendar, MessageSquare, Settings, Search, Bell, Activity, FileText, CheckCircle2, XCircle, X, Download } from 'lucide-react';
 import './index.css';
-import logo from '../assets/logo.png';
+import logo from "./assets/logo.png";
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://pet-town-backend.onrender.com/api/admin';
 

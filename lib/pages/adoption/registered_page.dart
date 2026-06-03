@@ -65,6 +65,39 @@ class _RegisteredPageState extends State<RegisteredPage> {
     );
   }
 
+  Future<void> _updateRequestStatus(dynamic requestIdRaw, String status) async {
+    final requestId = requestIdRaw is int
+        ? requestIdRaw
+        : int.tryParse(requestIdRaw?.toString() ?? '');
+
+    if (requestId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid request ID')),
+      );
+      return;
+    }
+
+    final res = await ApiService.updateAdoptionRequestStatus(requestId, status);
+
+    if (!mounted) return;
+
+    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          res['success'] == true
+              ? 'Request $status successfully'
+              : res['message'] ?? 'Failed to update request',
+        ),
+      ),
+    );
+
+    if (res['success'] == true) {
+      _fetchAllRequests();
+    }
+  }
+
   void _showBookedPetModal(dynamic request) {
     final ownerId = int.tryParse(request['owner_user_id'].toString());
     final ownerName = request['owner_username'] ?? request['owner_name'] ?? 'Owner';
@@ -135,6 +168,47 @@ class _RegisteredPageState extends State<RegisteredPage> {
                     name: requesterName,
                     image: requesterImage,
                   ),
+          extraActions: request['request_status'] == 'pending'
+            ? Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _updateRequestStatus(request['request_id'], 'rejected'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Reject',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => _updateRequestStatus(request['request_id'], 'accepted'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Accept',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : null,
         );
       },
     );
@@ -149,6 +223,7 @@ class _RegisteredPageState extends State<RegisteredPage> {
     required List<List<dynamic>> details,
     required String buttonText,
     required VoidCallback? onMessage,
+    Widget? extraActions,
   }) {
     return Container(
       margin: const EdgeInsets.only(top: 80),
@@ -244,6 +319,10 @@ class _RegisteredPageState extends State<RegisteredPage> {
                 ),
               ),
             ),
+            if (extraActions != null) ...[
+              const SizedBox(height: 12),
+              extraActions,
+            ],
           ],
         ),
       ),

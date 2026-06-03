@@ -99,9 +99,11 @@ class _AdoptionPageState extends State<AdoptionPage> with SingleTickerProviderSt
       body: TabBarView(
         controller: _tabController,
         physics: const NeverScrollableScrollPhysics(), // Match segmented control feel
-        children: const [
+        children: [
           NewFriendPage(),
-          RehomePage(),
+          RehomePage(onSubmitted: () {
+            _tabController.animateTo(0);
+          }),
           RegisteredPage(),
           SheltersPage(),
         ],

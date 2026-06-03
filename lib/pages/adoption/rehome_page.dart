@@ -4,9 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import 'new_friend_page.dart';
 
 class RehomePage extends StatefulWidget {
-  const RehomePage({super.key});
+  final VoidCallback onSubmitted;
+
+  const RehomePage({
+    super.key,
+    required this.onSubmitted,
+  });
 
   @override
   State<RehomePage> createState() => _RehomePageState();
@@ -51,9 +57,22 @@ class _RehomePageState extends State<RehomePage> {
     _formKey.currentState!.save();
 
     final userId = await AuthService.getUserId();
+
     if (userId == null) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User not logged in')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not logged in')),
+        );
+      }
       return;
+    }
+
+    String accountUsername = 'User';
+
+    final profileRes = await AuthService.getProfile(userId);
+    if (profileRes['success'] == true && profileRes['data'] != null) {
+      final user = profileRes['data']['user'] ?? profileRes['data'];
+      accountUsername = user['username'] ?? user['display_name'] ?? 'User';
     }
 
     setState(() => _isSubmitting = true);
@@ -75,14 +94,14 @@ class _RehomePageState extends State<RehomePage> {
     // 2. Submit the adoption post
     final postRes = await ApiService.createAdoption({
       'user_id': userId,
-      'pet_name': 'New Pet', // Can be derived or added as field, using placeholder since image showed "Write your pet name here" in "Pet type" label, wait let's use petType as pet name if needed, but let's just pass 'New Pet' or a default since the form lacked an explicit Pet Name field, wait image 2 says "Pet type - Write your pet name here", so petType is effectively pet name in the user's mockup.
+      'pet_name': petType?.trim().isNotEmpty == true ? petType!.trim() : '',
       'pet_type': petType, 
       'pet_age': petAge,
       'pet_breed': petBreed,
       'pet_traits': petTraits,
       'pet_gender': petGender,
       'pet_food_habit': petFoodHabit,
-      'owner_name': ownerName,
+      'owner_name': '$accountUsername (${ownerName?.trim() ?? ''})',
       'owner_contact': ownerContact,
       'description': description,
       'image_url': imageUrl
@@ -92,12 +111,13 @@ class _RehomePageState extends State<RehomePage> {
 
     if (postRes['success']) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Adoption post submitted successfully!')));
-        // Reset form
         _formKey.currentState!.reset();
+
         setState(() {
           _imageFile = null;
         });
+
+        widget.onSubmitted();
       }
     } else {
       if (mounted) {
@@ -117,40 +137,83 @@ class _RehomePageState extends State<RehomePage> {
           children: [
             GestureDetector(
               onTap: _pickImage,
-              child: Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: const Color(0xFF3293B3)),
-                  image: _imageFile != null
-                      ? DecorationImage(image: FileImage(_imageFile!), fit: BoxFit.cover)
-                      : null,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  height: 220,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAF1F1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFF3293B3).withValues(alpha: 0.35),
+                    ),
+                    image: _imageFile != null
+                        ? DecorationImage(
+                            image: FileImage(_imageFile!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: _imageFile == null
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF3293B3),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.add_photo_alternate_outlined,
+                                color: Colors.white,
+                                size: 32,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              'Choose pet photo',
+                              style: GoogleFonts.outfit(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF374957),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Upload a clear image for adoption',
+                              style: GoogleFonts.outfit(
+                                fontSize: 13,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Stack(
+                          children: [
+                            Positioned(
+                              right: 12,
+                              bottom: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.55),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  'Change photo',
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
-                child: _imageFile == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: Colors.black,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.add, color: Colors.white, size: 24),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Add media files ( photos\nor videos )',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(
-                              fontSize: 16,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      )
-                    : null,
               ),
             ),
             const SizedBox(height: 20),
@@ -160,7 +223,7 @@ class _RehomePageState extends State<RehomePage> {
             _buildTextField('Pet Traits', 'Write your pet traits here', (v) => petTraits = v),
             _buildTextField('Pet Gender', 'Write your pet gender here', (v) => petGender = v),
             _buildTextField('Pet Food Habit', 'Write your pet food habit here', (v) => petFoodHabit = v),
-            _buildTextField('Your Name', 'Write your name here', (v) => ownerName = v),
+            _buildTextField('Nickname', 'Write your name here', (v) => ownerName = v),
             _buildTextField('Your Contact No', 'Write your contact number here', (v) => ownerContact = v, isNumber: true),
             _buildTextField('Add description of pet', 'Write something about your pet here', (v) => description = v, maxLines: 3),
             const SizedBox(height: 20),
@@ -174,7 +237,7 @@ class _RehomePageState extends State<RehomePage> {
               child: _isSubmitting 
                   ? const CircularProgressIndicator(color: Colors.white)
                   : Text(
-                      'Done',
+                      'Post',
                       style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                     ),
             ),
@@ -185,32 +248,56 @@ class _RehomePageState extends State<RehomePage> {
     );
   }
 
-  Widget _buildTextField(String label, String hint, Function(String?) onSaved, {int maxLines = 1, bool isNumber = false}) {
+  Widget _buildTextField(
+    String label,
+    String hint,
+    Function(String?) onSaved, {
+    int maxLines = 1,
+    bool isNumber = false,
+  }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold),
+            style: GoogleFonts.outfit(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF374957),
+            ),
           ),
+          const SizedBox(height: 8),
           TextFormField(
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(vertical: 8),
-              enabledBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.black54),
+              hintStyle: GoogleFonts.outfit(
+                fontSize: 14,
+                color: Colors.grey.shade500,
               ),
-              focusedBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFF3293B3), width: 2),
+              filled: true,
+              fillColor: const Color(0xFFEAF1F1),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: Color(0xFF3293B3),
+                  width: 1.4,
+                ),
               ),
             ),
             maxLines: maxLines,
             keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
-            validator: (value) => value == null || value.isEmpty ? 'Required field' : null,
+            validator: (value) =>
+                value == null || value.trim().isEmpty ? 'Required field' : null,
             onSaved: onSaved,
           ),
         ],

@@ -279,6 +279,23 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> updateAdoptionRequestStatus(
+    int requestId,
+    String status,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/adoptions/requests/$requestId/status')}'),
+        headers: headers,
+        body: jsonEncode({'status': status}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
 
 
   static Future<Map<String, dynamic>> likePost(int postId, int userId) async {

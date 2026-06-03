@@ -10,5 +10,6 @@ router.post('/:id/request', adoptionController.requestAdoption);
 router.get('/user/:userId', adoptionController.getUserAdoptions);
 router.get('/requests/:userId', adoptionController.getUserAdoptionRequests);
 router.get('/owner-requests/:userId', adoptionController.getOwnerAdoptionRequests);
+router.put('/requests/:requestId/status', adoptionController.updateAdoptionRequestStatus);
 
 module.exports = router;

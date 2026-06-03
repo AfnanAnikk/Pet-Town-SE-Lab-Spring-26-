@@ -19,7 +19,7 @@ class _AdoptionPageState extends State<AdoptionPage> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -88,7 +88,6 @@ class _AdoptionPageState extends State<AdoptionPage> with SingleTickerProviderSt
                     Tab(child: Text('Friend')),
                     Tab(child: Text('Re-Home')),
                     Tab(child: Text('Register')),
-                    Tab(child: Text('Shelter')),
                   ],
                 ),
               ),
@@ -98,14 +97,13 @@ class _AdoptionPageState extends State<AdoptionPage> with SingleTickerProviderSt
       ),
       body: TabBarView(
         controller: _tabController,
-        physics: const NeverScrollableScrollPhysics(), // Match segmented control feel
+        physics: const NeverScrollableScrollPhysics(), 
         children: [
           NewFriendPage(),
           RehomePage(onSubmitted: () {
             _tabController.animateTo(0);
           }),
           RegisteredPage(),
-          SheltersPage(),
         ],
       ),
       bottomNavigationBar: AppBottomNavBar(currentIndex: 2),

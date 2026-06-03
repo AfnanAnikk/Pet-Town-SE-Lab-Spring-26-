@@ -196,8 +196,13 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
           ),
           label: 'Home',
         ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.search, size: 28),
+        BottomNavigationBarItem(
+          icon: Image.asset('assets/images/search.png', width: 28, height: 28),
+          activeIcon: Image.asset(
+            widget.isOutsideTab ? 'assets/images/search.png' : 'assets/images/search1.png',
+            width: 28,
+            height: 28,
+          ),
           label: 'Search',
         ),
         BottomNavigationBarItem(
@@ -209,9 +214,14 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
           ),
           label: 'Features',
         ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.notifications_none, size: 28),
-          label: 'Notifications',
+        BottomNavigationBarItem(
+          icon: Image.asset('assets/images/notifications.png', width: 28, height: 28),
+          activeIcon: Image.asset(
+            widget.isOutsideTab ? 'assets/images/notifications.png' : 'assets/images/notifications1.png',
+            width: 28,
+            height: 28,
+          ),
+          label: 'Home',
         ),
         BottomNavigationBarItem(
           icon: _buildProfileIcon(),

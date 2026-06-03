@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ShieldAlert, ShoppingBag, TrendingUp, Users, Scissors, Heart, Calendar, MessageSquare, Settings, Search, Bell, Activity, FileText, CheckCircle2, XCircle, X, Download } from 'lucide-react';
 import './index.css';
+import logo from '../assets/logo.png';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://pet-town-backend.onrender.com/api/admin';
 
@@ -23,8 +24,8 @@ function Sidebar() {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <div style={{ width: 36, height: 36, background: '#1E293B', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ color: 'white', fontSize: 18 }}>🐱</span>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden' }}>
+          <img src={logo} alt="PetTown" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
         <h2>Pet Town</h2>
       </div>

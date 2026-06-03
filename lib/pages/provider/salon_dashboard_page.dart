@@ -64,7 +64,7 @@ class _SalonDashboardPageState extends State<SalonDashboardPage> {
     final profileRes = await ApiService.getSalonProfile(userId.toString());
 
     if (profileRes['success'] && profileRes['data'] != null) {
-      _salonId = profileRes['data']['id'];
+      _salonId = profileRes['data']['id']?.toString();
       _isVerified = profileRes['data']['is_verified'] == true ||
           profileRes['data']['is_verified'] == 1;
     }
@@ -503,7 +503,7 @@ class _SalonDashboardPageState extends State<SalonDashboardPage> {
     if (_salonId == null) {
       final profileRes = await ApiService.getSalonProfile(userId.toString());
       if (profileRes['success'] && profileRes['data'] != null) {
-        _salonId = profileRes['data']['id'];
+        _salonId = profileRes['data']['id']?.toString();
       } else {
         setState(() {
           _errorMessage = profileRes['message'] ?? 'Failed to load profile';

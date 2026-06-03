@@ -69,17 +69,28 @@ exports.getAdoptionById = async (req, res) => {
   }
 };
 
-exports.getUserAdoptions = async (req, res) => {
+exports.getUserAdoptionRequests = async (req, res) => {
   try {
-    const [adoptions] = await db.execute(`
-      SELECT * FROM adoptions 
-      WHERE user_id = ? 
-      ORDER BY created_at DESC
+    const [requests] = await db.execute(`
+      SELECT 
+        r.id as request_id,
+        r.status as request_status,
+        r.created_at as requested_at,
+        a.*,
+        owner.id as owner_user_id,
+        owner.username as owner_username,
+        owner.profile_picture_url as owner_profile_picture_url
+      FROM adoption_requests r
+      JOIN adoptions a ON r.adoption_id = a.id
+      JOIN users owner ON a.user_id = owner.id
+      WHERE r.user_id = ?
+      ORDER BY r.created_at DESC
     `, [req.params.userId]);
-    res.json(adoptions);
+
+    res.json(requests);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error fetching requests' });
   }
 };
 
@@ -142,21 +153,5 @@ exports.requestAdoption = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error requesting adoption' });
-  }
-};
-
-exports.getUserAdoptionRequests = async (req, res) => {
-  try {
-    const [requests] = await db.execute(`
-      SELECT r.id as request_id, r.status as request_status, a.* 
-      FROM adoption_requests r
-      JOIN adoptions a ON r.adoption_id = a.id
-      WHERE r.user_id = ?
-      ORDER BY r.created_at DESC
-    `, [req.params.userId]);
-    res.json(requests);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error fetching requests' });
   }
 };

@@ -84,7 +84,7 @@ exports.globalSearch = async (req, res) => {
       // Search ONLY users
       const searchTerm = `%${q.substring(1)}%`;
       const [users] = await db.execute(
-        'SELECT id, username, name, email, role, profile_picture_url FROM users WHERE name ILIKE ? OR email ILIKE ? OR username ILIKE ? LIMIT 20',
+        'SELECT id, username, display_name as name, email, role, profile_picture_url FROM users WHERE display_name ILIKE ? OR email ILIKE ? OR username ILIKE ? LIMIT 20',
         [searchTerm, searchTerm, searchTerm]
       );
       return res.json({ success: true, users: users, posts: [] });
@@ -92,7 +92,7 @@ exports.globalSearch = async (req, res) => {
       // Search BOTH users and posts
       const searchTerm = `%${q}%`;
       const [users] = await db.execute(
-        'SELECT id, username, name, email, role, profile_picture_url FROM users WHERE name ILIKE ? OR email ILIKE ? OR username ILIKE ? LIMIT 20',
+        'SELECT id, username, display_name as name, email, role, profile_picture_url FROM users WHERE display_name ILIKE ? OR email ILIKE ? OR username ILIKE ? LIMIT 20',
         [searchTerm, searchTerm, searchTerm]
       );
 

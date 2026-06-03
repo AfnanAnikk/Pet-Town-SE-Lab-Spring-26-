@@ -85,6 +85,50 @@ exports.getAdoptionById = async (req, res) => {
   }
 };
 
+exports.updateAdoptionRequestStatus = async (req, res) => {
+  const requestId = req.params.requestId;
+  const { status } = req.body;
+
+  if (!['accepted', 'rejected'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid status' });
+  }
+
+  try {
+    const [requests] = await db.execute(
+      'SELECT adoption_id FROM adoption_requests WHERE id = ?',
+      [requestId]
+    );
+
+    if (requests.length === 0) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    const adoptionId = requests[0].adoption_id;
+
+    await db.execute(
+      'UPDATE adoption_requests SET status = ? WHERE id = ?',
+      [status, requestId]
+    );
+
+    if (status === 'accepted') {
+      await db.execute(
+        "UPDATE adoptions SET status = 'adopted' WHERE id = ?",
+        [adoptionId]
+      );
+
+      await db.execute(
+        "UPDATE adoption_requests SET status = 'rejected' WHERE adoption_id = ? AND id != ? AND status = 'pending'",
+        [adoptionId, requestId]
+      );
+    }
+
+    res.json({ message: `Request ${status} successfully` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error updating adoption request' });
+  }
+};
+
 exports.getUserAdoptionRequests = async (req, res) => {
   try {
     const [requests] = await db.execute(`

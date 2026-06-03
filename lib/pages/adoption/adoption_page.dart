@@ -3,7 +3,6 @@ import '../../widgets/app_bottom_nav_bar.dart';
 import 'new_friend_page.dart';
 import 'rehome_page.dart';
 import 'registered_page.dart';
-import 'shelters_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AdoptionPage extends StatefulWidget {

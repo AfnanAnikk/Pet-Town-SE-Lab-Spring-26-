@@ -98,17 +98,21 @@ exports.globalSearch = async (req, res) => {
 
       const [posts] = await db.execute(`
         SELECT p.*,
-          COALESCE(
-            (SELECT json_agg(pt.tag_name) FROM post_tags pt WHERE pt.post_id = p.id),
-            '[]'
-          ) as tags
+               u.profile_picture_url,
+               COALESCE(u.username, u.display_name, p.author_name) AS author_name
         FROM posts p
+        JOIN users u ON p.user_id = u.id
         WHERE p.title ILIKE ?
         OR EXISTS (
           SELECT 1 FROM post_tags pt WHERE pt.post_id = p.id AND pt.tag_name ILIKE ?
         )
         LIMIT 20
       `, [searchTerm, searchTerm]);
+
+      for (let post of posts) {
+        const [tags] = await db.execute('SELECT tag_name FROM post_tags WHERE post_id = ?', [post.id]);
+        post.tags = tags.map(t => t.tag_name);
+      }
 
       return res.json({ success: true, users: users, posts: posts });
     }
@@ -132,7 +136,7 @@ exports.getNotifications = async (req, res) => {
     // Mark as read
     await db.execute('UPDATE notifications SET is_read = true WHERE user_id = ? AND is_read = false', [userId]);
 
-    res.json({ success: true, data: notifications });
+    res.json(notifications);
   } catch (error) {
     console.error('Error fetching notifications:', error);
     res.status(500).json({ success: false, message: 'Server error' });

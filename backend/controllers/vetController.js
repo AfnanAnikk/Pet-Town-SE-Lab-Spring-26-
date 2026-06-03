@@ -57,7 +57,7 @@ exports.getAllVets = async (req, res) => {
       const [licences] = await db.execute('SELECT licence_name FROM vet_licences WHERE vet_id = ?', [vet.id]);
       const [species] = await db.execute('SELECT species_name FROM vet_species WHERE vet_id = ?', [vet.id]);
       const [areas] = await db.execute('SELECT area_name FROM vet_areas WHERE vet_id = ?', [vet.id]);
-      const [reviews] = await db.execute('SELECT r.*, u.name as author_name FROM vet_reviews r JOIN users u ON r.user_id = u.id WHERE r.vet_id = ? ORDER BY r.created_at DESC', [vet.id]);
+      const [reviews] = await db.execute('SELECT r.*, u.display_name as author_name FROM vet_reviews r JOIN users u ON r.user_id = u.id WHERE r.vet_id = ? ORDER BY r.created_at DESC', [vet.id]);
 
       vet.tags = tags.map(t => t.tag_name);
       vet.availableSlots = slots.map(s => s.slot_time);
@@ -91,7 +91,7 @@ exports.getVetById = async (req, res) => {
     const [licences] = await db.execute('SELECT licence_name FROM vet_licences WHERE vet_id = ?', [vetId]);
     const [species] = await db.execute('SELECT species_name FROM vet_species WHERE vet_id = ?', [vetId]);
     const [areas] = await db.execute('SELECT area_name FROM vet_areas WHERE vet_id = ?', [vetId]);
-    const [reviews] = await db.execute('SELECT r.*, u.name as author_name FROM vet_reviews r JOIN users u ON r.user_id = u.id WHERE r.vet_id = ? ORDER BY r.created_at DESC', [vetId]);
+    const [reviews] = await db.execute('SELECT r.*, u.display_name as author_name FROM vet_reviews r JOIN users u ON r.user_id = u.id WHERE r.vet_id = ? ORDER BY r.created_at DESC', [vetId]);
 
     vet.tags = tags.map(t => t.tag_name);
     vet.availableSlots = slots.map(s => s.slot_time);

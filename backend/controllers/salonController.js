@@ -31,7 +31,7 @@ exports.getAllSalons = async (req, res) => {
     for (let salon of salons) {
       const [tags] = await db.execute('SELECT tag FROM salon_tags WHERE salon_id = ?', [salon.id]);
       const [slots] = await db.execute('SELECT slot_time FROM salon_slots WHERE salon_id = ?', [salon.id]);
-      const [reviews] = await db.execute('SELECT r.*, u.name as author_name FROM salon_reviews r JOIN users u ON r.user_id = u.id WHERE r.salon_id = ? ORDER BY r.created_at DESC', [salon.id]);
+      const [reviews] = await db.execute('SELECT r.*, u.display_name as author_name FROM salon_reviews r JOIN users u ON r.user_id = u.id WHERE r.salon_id = ? ORDER BY r.created_at DESC', [salon.id]);
 
       salon.tags = tags.map(t => t.tag);
       salon.availableSlots = slots.map(s => s.slot_time);
@@ -55,7 +55,7 @@ exports.getSalonById = async (req, res) => {
     const salon = salons[0];
     const [tags] = await db.execute('SELECT tag FROM salon_tags WHERE salon_id = ?', [salonId]);
     const [slots] = await db.execute('SELECT slot_time FROM salon_slots WHERE salon_id = ?', [salonId]);
-    const [reviews] = await db.execute('SELECT r.*, u.name as author_name FROM salon_reviews r JOIN users u ON r.user_id = u.id WHERE r.salon_id = ? ORDER BY r.created_at DESC', [salonId]);
+    const [reviews] = await db.execute('SELECT r.*, u.display_name as author_name FROM salon_reviews r JOIN users u ON r.user_id = u.id WHERE r.salon_id = ? ORDER BY r.created_at DESC', [salonId]);
 
     salon.tags = tags.map(t => t.tag);
     salon.availableSlots = slots.map(s => s.slot_time);

@@ -49,8 +49,9 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> with SingleTickerPr
 
     final res = await ApiService.globalSearch(query.trim());
     if (res['success']) {
-      final userList = res['users'] as List? ?? [];
-      final postList = res['posts'] as List? ?? [];
+      final data = res['data'] ?? {};
+      final userList = data['users'] as List? ?? [];
+      final postList = data['posts'] as List? ?? [];
 
       setState(() {
         _users = userList;

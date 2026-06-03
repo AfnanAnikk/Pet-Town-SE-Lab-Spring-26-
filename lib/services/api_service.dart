@@ -266,7 +266,20 @@ class ApiService {
     }
   }
 
-  
+  static Future<Map<String, dynamic>> getOwnerAdoptionRequests(int userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/adoptions/owner-requests/$userId')}'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+
 
   static Future<Map<String, dynamic>> likePost(int postId, int userId) async {
     try {

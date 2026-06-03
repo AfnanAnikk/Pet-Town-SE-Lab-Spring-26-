@@ -16,6 +16,40 @@ exports.getAllAdoptions = async (req, res) => {
   }
 };
 
+exports.getOwnerAdoptionRequests = async (req, res) => {
+  try {
+    const [requests] = await db.execute(`
+      SELECT 
+        r.id as request_id,
+        r.status as request_status,
+        r.requester_name,
+        r.requester_phone,
+        r.requester_address,
+        r.pickup_date,
+        r.created_at as requested_at,
+        a.id as adoption_id,
+        a.pet_name,
+        a.pet_type,
+        a.pet_breed,
+        a.pet_age,
+        a.image_url,
+        u.id as requester_user_id,
+        u.username as requester_username,
+        u.profile_picture_url as requester_profile_picture_url
+      FROM adoption_requests r
+      JOIN adoptions a ON r.adoption_id = a.id
+      JOIN users u ON r.user_id = u.id
+      WHERE a.user_id = ?
+      ORDER BY r.created_at DESC
+    `, [req.params.userId]);
+
+    res.json(requests);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching owner adoption requests' });
+  }
+};
+
 exports.getAdoptionById = async (req, res) => {
   try {
     const [adoptions] = await db.execute(`

@@ -26,5 +26,6 @@ router.get('/orders', adminController.getMarketplaceOrders);
 router.get('/adoptions', adminController.getAdoptions);
 router.post('/adoptions', adminController.addAdoption);
 router.put('/adoptions/:id/status', adminController.updateAdoptionStatus);
+router.get('/owner-requests/:userId', adoptionController.getOwnerAdoptionRequests);
 
 module.exports = router;

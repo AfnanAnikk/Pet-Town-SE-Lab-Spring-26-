@@ -6,7 +6,12 @@ import '../../widgets/app_bottom_nav_bar.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class MessageListPage extends StatefulWidget {
-  const MessageListPage({super.key});
+  final bool showScaffoldBars;
+
+  const MessageListPage({
+    super.key,
+    this.showScaffoldBars = true,
+  });
 
   @override
   State<MessageListPage> createState() => _MessageListPageState();
@@ -289,11 +294,73 @@ class _MessageListPageState extends State<MessageListPage> {
     );
   }
 
+  Widget _buildConversationName(String name) {
+    final lower = name.toLowerCase().trim();
+    final isVet = lower.endsWith('vet');
+
+    final cleanName = isVet
+        ? name.substring(0, name.length - 3).trim()
+        : name;
+
+    final displayName = cleanName.isNotEmpty
+        ? cleanName[0].toUpperCase() + cleanName.substring(1)
+        : cleanName;
+
+    if (!isVet) {
+      return Text(
+        displayName,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF374957),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        Flexible(
+          child: Text(
+            displayName,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF00AEEF),
+              shadows: [
+                Shadow(
+                  color: Color(0x6600AEEF),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: Color(0xFFE6F8FF),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Text(
+            'Vet',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF00AEEF),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: widget.showScaffoldBars ? AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -319,7 +386,8 @@ class _MessageListPageState extends State<MessageListPage> {
             onPressed: () {},
           ),
         ],
-      ),
+      )
+        : null,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -432,14 +500,7 @@ class _MessageListPageState extends State<MessageListPage> {
                               )
                             : null,
                       ),
-                      title: Text(
-                        otherName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF374957),
-                        ),
-                      ),
+                      title: _buildConversationName(otherName),
                       subtitle: Text(
                         '$prefix$lastMsg',
                         style: TextStyle(
@@ -479,10 +540,12 @@ class _MessageListPageState extends State<MessageListPage> {
                 ],
               ),
             ),
-      bottomNavigationBar: const AppBottomNavBar(
-        currentIndex: 0,
-        isOutsideTab: true,
-      ),
+      bottomNavigationBar: widget.showScaffoldBars
+        ? const AppBottomNavBar(
+            currentIndex: 0,
+            isOutsideTab: true,
+          )
+        : null,
     );
   }
 }

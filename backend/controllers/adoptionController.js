@@ -77,7 +77,14 @@ exports.createAdoption = async (req, res) => {
 };
 
 exports.requestAdoption = async (req, res) => {
-  const { user_id } = req.body;
+  const {
+    user_id,
+    requester_name,
+    requester_phone,
+    requester_address,
+    pickup_date
+  } = req.body;
+
   const adoption_id = req.params.id;
   
   try {
@@ -85,14 +92,18 @@ exports.requestAdoption = async (req, res) => {
       'SELECT 1 FROM adoption_requests WHERE user_id = ? AND adoption_id = ?',
       [user_id, adoption_id]
     );
+
     if (existing.length > 0) {
       return res.status(400).json({ message: 'You have already requested this adoption' });
     }
     
     await db.execute(
-      'INSERT INTO adoption_requests (user_id, adoption_id) VALUES (?, ?)',
-      [user_id, adoption_id]
+      `INSERT INTO adoption_requests 
+      (user_id, adoption_id, requester_name, requester_phone, requester_address, pickup_date) 
+      VALUES (?, ?, ?, ?, ?, ?)`,
+      [user_id, adoption_id, requester_name, requester_phone, requester_address, pickup_date]
     );
+
     res.status(201).json({ message: 'Adoption requested successfully' });
   } catch (error) {
     console.error(error);

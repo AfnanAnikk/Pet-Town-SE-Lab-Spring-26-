@@ -3,6 +3,8 @@ import 'provider_profile_page.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_page.dart';
+import '../messaging/chat_page.dart';
+import '../messaging/message_list_page.dart';
 
 
 class ProviderDashboardPage extends StatefulWidget {
@@ -20,6 +22,7 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
   int? _vetId;
   List<dynamic> _vouchers = [];
   bool _isVouchersLoading = true;
+  bool _isVerified = false;
 
   @override
   void initState() {
@@ -27,8 +30,29 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
     _fetchBookings();
   }
 
+  void _messageClient(dynamic booking) {
+    final clientUserIdRaw = booking['user_id'];
+    final clientUserId = clientUserIdRaw is int
+        ? clientUserIdRaw
+        : int.tryParse(clientUserIdRaw.toString());
+
+    if (clientUserId == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatPage(
+          otherUserId: clientUserId,
+          otherUserName: booking['user_name'] ?? booking['user_email'] ?? 'Client',
+          otherUserImage: '',
+        ),
+      ),
+    );
+  }
+
   Future<void> _fetchBookings() async {
     final userId = await AuthService.getUserId();
+
     if (userId == null) {
       setState(() {
         _errorMessage = 'User not logged in';
@@ -37,8 +61,16 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
       return;
     }
 
+    final profileRes = await ApiService.getVetProfile(userId);
+
+    if (profileRes['success'] && profileRes['data'] != null) {
+      _vetId = profileRes['data']['id'];
+      _isVerified = profileRes['data']['is_verified'] == true ||
+          profileRes['data']['is_verified'] == 1;
+    }
+
     final result = await ApiService.getVetBookings(userId);
-    
+
     if (result['success']) {
       setState(() {
         _bookings = result['data'];
@@ -109,32 +141,34 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
       body: Column(
         children: [
           // Warning Banner
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: const Color(0xFFFFF4E5), // Light warning orange
-            child: Row(
-              children: const [
-                Icon(Icons.warning_amber_rounded, color: Color(0xFFFF9800), size: 24),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Your account is currently under review by our admin team. Some features may be limited.',
-                    style: TextStyle(color: Color(0xFFE65100), fontSize: 13),
+          if (!_isVerified)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: const Color(0xFFFFF4E5),
+              child: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Color(0xFFFF9800), size: 24),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Your account is currently under review by our admin team. Some features may be limited.',
+                      style: TextStyle(color: Color(0xFFE65100), fontSize: 13),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          
           Expanded(
-            child: _selectedIndex == 0 
-                ? _buildDashboardContent() 
-                : _selectedIndex == 2
+            child: _selectedIndex == 0
+                ? _buildDashboardContent()
+                : _selectedIndex == 1
                     ? _buildVouchersContent()
-                    : _selectedIndex == 4
-                        ? const ProviderProfilePage()
-                        : const Center(child: Text("Feature coming soon")),
+                    : _selectedIndex == 2
+                        ? const MessageListPage(showScaffoldBars: false)
+                        : _selectedIndex == 3
+                            ? const ProviderProfilePage()
+                            : const Center(child: Text("Feature coming soon")),
           ),
         ],
       ),
@@ -154,7 +188,7 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
           setState(() {
             _selectedIndex = index;
           });
-          if (index == 2) {
+          if (index == 1) {
             _fetchVouchers();
           }
         },
@@ -163,11 +197,6 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
             icon: Icon(Icons.dashboard_outlined),
             activeIcon: Icon(Icons.dashboard),
             label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            activeIcon: Icon(Icons.calendar_month),
-            label: 'Bookings',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.discount_outlined),
@@ -419,13 +448,21 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _messageClient(booking);
+                    },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: const BorderSide(color: Color(0xFF3FA9F5)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('Message Client', style: TextStyle(color: Color(0xFF3FA9F5))),
+                    child: const Text(
+                      'Message Client',
+                      style: TextStyle(color: Color(0xFF3FA9F5)),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),

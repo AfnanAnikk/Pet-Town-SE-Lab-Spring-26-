@@ -16,7 +16,7 @@ class PostModel {
   PostModel({
     required this.id,
     required this.userId,
-    required this.title,
+    required this.title,  
     required this.authorName,
     this.authorProfilePictureUrl,
     required this.tags,

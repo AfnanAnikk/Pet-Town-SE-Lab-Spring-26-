@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pet_town/pages/adoption/adoption_page.dart';
+import 'package:pet_town/pages/events/event_page.dart';
+import 'package:pet_town/pages/salon/salon_list_page.dart';
 import '../pages/profile/user_profile_page.dart';
 import '../pages/vet/vet_list_page.dart';
 import '../pages/marketplace/marketplace_home_page.dart';
@@ -77,9 +80,9 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
               children: [
                 _featureButton(context, 'assets/images/vet1.png', 'Pet Vet', const VetListPage()),
                 _featureButton(context, 'assets/images/marketplace.png', 'Marketplace', const MarketplaceHomePage()),
-                _comingSoon(context, 'assets/images/adoption.png', 'Adoption'),
-                _comingSoon(context, 'assets/images/events.png', 'Events'),
-                _comingSoon(context, 'assets/images/grooming.png', 'Grooming'),
+                _featureButton(context, 'assets/images/adoption.png', 'Adoption', const AdoptionPage()),
+                _featureButton(context, 'assets/images/events.png', 'Events', const EventPage()),
+                _featureButton(context, 'assets/images/grooming.png', 'Grooming', const SalonListPage()),
               ],
             ),
           ),

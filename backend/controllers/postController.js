@@ -2,10 +2,22 @@ const db = require('../config/db');
 
 exports.getAllPosts = async (req, res) => {
   try {
-    const [posts] = await db.execute("SELECT * FROM posts WHERE LOWER(title) NOT LIKE '%test%' ORDER BY id DESC");
+    const [posts] = await db.execute(`
+      SELECT 
+        p.*,
+        u.profile_picture_url,
+        COALESCE(u.username, u.display_name, p.author_name) AS author_name
+      FROM posts p
+      JOIN users u ON p.user_id = u.id
+      WHERE LOWER(p.title) NOT LIKE '%test%'
+      ORDER BY p.id DESC
+    `);
 
     for (let post of posts) {
-      const [tags] = await db.execute('SELECT tag_name FROM post_tags WHERE post_id = ?', [post.id]);
+      const [tags] = await db.execute(
+        'SELECT tag_name FROM post_tags WHERE post_id = ?',
+        [post.id]
+      );
       post.tags = tags.map(t => t.tag_name);
     }
 

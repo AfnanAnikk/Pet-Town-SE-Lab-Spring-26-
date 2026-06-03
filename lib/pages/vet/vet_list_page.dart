@@ -13,8 +13,6 @@ class VetListPage extends StatefulWidget {
 }
 
 class _VetListPageState extends State<VetListPage> {
-  bool _showFeatureMenu = false;
-  int _selectedIndex = 2; //
   
   String? _filterLocation;
   String? _filterConcern;
@@ -64,23 +62,6 @@ class _VetListPageState extends State<VetListPage> {
         );
       }
     }
-  }
-
-  Widget _buildFeatureIcon({
-    required Widget icon,
-    required String tooltip,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Tooltip(
-        message: tooltip,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: icon,
-        ),
-      ),
-    );
   }
 
   @override
@@ -151,108 +132,6 @@ class _VetListPageState extends State<VetListPage> {
                 itemBuilder: (context, index) {
                   return VetCard(vet: filteredVets[index]);
                 },
-              ),
-
-            if (_showFeatureMenu)
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _showFeatureMenu = false;
-                    });
-                  },
-                  child: Container(color: Colors.transparent),
-                ),
-              ),
-
-            if (_showFeatureMenu)
-              Positioned(
-                bottom: 16,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Material(
-                    elevation: 8,
-                    borderRadius: BorderRadius.circular(40),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(40),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildFeatureIcon(
-                            icon: Image.asset(
-                              'assets/images/vet1.png',
-                              width: 28,
-                            ),
-                            tooltip: 'Pet Vet',
-                            onTap: () {
-                              setState(() {
-                                _showFeatureMenu = false;
-                              });
-                            },
-                          ),
-
-                          _buildFeatureIcon(
-                            icon: Image.asset(
-                              'assets/images/marketplace.png',
-                              width: 28,
-                            ),
-                            tooltip: 'Marketplace',
-                            onTap: () {
-                              setState(() {
-                                _showFeatureMenu = false;
-                              });
-                            },
-                          ),
-
-                          _buildFeatureIcon(
-                            icon: Image.asset(
-                              'assets/images/adoption.png',
-                              width: 28,
-                            ),
-                            tooltip: 'Adoption',
-                            onTap: () {
-                              setState(() {
-                                _showFeatureMenu = false;
-                              });
-                            },
-                          ),
-
-                          _buildFeatureIcon(
-                            icon: Image.asset(
-                              'assets/images/events.png',
-                              width: 28,
-                            ),
-                            tooltip: 'Events',
-                            onTap: () {
-                              setState(() {
-                                _showFeatureMenu = false;
-                              });
-                            },
-                          ),
-
-                          _buildFeatureIcon(
-                            icon: Image.asset(
-                              'assets/images/grooming.png',
-                              width: 28,
-                            ),
-                            tooltip: 'Grooming',
-                            onTap: () {
-                              setState(() {
-                                _showFeatureMenu = false;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
               ),
           ],
         ),

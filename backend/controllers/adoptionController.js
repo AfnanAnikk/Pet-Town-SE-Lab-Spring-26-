@@ -16,6 +16,22 @@ exports.getAllAdoptions = async (req, res) => {
   }
 };
 
+exports.getUserAdoptions = async (req, res) => {
+  try {
+    const [adoptions] = await db.execute(`
+      SELECT *
+      FROM adoptions
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+    `, [req.params.userId]);
+
+    res.json(adoptions);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error fetching user adoptions' });
+  }
+};
+
 exports.getOwnerAdoptionRequests = async (req, res) => {
   try {
     const [requests] = await db.execute(`

@@ -36,77 +36,59 @@ class _AdoptionPageState extends State<AdoptionPage> with SingleTickerProviderSt
         backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Row(
+        toolbarHeight: 104,
+        titleSpacing: 16,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'Adoption',
               style: GoogleFonts.outfit(
                 color: const Color(0xFF3293B3),
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 40,
+              width: MediaQuery.of(context).size.width - 32,
               child: Container(
-                height: 36,
+                padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF3293B3), width: 1),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: const Color(0xFF3293B3),
+                    width: 1.2,
+                  ),
                 ),
                 child: TabBar(
                   controller: _tabController,
+                  isScrollable: false,
+                  dividerColor: Colors.transparent,
                   indicator: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(22),
                     color: const Color(0xFF3293B3),
                   ),
+                  indicatorSize: TabBarIndicatorSize.tab,
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.black87,
-                  indicatorSize: TabBarIndicatorSize.tab,
                   labelPadding: EdgeInsets.zero,
-                  labelStyle: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.bold),
+                  labelStyle: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  unselectedLabelStyle: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
                   tabs: const [
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.pets, size: 12),
-                          SizedBox(width: 4),
-                          Text('New Friend', overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
-                    ),
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.home, size: 12),
-                          SizedBox(width: 4),
-                          Text('Re-Home', overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
-                    ),
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.list_alt, size: 12),
-                          SizedBox(width: 4),
-                          Text('Registered', overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
-                    ),
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.favorite, size: 12),
-                          SizedBox(width: 4),
-                          Text('Shelter', overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
-                    ),
+                    Tab(child: Text('Friend')),
+                    Tab(child: Text('Re-Home')),
+                    Tab(child: Text('Register')),
+                    Tab(child: Text('Shelter')),
                   ],
                 ),
               ),

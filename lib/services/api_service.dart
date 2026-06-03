@@ -222,6 +222,20 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> createAdoption(Map<String, dynamic> adoptionData) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/adoptions')}'),
+        headers: headers,
+        body: jsonEncode(adoptionData),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   static Future<Map<String, dynamic>> likePost(int postId, int userId) async {
     try {
       final headers = await _getHeaders();

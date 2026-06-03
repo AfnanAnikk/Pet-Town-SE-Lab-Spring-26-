@@ -118,7 +118,16 @@ exports.getProfile = async (req, res) => {
 
     // Get user posts with tags
     const [posts] = await db.execute(
-      'SELECT * FROM posts WHERE user_id = ? ORDER BY id DESC',
+    `
+      SELECT 
+        p.*,
+        u.profile_picture_url,
+        COALESCE(u.display_name, u.username, p.author_name) AS author_name
+      FROM posts p
+      JOIN users u ON p.user_id = u.id
+      WHERE p.user_id = ?
+      ORDER BY p.id DESC
+      `,
       [id]
     );
     for (let post of posts) {

@@ -4,6 +4,7 @@ import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import 'call_page.dart';
 import '../../services/call_service.dart';
+import '../profile/user_profile_page.dart';
 
 class ChatPage extends StatefulWidget {
   final int? conversationId;
@@ -198,37 +199,47 @@ class _ChatPageState extends State<ChatPage> {
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.grey.shade200,
-              backgroundImage: _getOtherUserImageProvider(),
-              child: _getOtherUserImageProvider() == null
-                  ? Text(
-                      widget.otherUserName.isNotEmpty
-                          ? widget.otherUserName[0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                widget.otherUserName,
-                style: const TextStyle(
-                  color: Color(0xFF374957),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
+        title: GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => UserProfilePage(userId: widget.otherUserId),
               ),
-            ),
-          ],
+            );
+          },
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: Colors.grey.shade200,
+                backgroundImage: _getOtherUserImageProvider(),
+                child: _getOtherUserImageProvider() == null
+                    ? Text(
+                        widget.otherUserName.isNotEmpty
+                            ? widget.otherUserName[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  widget.otherUserName,
+                  style: const TextStyle(
+                    color: Color(0xFF374957),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           IconButton(

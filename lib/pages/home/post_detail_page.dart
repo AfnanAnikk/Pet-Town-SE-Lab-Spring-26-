@@ -26,6 +26,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   int _likesCount = 0;
   int _commentsCount = 0;
   String? _currentUserProfilePictureUrl;  
+  String? _authorProfilePictureUrl;
   
   final TextEditingController _commentController = TextEditingController();
 
@@ -39,6 +40,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     _checkSaveStatus();
     _checkLikeStatus();
     _loadCurrentUserProfilePicture();
+    _loadAuthorProfilePicture();
     _fetchLiveLikesCount(); // fetch real count from server
   }
   Future<void> _loadCurrentUserProfilePicture() async {
@@ -52,6 +54,27 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
       setState(() {
         _currentUserProfilePictureUrl = user['profile_picture_url'];
+      });
+    }
+  }
+
+  Future<void> _loadAuthorProfilePicture() async {
+    if (widget.post.authorProfilePictureUrl != null &&
+        widget.post.authorProfilePictureUrl!.isNotEmpty) {
+      _authorProfilePictureUrl = widget.post.authorProfilePictureUrl;
+      return;
+    }
+
+    final authorId = int.tryParse(widget.post.userId);
+    if (authorId == null) return;
+
+    final res = await AuthService.getProfile(authorId);
+
+    if (res['success'] == true && res['data'] != null && mounted) {
+      final user = res['data']['user'] ?? res['data'];
+
+      setState(() {
+        _authorProfilePictureUrl = user['profile_picture_url'];
       });
     }
   }
@@ -428,7 +451,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 child: Row(
                   children: [
                     _buildProfileAvatar(
-                      imageUrl: post.authorProfilePictureUrl,
+                      imageUrl: _authorProfilePictureUrl ?? post.authorProfilePictureUrl,
                       radius: 16,
                       iconSize: 20,
                     ),

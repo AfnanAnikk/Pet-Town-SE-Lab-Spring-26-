@@ -333,3 +333,77 @@ CREATE TABLE IF NOT EXISTS post_saves (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Pet Salon Tables
+CREATE TABLE IF NOT EXISTS salons (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    owner_name VARCHAR(255),
+    profile_picture_url VARCHAR(255),
+    location VARCHAR(255),
+    price INT DEFAULT 0,
+    rating FLOAT DEFAULT 0.0,
+    review_count INT DEFAULT 0,
+    total_bookings INT DEFAULT 0,
+    profile_description TEXT,
+    is_verified BOOLEAN DEFAULT false,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS salon_tags (
+    id SERIAL PRIMARY KEY,
+    salon_id INT NOT NULL,
+    tag VARCHAR(100) NOT NULL,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS salon_slots (
+    id SERIAL PRIMARY KEY,
+    salon_id INT NOT NULL,
+    slot_time VARCHAR(100) NOT NULL,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS salon_reviews (
+    id SERIAL PRIMARY KEY,
+    salon_id INT NOT NULL,
+    user_id INT NOT NULL,
+    rating FLOAT NOT NULL,
+    review_text TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS salon_bookings (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    salon_id INT NOT NULL,
+    pet_name VARCHAR(255),
+    pet_species VARCHAR(255),
+    pet_breed VARCHAR(255),
+    pet_sex VARCHAR(50),
+    pet_age VARCHAR(50),
+    concern VARCHAR(255),
+    reason TEXT,
+    payment_method VARCHAR(100),
+    slot_time VARCHAR(255),
+    booking_date VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'pending',
+    voucher_code VARCHAR(50),
+    discount_amount INT DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS salon_vouchers (
+    id SERIAL PRIMARY KEY,
+    salon_id INT NOT NULL,
+    code VARCHAR(50) NOT NULL,
+    discount_percent INT NOT NULL,
+    max_uses INT DEFAULT 1,
+    used_count INT DEFAULT 0,
+    expires_at TIMESTAMP,
+    is_active BOOLEAN DEFAULT true,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
+);

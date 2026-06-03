@@ -14,7 +14,7 @@ function Sidebar() {
     { name: 'Marketplace', path: '/marketplace', icon: <ShoppingBag size={20} /> },
     { name: 'Finance', path: '/finance', icon: <TrendingUp size={20} /> },
     { name: 'Vet Services', path: '/vets', icon: <Users size={20} /> },
-    { name: 'Pet Salons', path: '/salons', icon: <Scissors size={20} /> },
+    { name: 'Pet Salon', path: '/salons', icon: <Scissors size={20} /> },
     { name: 'Adoption', path: '/adoption', icon: <Heart size={20} /> },
     { name: 'Events', path: '/events', icon: <Calendar size={20} /> },
     { name: 'Messaging', path: '/messages', icon: <MessageSquare size={20} /> },
@@ -209,11 +209,11 @@ function CommunityEvents() {
   );
 }
 
-// 3. Pet Salons (Uses Store Verifications for now, similar to vets)
+// 3. Pet Salon (Uses Store Verifications for now, similar to vets)
 function PetSalons() {
   return (
     <div className="page">
-      <h1>Pet Salons</h1>
+      <h1>Pet Salon</h1>
       <p>Manage grooming partners, reviews, and booking quality.</p>
     </div>
   );

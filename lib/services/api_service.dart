@@ -822,6 +822,137 @@ class ApiService {
     }
   }
 
+  // ================= SALONS ================= //
+  static Future<Map<String, dynamic>> getAllSalons({
+    String? location,
+    String? concern,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      var queryParams = <String>[];
+      if (location != null) queryParams.add('location=$location');
+      if (concern != null) queryParams.add('concern=$concern');
+
+      String queryString = queryParams.isNotEmpty ? '?${queryParams.join('&')}' : '';
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons')}$queryString'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getSalonProfile(String userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons/user')}/$userId'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateSalonProfile(Map<String, dynamic> profileData) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons/profile')}'),
+        headers: headers,
+        body: jsonEncode(profileData),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> createSalonBooking(Map<String, dynamic> bookingData) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons/bookings')}'),
+        headers: headers,
+        body: jsonEncode(bookingData),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getProviderSalonBookings(String userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons/bookings/provider')}/$userId'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateSalonBookingStatus(String bookingId, String status) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons/bookings')}/$bookingId/status'),
+        headers: headers,
+        body: jsonEncode({'status': status}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> validateSalonVoucher(String code, String salonId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons/vouchers/validate')}'),
+        headers: headers,
+        body: jsonEncode({'code': code, 'salonId': salonId}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getSalonVouchers(String providerUserId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons/vouchers/provider')}/$providerUserId'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> createSalonVoucher(String providerUserId, Map<String, dynamic> voucherData) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons/vouchers/provider')}/$providerUserId'),
+        headers: headers,
+        body: jsonEncode(voucherData),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   static Map<String, dynamic> _handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return {

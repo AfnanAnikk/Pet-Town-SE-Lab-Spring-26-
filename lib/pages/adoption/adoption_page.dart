@@ -84,7 +84,7 @@ class _AdoptionPageState extends State<AdoptionPage> with SingleTickerProviderSt
                     fontWeight: FontWeight.w600,
                   ),
                   tabs: const [
-                    Tab(child: Text('Friend')),
+                    Tab(child: Text('New Friend')),
                     Tab(child: Text('Re-Home')),
                     Tab(child: Text('Register')),
                   ],

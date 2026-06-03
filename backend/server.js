@@ -37,6 +37,8 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/vouchers', require('./routes/voucherRoutes'));
+app.use('/api/adoptions', require('./routes/adoptionRoutes'));
+app.use('/api/shelters', require('./routes/shelterRoutes'));
 
 // Socket.io connection logic
 io.on('connection', (socket) => {

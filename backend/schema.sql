@@ -264,16 +264,62 @@ CREATE TABLE IF NOT EXISTS store_verifications (
     FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
 );
 
+-- Recreated adoptions table for full feature support
+DROP TABLE IF EXISTS adoptions CASCADE;
 CREATE TABLE IF NOT EXISTS adoptions (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    user_id INT NOT NULL,
+    pet_name VARCHAR(255) NOT NULL,
+    pet_type VARCHAR(100),
+    pet_breed VARCHAR(255),
+    pet_age VARCHAR(50),
+    pet_traits VARCHAR(255),
+    pet_gender VARCHAR(50),
+    pet_food_habit TEXT,
+    owner_name VARCHAR(255),
+    owner_contact VARCHAR(100),
     description TEXT,
-    breed VARCHAR(255),
-    age VARCHAR(50),
-    species VARCHAR(50),
     image_url VARCHAR(255),
     status VARCHAR(50) DEFAULT 'available',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS adoption_requests (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    adoption_id INT NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (adoption_id) REFERENCES adoptions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS shelters (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    location VARCHAR(255),
+    total_seat INT DEFAULT 0,
+    occupied_seat INT DEFAULT 0,
+    vacant_seat INT DEFAULT 0,
+    fb_url VARCHAR(255),
+    website_url VARCHAR(255),
+    logo_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS shelter_bookings (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    shelter_id INT NOT NULL,
+    pet_type VARCHAR(100),
+    pet_name VARCHAR(255),
+    from_date VARCHAR(100),
+    to_date VARCHAR(100),
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (shelter_id) REFERENCES shelters(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS post_saves (

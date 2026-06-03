@@ -9,5 +9,6 @@ router.post('/:id/request', adoptionController.requestAdoption);
 
 router.get('/user/:userId', adoptionController.getUserAdoptions);
 router.get('/requests/:userId', adoptionController.getUserAdoptionRequests);
+router.get('/owner-requests/:userId', adoptionController.getOwnerAdoptionRequests);
 
 module.exports = router;

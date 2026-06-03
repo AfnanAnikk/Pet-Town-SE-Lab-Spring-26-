@@ -233,7 +233,7 @@ class _PostCardState extends State<PostCard> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.9),
+                                color: Colors.white.withValues(alpha: 0.4),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
@@ -241,17 +241,8 @@ class _PostCardState extends State<PostCard> {
                                 children: [
                                   Icon(
                                     _isLoved ? Icons.favorite : Icons.favorite_border,
-                                    color: _isLoved ? Colors.red : Colors.black87,
+                                    color: _isLoved ? Colors.red : Colors.black87.withValues(alpha: 0.5),
                                     size: 18,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '$_likesCount',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
                                   ),
                                 ],
                               ),

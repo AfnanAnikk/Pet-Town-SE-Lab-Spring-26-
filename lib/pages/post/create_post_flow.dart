@@ -24,7 +24,10 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
   
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
-  final _tagsController = TextEditingController();
+  final _tagInputController = TextEditingController();
+  
+  List<String> _tags = [];
+  final List<String> _suggestedTags = ['Dogs', 'Cats', 'Training', 'Grooming', 'Health', 'Adoption', 'Funny'];
 
   final _cropController = CropController();
   Uint8List? _croppedImageData;
@@ -186,7 +189,7 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
       'image_path': imagePath,
       'placeholder_color': '#E0E0E0',
       'placeholder_height': 300.0,
-      'tags': _tagsController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
+      'tags': _tags,
     });
 
     if (mounted) {
@@ -421,14 +424,77 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
                 const SizedBox(height: 16),
                 const Text('Tags', style: TextStyle(fontSize: 16, color: Color(0xFF374957))),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: _tagsController,
-                  decoration: InputDecoration(
-                    hintText: 'Include relevant tags (comma separated)',
-                    filled: true,
-                    fillColor: const Color(0xFFE2E8E8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                  ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _tags.map((tag) => Chip(
+                    label: Text(tag),
+                    onDeleted: () {
+                      setState(() {
+                        _tags.remove(tag);
+                      });
+                    },
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                  )).toList(),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _tagInputController,
+                        decoration: InputDecoration(
+                          hintText: 'Add custom tag',
+                          filled: true,
+                          fillColor: const Color(0xFFE2E8E8),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        ),
+                        onSubmitted: (value) {
+                          if (value.trim().isNotEmpty && !_tags.contains(value.trim())) {
+                            setState(() {
+                              _tags.add(value.trim());
+                              _tagInputController.clear();
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF374957),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      ),
+                      onPressed: () {
+                        if (_tagInputController.text.trim().isNotEmpty && !_tags.contains(_tagInputController.text.trim())) {
+                          setState(() {
+                            _tags.add(_tagInputController.text.trim());
+                            _tagInputController.clear();
+                          });
+                        }
+                      },
+                      child: const Text('Add', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text('Suggested Tags:', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _suggestedTags.map((tag) => ActionChip(
+                    label: Text(tag),
+                    backgroundColor: Colors.grey.shade200,
+                    onPressed: () {
+                      if (!_tags.contains(tag)) {
+                        setState(() {
+                          _tags.add(tag);
+                        });
+                      }
+                    },
+                  )).toList(),
                 ),
                 const SizedBox(height: 40),
                 Center(

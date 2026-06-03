@@ -31,7 +31,7 @@ exports.getAllSalons = async (req, res) => {
     for (let salon of salons) {
       const [tags] = await db.execute('SELECT tag FROM salon_tags WHERE salon_id = ?', [salon.id]);
       const [slots] = await db.execute('SELECT slot_time FROM salon_slots WHERE salon_id = ?', [salon.id]);
-      const [reviews] = await db.execute('SELECT * FROM salon_reviews WHERE salon_id = ?', [salon.id]);
+      const [reviews] = await db.execute('SELECT r.*, u.name as author_name FROM salon_reviews r JOIN users u ON r.user_id = u.id WHERE r.salon_id = ? ORDER BY r.created_at DESC', [salon.id]);
 
       salon.tags = tags.map(t => t.tag);
       salon.availableSlots = slots.map(s => s.slot_time);
@@ -55,7 +55,7 @@ exports.getSalonById = async (req, res) => {
     const salon = salons[0];
     const [tags] = await db.execute('SELECT tag FROM salon_tags WHERE salon_id = ?', [salonId]);
     const [slots] = await db.execute('SELECT slot_time FROM salon_slots WHERE salon_id = ?', [salonId]);
-    const [reviews] = await db.execute('SELECT * FROM salon_reviews WHERE salon_id = ?', [salonId]);
+    const [reviews] = await db.execute('SELECT r.*, u.name as author_name FROM salon_reviews r JOIN users u ON r.user_id = u.id WHERE r.salon_id = ? ORDER BY r.created_at DESC', [salonId]);
 
     salon.tags = tags.map(t => t.tag);
     salon.availableSlots = slots.map(s => s.slot_time);
@@ -94,7 +94,7 @@ exports.getSalonByUserId = async (req, res) => {
 exports.updateSalonProfile = async (req, res) => {
   const { 
     userId, name, ownerName, location, price, profileDescription, profilePictureUrl,
-    tags, timeslots 
+    tags, availableSlots 
   } = req.body;
 
   try {
@@ -126,8 +126,8 @@ exports.updateSalonProfile = async (req, res) => {
     if (tags && tags.length > 0) {
       for (const t of tags) await db.execute('INSERT INTO salon_tags (salon_id, tag) VALUES (?, ?)', [salonId, t]);
     }
-    if (timeslots && timeslots.length > 0) {
-      for (const slot of timeslots) await db.execute('INSERT INTO salon_slots (salon_id, slot_time) VALUES (?, ?)', [salonId, slot]);
+    if (availableSlots && availableSlots.length > 0) {
+      for (const slot of availableSlots) await db.execute('INSERT INTO salon_slots (salon_id, slot_time) VALUES (?, ?)', [salonId, slot]);
     }
 
     res.json({ message: 'Profile updated successfully', success: true });
@@ -204,10 +204,30 @@ exports.updateBookingStatus = async (req, res) => {
   const { status } = req.body;
   try {
     await db.execute('UPDATE salon_bookings SET status = ? WHERE id = ?', [status, bookingId]);
+
+    // Notification Trigger (Phase 4)
+    if (status === 'accepted') {
+      const [booking] = await db.execute('SELECT user_id, pet_name FROM salon_bookings WHERE id = ?', [bookingId]);
+      if (booking.length > 0) {
+        await db.execute(
+          'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
+          [booking[0].user_id, 'order', bookingId, `Your salon booking for ${booking[0].pet_name} was accepted!`]
+        );
+      }
+    } else if (status === 'completed') {
+      const [booking] = await db.execute('SELECT user_id, pet_name FROM salon_bookings WHERE id = ?', [bookingId]);
+      if (booking.length > 0) {
+        await db.execute(
+          'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
+          [booking[0].user_id, 'order', bookingId, `Your salon booking for ${booking[0].pet_name} is completed! Please leave a review.`]
+        );
+      }
+    }
+
     res.json({ message: 'Booking status updated successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error updating booking status' });
   }
 };
 
@@ -284,3 +304,37 @@ exports.validateVoucher = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+exports.addSalonReview = async (req, res) => {
+  const salonId = req.params.id;
+  const { userId, rating, reviewText } = req.body;
+
+  try {
+    // 1. Insert the review
+    await db.execute(
+      'INSERT INTO salon_reviews (salon_id, user_id, rating, review_text) VALUES (?, ?, ?, ?)',
+      [salonId, userId, rating, reviewText]
+    );
+
+    // 2. Calculate new average rating and review count
+    const [stats] = await db.execute(
+      'SELECT AVG(rating) as avg_rating, COUNT(*) as review_count FROM salon_reviews WHERE salon_id = ?',
+      [salonId]
+    );
+
+    const newRating = stats[0].avg_rating ? parseFloat(stats[0].avg_rating).toFixed(1) : 0;
+    const newCount = stats[0].review_count || 0;
+
+    // 3. Update the salons table
+    await db.execute(
+      'UPDATE salons SET rating = ?, review_count = ? WHERE id = ?',
+      [newRating, newCount, salonId]
+    );
+
+    res.json({ success: true, message: 'Review added successfully', data: { rating: newRating, reviewCount: newCount } });
+  } catch (error) {
+    console.error('Error adding salon review:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+

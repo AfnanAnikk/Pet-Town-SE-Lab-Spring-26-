@@ -20,4 +20,6 @@ router.post('/vouchers/provider/:userId', salonController.createVoucher);
 router.delete('/vouchers/:id', salonController.deleteVoucher);
 router.post('/vouchers/validate', salonController.validateVoucher);
 
+router.post('/:id/reviews', salonController.addSalonReview);
+
 module.exports = router;

@@ -5,6 +5,7 @@ class OptionsBottomSheet extends StatelessWidget {
   final VoidCallback? onDownload;
   final bool showDelete;
   final VoidCallback? onDelete;
+  final VoidCallback? onFollow;
 
   const OptionsBottomSheet({
     super.key, 
@@ -12,6 +13,7 @@ class OptionsBottomSheet extends StatelessWidget {
     this.onDownload,
     this.showDelete = false,
     this.onDelete,
+    this.onFollow,
   });
 
   @override
@@ -56,7 +58,11 @@ class OptionsBottomSheet extends StatelessWidget {
                   Navigator.pop(context);
                   if (onDelete != null) onDelete!();
                 }),
-              _buildOption('Follow $authorName'),
+              if (!showDelete) // Don't show follow for own post
+                _buildOption('Follow $authorName', onTap: () {
+                  Navigator.pop(context);
+                  if (onFollow != null) onFollow!();
+                }),
               _buildOption('Copy link'),
               _buildOption('Download image', onTap: () {
                 Navigator.pop(context);
@@ -97,6 +103,7 @@ void showOptionsBottomSheet(
     VoidCallback? onDownload,
     bool showDelete = false,
     VoidCallback? onDelete,
+    VoidCallback? onFollow,
   }
 ) {
   showModalBottomSheet(
@@ -108,6 +115,7 @@ void showOptionsBottomSheet(
       onDownload: onDownload,
       showDelete: showDelete,
       onDelete: onDelete,
+      onFollow: onFollow,
     ),
   );
 }

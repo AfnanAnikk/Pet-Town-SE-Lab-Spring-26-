@@ -967,4 +967,147 @@ class ApiService {
       };
     }
   }
+
+  // Add Vet Review
+  static Future<Map<String, dynamic>> addVetReview(String vetId, double rating, String reviewText) async {
+    try {
+      final headers = await _getHeaders();
+      final userId = await AuthService.getUserId();
+      if (userId == null) return {'success': false, 'message': 'Not logged in'};
+
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vets')}/$vetId/reviews'),
+        headers: headers,
+        body: jsonEncode({
+          'userId': userId,
+          'rating': rating,
+          'reviewText': reviewText,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // Add Salon Review
+  static Future<Map<String, dynamic>> addSalonReview(String salonId, double rating, String reviewText) async {
+    try {
+      final headers = await _getHeaders();
+      final userId = await AuthService.getUserId();
+      if (userId == null) return {'success': false, 'message': 'Not logged in'};
+
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons')}/$salonId/reviews'),
+        headers: headers,
+        body: jsonEncode({
+          'userId': userId,
+          'rating': rating,
+          'reviewText': reviewText,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // Get User Salon Bookings
+  static Future<Map<String, dynamic>> getUserSalonBookings(int userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons/bookings/user')}/$userId'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // Social Features (Phase 2)
+  static Future<Map<String, dynamic>> followUser(int followingId) async {
+    try {
+      final headers = await _getHeaders();
+      final followerId = await AuthService.getUserId();
+      if (followerId == null) return {'success': false, 'message': 'Not logged in'};
+
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/follow')}'),
+        headers: headers,
+        body: jsonEncode({
+          'followerId': followerId,
+          'followingId': followingId,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> unfollowUser(int followingId) async {
+    try {
+      final headers = await _getHeaders();
+      final followerId = await AuthService.getUserId();
+      if (followerId == null) return {'success': false, 'message': 'Not logged in'};
+
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/unfollow')}'),
+        headers: headers,
+        body: jsonEncode({
+          'followerId': followerId,
+          'followingId': followingId,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getFollowStatus(int followingId) async {
+    try {
+      final headers = await _getHeaders();
+      final followerId = await AuthService.getUserId();
+      if (followerId == null) return {'success': false, 'message': 'Not logged in'};
+
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/follow-status')}?followerId=$followerId&followingId=$followingId'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> globalSearch(String query) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/search')}?q=$query'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getNotifications(int userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/notifications')}?userId=$userId'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
 }
+
+

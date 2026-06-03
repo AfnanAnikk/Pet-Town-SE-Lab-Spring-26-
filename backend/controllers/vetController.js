@@ -57,7 +57,7 @@ exports.getAllVets = async (req, res) => {
       const [licences] = await db.execute('SELECT licence_name FROM vet_licences WHERE vet_id = ?', [vet.id]);
       const [species] = await db.execute('SELECT species_name FROM vet_species WHERE vet_id = ?', [vet.id]);
       const [areas] = await db.execute('SELECT area_name FROM vet_areas WHERE vet_id = ?', [vet.id]);
-      const [reviews] = await db.execute('SELECT * FROM vet_reviews WHERE vet_id = ?', [vet.id]);
+      const [reviews] = await db.execute('SELECT r.*, u.name as author_name FROM vet_reviews r JOIN users u ON r.user_id = u.id WHERE r.vet_id = ? ORDER BY r.created_at DESC', [vet.id]);
 
       vet.tags = tags.map(t => t.tag_name);
       vet.availableSlots = slots.map(s => s.slot_time);
@@ -91,7 +91,7 @@ exports.getVetById = async (req, res) => {
     const [licences] = await db.execute('SELECT licence_name FROM vet_licences WHERE vet_id = ?', [vetId]);
     const [species] = await db.execute('SELECT species_name FROM vet_species WHERE vet_id = ?', [vetId]);
     const [areas] = await db.execute('SELECT area_name FROM vet_areas WHERE vet_id = ?', [vetId]);
-    const [reviews] = await db.execute('SELECT * FROM vet_reviews WHERE vet_id = ?', [vetId]);
+    const [reviews] = await db.execute('SELECT r.*, u.name as author_name FROM vet_reviews r JOIN users u ON r.user_id = u.id WHERE r.vet_id = ? ORDER BY r.created_at DESC', [vetId]);
 
     vet.tags = tags.map(t => t.tag_name);
     vet.availableSlots = slots.map(s => s.slot_time);
@@ -229,3 +229,37 @@ exports.updateVetProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error', success: false });
   }
 };
+
+exports.addVetReview = async (req, res) => {
+  const vetId = req.params.id;
+  const { userId, rating, reviewText } = req.body;
+
+  try {
+    // 1. Insert the review
+    await db.execute(
+      'INSERT INTO vet_reviews (vet_id, user_id, rating, review_text) VALUES (?, ?, ?, ?)',
+      [vetId, userId, rating, reviewText]
+    );
+
+    // 2. Calculate new average rating and review count
+    const [stats] = await db.execute(
+      'SELECT AVG(rating) as avg_rating, COUNT(*) as review_count FROM vet_reviews WHERE vet_id = ?',
+      [vetId]
+    );
+
+    const newRating = stats[0].avg_rating ? parseFloat(stats[0].avg_rating).toFixed(1) : 0;
+    const newCount = stats[0].review_count || 0;
+
+    // 3. Update the vets table
+    await db.execute(
+      'UPDATE vets SET rating = ?, review_count = ? WHERE id = ?',
+      [newRating, newCount, vetId]
+    );
+
+    res.json({ success: true, message: 'Review added successfully', data: { rating: newRating, reviewCount: newCount } });
+  } catch (error) {
+    console.error('Error adding vet review:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+

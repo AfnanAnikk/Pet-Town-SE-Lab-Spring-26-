@@ -11,6 +11,7 @@ class ChatPage extends StatefulWidget {
   final int otherUserId;
   final String otherUserName;
   final String otherUserImage;
+  final String? initialText;
 
   const ChatPage({
     super.key,
@@ -18,6 +19,7 @@ class ChatPage extends StatefulWidget {
     required this.otherUserId,
     required this.otherUserName,
     required this.otherUserImage,
+    this.initialText,
   });
 
   @override
@@ -41,6 +43,10 @@ class _ChatPageState extends State<ChatPage> {
     if (widget.otherUserImage.startsWith('http://') ||
         widget.otherUserImage.startsWith('https://')) {
       _otherUserProfilePictureUrl = widget.otherUserImage;
+    }
+    
+    if (widget.initialText != null) {
+      _messageController.text = widget.initialText!;
     }
 
     _initChat();

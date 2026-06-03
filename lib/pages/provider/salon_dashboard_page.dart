@@ -61,7 +61,7 @@ class _SalonDashboardPageState extends State<SalonDashboardPage> {
       return;
     }
 
-    final profileRes = await ApiService.getSalonProfile(userId);
+    final profileRes = await ApiService.getSalonProfile(userId.toString());
 
     if (profileRes['success'] && profileRes['data'] != null) {
       _salonId = profileRes['data']['id'];
@@ -69,7 +69,7 @@ class _SalonDashboardPageState extends State<SalonDashboardPage> {
           profileRes['data']['is_verified'] == 1;
     }
 
-    final result = await ApiService.getProviderSalonBookings(userId);
+    final result = await ApiService.getProviderSalonBookings(userId.toString());
 
     if (result['success']) {
       setState(() {
@@ -501,7 +501,7 @@ class _SalonDashboardPageState extends State<SalonDashboardPage> {
     }
 
     if (_salonId == null) {
-      final profileRes = await ApiService.getSalonProfile(userId);
+      final profileRes = await ApiService.getSalonProfile(userId.toString());
       if (profileRes['success'] && profileRes['data'] != null) {
         _salonId = profileRes['data']['id'];
       } else {
@@ -513,7 +513,7 @@ class _SalonDashboardPageState extends State<SalonDashboardPage> {
       }
     }
 
-    final result = await ApiService.getSalonVouchers(userId); // providerUserId
+    final result = await ApiService.getSalonVouchers(userId.toString()); // providerUserId
     if (result['success']) {
       setState(() {
         _vouchers = result['data'];

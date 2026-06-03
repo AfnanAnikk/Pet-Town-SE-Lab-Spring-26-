@@ -66,7 +66,19 @@ class VetModel {
       licences: List<String>.from(json['licences'] ?? []),
       speciesTreated: List<String>.from(json['speciesTreated'] ?? []),
       areasOfInterest: List<String>.from(json['areasOfInterest'] ?? []),
-      reviews: [],
+      reviews: json['reviews'] != null
+          ? (json['reviews'] as List).map((r) {
+              final authorName = r['author_name'] ?? 'Unknown User';
+              final dateObj = r['created_at'] != null ? DateTime.tryParse(r['created_at']) : null;
+              final dateStr = dateObj != null ? '${dateObj.day}/${dateObj.month}/${dateObj.year}' : 'Unknown Date';
+              return VetReview(
+                authorName: authorName,
+                authorInitial: authorName.isNotEmpty ? authorName[0].toUpperCase() : 'U',
+                date: dateStr,
+                text: r['review_text'] ?? '',
+              );
+            }).toList()
+          : [],
     );
   }
 }

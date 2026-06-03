@@ -73,6 +73,16 @@ exports.likePost = async (req, res) => {
       [postId, userId]
     );
     await db.execute('UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?', [postId]);
+
+    // Notification Trigger (Phase 4)
+    const [post] = await db.execute('SELECT user_id, title FROM posts WHERE id = ?', [postId]);
+    if (post.length > 0 && post[0].user_id.toString() !== userId.toString()) {
+      await db.execute(
+        'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
+        [post[0].user_id, 'like', postId, `Someone liked your post "${post[0].title}"!`]
+      );
+    }
+
     res.json({ message: 'Post liked' });
   } catch (error) {
     console.error(error);
@@ -134,10 +144,10 @@ exports.deletePost = async (req, res) => {
   const postId = req.params.id;
   try {
     await db.execute('DELETE FROM posts WHERE id = ?', [postId]);
-    res.json({ message: 'Post deleted' });
+    res.json({ success: true, message: 'Post deleted' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 

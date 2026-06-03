@@ -81,12 +81,31 @@ exports.getVetBookings = async (req, res) => {
 exports.updateBookingStatus = async (req, res) => {
   const bookingId = req.params.id;
   const { status } = req.body;
-
   try {
     await db.execute('UPDATE bookings SET status = ? WHERE id = ?', [status, bookingId]);
+
+    // Notification Trigger (Phase 4)
+    if (status === 'accepted') {
+      const [booking] = await db.execute('SELECT user_id, pet_name FROM bookings WHERE id = ?', [bookingId]);
+      if (booking.length > 0) {
+        await db.execute(
+          'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
+          [booking[0].user_id, 'order', bookingId, `Your vet booking for ${booking[0].pet_name} was accepted!`]
+        );
+      }
+    } else if (status === 'completed') {
+      const [booking] = await db.execute('SELECT user_id, pet_name FROM bookings WHERE id = ?', [bookingId]);
+      if (booking.length > 0) {
+        await db.execute(
+          'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
+          [booking[0].user_id, 'order', bookingId, `Your vet booking for ${booking[0].pet_name} is completed! Please leave a review.`]
+        );
+      }
+    }
+
     res.json({ message: 'Booking status updated successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error updating booking status' });
   }
 };

@@ -40,7 +40,7 @@ app.use('/api/vouchers', require('./routes/voucherRoutes'));
 app.use('/api/adoptions', require('./routes/adoptionRoutes'));
 app.use('/api/shelters', require('./routes/shelterRoutes'));
 app.use('/api/salons', require('./routes/salonRoutes'));
-
+app.use('/api/social', require('./routes/socialRoutes'));
 // Socket.io connection logic
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);

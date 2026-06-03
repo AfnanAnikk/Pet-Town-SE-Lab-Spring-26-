@@ -232,7 +232,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
   }
 
   void _shareToChats() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const MessageListPage()));
+    final link = 'Check out this post: ${widget.post.title} by ${widget.post.authorName}!';
+    Navigator.push(context, MaterialPageRoute(builder: (_) => MessageListPage(shareText: link)));
   }
 
   void _downloadImage() {
@@ -264,6 +265,20 @@ class _PostDetailPageState extends State<PostDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted')));
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete post')));
+      }
+    }
+  }
+
+  Future<void> _followAuthor() async {
+    final authorId = int.tryParse(widget.post.userId);
+    if (authorId == null) return;
+    
+    final res = await ApiService.followUser(authorId);
+    if (mounted) {
+      if (res['success']) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('You are now following ${widget.post.authorName}!')));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Failed to follow user')));
       }
     }
   }
@@ -411,6 +426,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         onDownload: _downloadImage,
                         showDelete: isAuthor,
                         onDelete: _deletePost,
+                        onFollow: _followAuthor,
                       );
                     },
                     child: const Icon(Icons.more_horiz, size: 28),

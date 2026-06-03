@@ -360,8 +360,29 @@ CREATE TABLE IF NOT EXISTS salon_tags (
 CREATE TABLE IF NOT EXISTS salon_slots (
     id SERIAL PRIMARY KEY,
     salon_id INT NOT NULL,
-    slot_time VARCHAR(100) NOT NULL,
+    slot_time VARCHAR(255) NOT NULL,
     FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS follows (
+    id SERIAL PRIMARY KEY,
+    follower_id INT NOT NULL,
+    following_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (follower_id, following_id)
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    reference_id INT,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS salon_reviews (

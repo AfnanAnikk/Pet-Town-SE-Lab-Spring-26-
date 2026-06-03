@@ -60,7 +60,19 @@ class SalonModel {
       profileDescription: json['profile_description'] ?? '',
       tags: List<String>.from(json['tags'] ?? []),
       availableSlots: List<String>.from(json['availableSlots'] ?? []),
-      reviews: [], // Would map json reviews if provided
+      reviews: json['reviews'] != null
+          ? (json['reviews'] as List).map((r) {
+              final authorName = r['author_name'] ?? 'Unknown User';
+              final dateObj = r['created_at'] != null ? DateTime.tryParse(r['created_at']) : null;
+              final dateStr = dateObj != null ? '${dateObj.day}/${dateObj.month}/${dateObj.year}' : 'Unknown Date';
+              return SalonReview(
+                authorName: authorName,
+                authorInitial: authorName.isNotEmpty ? authorName[0].toUpperCase() : 'U',
+                date: dateStr,
+                text: r['review_text'] ?? '',
+              );
+            }).toList()
+          : [],
     );
   }
 }

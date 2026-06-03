@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:pet_town/pages/provider/salon_dashboard_page.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/primary_button.dart';
 import '../home/home_page.dart';
 import 'user_signup_page.dart';
 import '../provider/provider_dashboard_page.dart';
+import '../provider/salon_dashboard_page.dart';
 import '../marketplace/store_dashboard_page.dart';
 import '../../services/auth_service.dart';
 
@@ -83,8 +85,14 @@ class _LoginPageState extends State<LoginPage> {
             MaterialPageRoute(builder: (context) => const StoreDashboardPage()),
             (route) => false,
           );
+        } else if (serviceType == 'Pet Salon') {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const SalonDashboardPage()),
+            (route) => false,
+          );
         } else {
-          // Vet, Pet Salon, or any other provider → vet dashboard
+          // Vet or any other provider → vet dashboard
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const ProviderDashboardPage()),

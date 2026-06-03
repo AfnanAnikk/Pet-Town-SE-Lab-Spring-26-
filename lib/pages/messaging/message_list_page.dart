@@ -7,10 +7,12 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class MessageListPage extends StatefulWidget {
   final bool showScaffoldBars;
+  final String? shareText;
 
   const MessageListPage({
     super.key,
     this.showScaffoldBars = true,
+    this.shareText,
   });
 
   @override
@@ -276,6 +278,7 @@ class _MessageListPageState extends State<MessageListPage> {
                                           otherUserName: name,
                                           otherUserImage:
                                               profileImageUrl?.toString() ?? '',
+                                          initialText: widget.shareText,
                                         ),
                                       ),
                                     ).then((_) => _fetchConversations());
@@ -531,6 +534,7 @@ class _MessageListPageState extends State<MessageListPage> {
                               otherUserId: otherUserId ?? conv['other_user_id'],
                               otherUserName: otherName,
                               otherUserImage: profileImageUrl?.toString() ?? '',
+                              initialText: widget.shareText,
                             ),
                           ),
                         ).then((_) => _fetchConversations());

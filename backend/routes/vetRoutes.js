@@ -8,4 +8,6 @@ router.post('/verify', vetController.verifyVet);
 router.get('/:id', vetController.getVetById);
 router.put('/profile', vetController.updateVetProfile);
 
+router.post('/:id/reviews', vetController.addVetReview);
+
 module.exports = router;

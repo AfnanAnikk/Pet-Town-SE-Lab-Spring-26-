@@ -236,7 +236,7 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
               ),
 
               // Professional License
-              if (widget.serviceType == 'Vet' || widget.serviceType == 'Pet Salon' || widget.serviceType == '') ...[
+              if (widget.serviceType == 'Vet' || widget.serviceType == '') ...[
                 _buildSectionTitle('Professional License (Vet/Clinic)'),
                 Row(
                   children: [

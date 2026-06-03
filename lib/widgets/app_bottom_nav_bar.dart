@@ -5,6 +5,8 @@ import 'package:pet_town/pages/salon/salon_list_page.dart';
 import '../pages/profile/user_profile_page.dart';
 import '../pages/vet/vet_list_page.dart';
 import '../pages/marketplace/marketplace_home_page.dart';
+import '../pages/search/global_search_page.dart';
+import '../pages/profile/notifications_page.dart';
 import '../services/auth_service.dart';
 
 class AppBottomNavBar extends StatefulWidget {
@@ -164,8 +166,16 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
       onTap: (index) {
         if (index == 0) {
           Navigator.popUntil(context, (route) => route.isFirst);
+        } else if (index == 1) {
+          if (widget.currentIndex != 1) {
+            _go(context, const GlobalSearchPage());
+          }
         } else if (index == 2) {
           _showFeatureMenu(context);
+        } else if (index == 3) {
+          if (widget.currentIndex != 3) {
+            _go(context, const NotificationsPage());
+          }
         } else if (index == 4) {
           if (widget.currentIndex != 4) {
             _go(context, const UserProfilePage());

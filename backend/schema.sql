@@ -264,8 +264,6 @@ CREATE TABLE IF NOT EXISTS store_verifications (
     FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
 );
 
--- Recreated adoptions table for full feature support
-DROP TABLE IF EXISTS adoptions CASCADE;
 CREATE TABLE IF NOT EXISTS adoptions (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,

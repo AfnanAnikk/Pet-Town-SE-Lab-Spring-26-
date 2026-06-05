@@ -272,25 +272,52 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final pendingCount = _invitations.where((inv) => inv.status == 'pending').length;
+
     final tabContent = DefaultTabController(
       length: 2,
       child: Column(
         children: [
           Container(
             color: Colors.white,
-            child: const TabBar(
+            child: TabBar(
               labelColor: _brandColor,
               unselectedLabelColor: Colors.grey,
               indicatorColor: _brandColor,
               indicatorWeight: 2.5,
-              labelStyle: TextStyle(
+              labelStyle: const TextStyle(
                 fontFamily: 'Outfit',
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
               tabs: [
-                Tab(text: 'Received'),
-                Tab(text: 'Send Invites'),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Received'),
+                      if (pendingCount > 0) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '$pendingCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const Tab(text: 'Send Invites'),
               ],
             ),
           ),

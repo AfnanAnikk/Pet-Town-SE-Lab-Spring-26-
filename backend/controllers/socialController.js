@@ -142,3 +142,21 @@ exports.getNotifications = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+// Get Unread Notifications Count
+exports.getUnreadNotificationsCount = async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) return res.status(400).json({ success: false, message: 'User ID required' });
+
+  try {
+    const [rows] = await db.execute(
+      'SELECT COUNT(*)::int as count FROM notifications WHERE user_id = ? AND is_read = false',
+      [userId]
+    );
+    res.json({ success: true, count: rows[0].count || 0 });
+  } catch (error) {
+    console.error('Error fetching unread count:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+

@@ -11,6 +11,7 @@ router.get('/follow-status', socialController.getFollowStatus);
 router.get('/search', socialController.globalSearch);
 
 // Notifications
+router.get('/notifications/unread-count', socialController.getUnreadNotificationsCount);
 router.get('/notifications', socialController.getNotifications);
 
 module.exports = router;

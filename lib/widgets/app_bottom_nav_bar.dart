@@ -8,6 +8,8 @@ import '../pages/marketplace/marketplace_home_page.dart';
 import '../pages/search/global_search_page.dart';
 import '../pages/profile/notifications_page.dart';
 import '../services/auth_service.dart';
+import '../services/api_service.dart';
+
 
 class AppBottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -25,11 +27,29 @@ class AppBottomNavBar extends StatefulWidget {
 
 class _AppBottomNavBarState extends State<AppBottomNavBar> {
   String? _profilePictureUrl;
+  int _unreadCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadProfilePicture();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    if (widget.currentIndex == 3) return;
+
+    final userId = await AuthService.getUserId();
+    if (userId == null) return;
+
+    final res = await ApiService.getUnreadNotificationsCount(userId);
+    if (res['success'] == true && res['count'] != null) {
+      if (mounted) {
+        setState(() {
+          _unreadCount = (res['count'] as num).toInt();
+        });
+      }
+    }
   }
 
   Future<void> _loadProfilePicture() async {
@@ -48,6 +68,7 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
       }
     }
   }
+
 
   void _go(BuildContext context, Widget page) {
     Navigator.push(
@@ -101,24 +122,6 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
       },
       child: Tooltip(
         message: tooltip,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Image.asset(asset, width: 28, height: 28),
-        ),
-      ),
-    );
-  }
-
-  Widget _comingSoon(BuildContext context, String asset, String name) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$name Feature Coming Soon!')),
-        );
-      },
-      child: Tooltip(
-        message: name,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Image.asset(asset, width: 28, height: 28),
@@ -215,13 +218,39 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
           label: 'Features',
         ),
         BottomNavigationBarItem(
-          icon: Image.asset('assets/images/notifications.png', width: 28, height: 28),
-          activeIcon: Image.asset(
-            widget.isOutsideTab ? 'assets/images/notifications.png' : 'assets/images/notifications1.png',
-            width: 28,
-            height: 28,
+          icon: Badge(
+            label: Text(
+              '$_unreadCount',
+              style: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            isLabelVisible: _unreadCount > 0,
+            backgroundColor: Colors.red,
+            child: Image.asset('assets/images/notifications.png', width: 28, height: 28),
           ),
-          label: 'Home',
+          activeIcon: Badge(
+            label: Text(
+              '$_unreadCount',
+              style: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            isLabelVisible: _unreadCount > 0,
+            backgroundColor: Colors.red,
+            child: Image.asset(
+              widget.isOutsideTab ? 'assets/images/notifications.png' : 'assets/images/notifications1.png',
+              width: 28,
+              height: 28,
+            ),
+          ),
+          label: 'Notifications',
         ),
         BottomNavigationBarItem(
           icon: _buildProfileIcon(),

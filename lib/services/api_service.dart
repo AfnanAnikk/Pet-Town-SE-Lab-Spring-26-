@@ -1109,6 +1109,20 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getUnreadNotificationsCount(int userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/notifications/unread-count')}?userId=$userId'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString(), 'count': 0};
+    }
+  }
+
+
   // ─────────────────────────────────────────────────────────────────────────
   //  EVENTS
   // ─────────────────────────────────────────────────────────────────────────

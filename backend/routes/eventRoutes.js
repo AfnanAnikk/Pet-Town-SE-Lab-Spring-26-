@@ -47,6 +47,7 @@ router.post('/:id/gallery',           c.addGalleryImage);
 
 // ── Invitations ───────────────────────────────────────────────────────────────
 router.post('/:id/invite',            c.sendInvitation);
+router.get('/:id/invitations',       c.getEventInvitations);
 
 // ── Announcements ─────────────────────────────────────────────────────────────
 router.post('/:id/announce',          c.sendAnnouncement);

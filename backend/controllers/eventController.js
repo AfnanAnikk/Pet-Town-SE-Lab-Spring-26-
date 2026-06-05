@@ -942,3 +942,24 @@ exports.sendAnnouncement = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 29. GET /:id/invitations — get invitations for a specific event
+// ─────────────────────────────────────────────────────────────────────────────
+exports.getEventInvitations = async (req, res) => {
+  const eventId = req.params.id;
+  try {
+    const [rows] = await db.execute(`
+      SELECT ei.id, ei.event_id, ei.inviter_id, ei.invitee_id, ei.status, ei.created_at,
+             u.username AS invitee_name, u.display_name AS invitee_display_name, u.profile_picture_url AS invitee_avatar
+      FROM event_invitations ei
+      JOIN users u ON ei.invitee_id = u.id
+      WHERE ei.event_id = ?
+    `, [eventId]);
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+

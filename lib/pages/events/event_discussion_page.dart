@@ -46,45 +46,60 @@ class _EventDiscussionPageState extends State<EventDiscussionPage> {
     super.dispose();
   }
 
-  Future<void> _load() async {
-    final uid = await AuthService.getUserId();
-    if (!mounted) return;
-    setState(() { _currentUserId = uid; _isLoading = true; });
-
-    final res = await ApiService.getEventComments(widget.eventId);
-    if (!mounted) return;
-    List<EventCommentModel> list = [];
+  /// Parse comments from the raw API response.
+  /// Backend returns: raw array OR {success, data: [...]} OR {success, data: {data: [...]}}
+  List<EventCommentModel> _parseComments(Map<String, dynamic> res) {
+    // Case 1: raw array in 'data' field (success == true, data is List)
     if (res['success'] == true) {
       final raw = res['data'];
-      // Handle both direct list and double-wrapped {success, data: [...]} responses
       final List? rawList = raw is List
           ? raw
           : (raw is Map ? raw['data'] as List? : null);
       if (rawList != null) {
-        list = rawList
+        return rawList
             .map((e) => EventCommentModel.fromJson(e as Map<String, dynamic>))
             .toList();
       }
     }
-    setState(() { _comments = list; _isLoading = false; });
+
+    // Case 2: backend returns array directly (no success wrapper)
+    // _handleResponse wraps it as {'success': true, 'data': [...]}
+    // but if it's a 2xx with a raw array body, _handleResponse puts the list in 'data'
+    // Try 'data' as list directly:
+    final rawData = res['data'];
+    if (rawData is List) {
+      return rawData
+          .map((e) => EventCommentModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+
+    // Case 3: response itself is an array-like map with integer keys
+    // (shouldn't happen but guard anyway)
+    return [];
+  }
+
+  Future<void> _load() async {
+    final uid = await AuthService.getUserId();
+    if (!mounted) return;
+    setState(() {
+      _currentUserId = uid;
+      _isLoading = true;
+    });
+
+    final res = await ApiService.getEventComments(widget.eventId);
+    if (!mounted) return;
+    final list = _parseComments(res);
+    setState(() {
+      _comments = list;
+      _isLoading = false;
+    });
   }
 
   /// Refresh comments without showing the full-page spinner (used after send/react/pin).
   Future<void> _loadSilent() async {
     final res = await ApiService.getEventComments(widget.eventId);
     if (!mounted) return;
-    List<EventCommentModel> list = [];
-    if (res['success'] == true) {
-      final raw = res['data'];
-      final List? rawList = raw is List
-          ? raw
-          : (raw is Map ? raw['data'] as List? : null);
-      if (rawList != null) {
-        list = rawList
-            .map((e) => EventCommentModel.fromJson(e as Map<String, dynamic>))
-            .toList();
-      }
-    }
+    final list = _parseComments(res);
     if (mounted) setState(() => _comments = list);
   }
 
@@ -100,19 +115,37 @@ class _EventDiscussionPageState extends State<EventDiscussionPage> {
       parentId: _replyingTo?.id,
     );
 
-    if (res['success'] == true && mounted) {
-      _inputCtrl.clear();
-      setState(() { _replyingTo = null; _isSending = false; });
-      await _loadSilent();
-      // Scroll to bottom after new comment appears
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollCtrl.hasClients) {
-          _scrollCtrl.animateTo(_scrollCtrl.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
-        }
-      });
-    } else {
-      if (mounted) setState(() => _isSending = false);
+    if (mounted) {
+      if (res['success'] == true || res['message'] == 'Comment added') {
+        _inputCtrl.clear();
+        setState(() {
+          _replyingTo = null;
+          _isSending = false;
+        });
+        await _loadSilent();
+        // Scroll to bottom after new comment appears
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollCtrl.hasClients) {
+            _scrollCtrl.animateTo(
+              _scrollCtrl.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      } else {
+        setState(() => _isSending = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              res['message']?.toString() ?? 'Failed to send comment',
+              style: const TextStyle(fontFamily: 'Outfit'),
+            ),
+            backgroundColor: Colors.red.shade600,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -144,31 +177,50 @@ class _EventDiscussionPageState extends State<EventDiscussionPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
-            onPressed: () => Navigator.pop(context)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Discussion', style: TextStyle(fontFamily: 'Outfit',
-              fontSize: 18, fontWeight: FontWeight.bold, color: _secondary)),
-          Text(widget.eventTitle, style: TextStyle(fontFamily: 'Outfit',
-              fontSize: 12, color: Colors.grey.shade500),
-              maxLines: 1, overflow: TextOverflow.ellipsis),
+          const Text('Discussion',
+              style: TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _secondary)),
+          Text(widget.eventTitle,
+              style: TextStyle(
+                  fontFamily: 'Outfit', fontSize: 12, color: Colors.grey.shade500),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
         ]),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: _brandColor),
+            onPressed: _load,
+            tooltip: 'Refresh',
+          ),
+        ],
       ),
       body: Column(children: [
-        Expanded(child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: _brandColor))
-            : _comments.isEmpty
-                ? _emptyState()
-                : RefreshIndicator(
-                    color: _brandColor, onRefresh: _load,
-                    child: ListView.builder(
-                      controller: _scrollCtrl,
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      itemCount: _comments.length,
-                      itemBuilder: (ctx, i) => _buildCommentTile(_comments[i]),
+        Expanded(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator(color: _brandColor))
+              : _comments.isEmpty
+                  ? _emptyState()
+                  : RefreshIndicator(
+                      color: _brandColor,
+                      onRefresh: _load,
+                      child: ListView.builder(
+                        controller: _scrollCtrl,
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        itemCount: _comments.length,
+                        itemBuilder: (ctx, i) => _buildCommentTile(_comments[i]),
+                      ),
                     ),
-                  )),
+        ),
         _buildInputBar(),
       ]),
     );
@@ -181,44 +233,74 @@ class _EventDiscussionPageState extends State<EventDiscussionPage> {
         decoration: BoxDecoration(
           color: c.isPinned ? const Color(0xFFFFFDE7) : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: c.isPinned ? Border.all(color: Colors.amber.shade300, width: 1.5) : null,
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8, offset: const Offset(0, 2))],
+          border: c.isPinned
+              ? Border.all(color: Colors.amber.shade300, width: 1.5)
+              : null,
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2))
+          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             if (c.isPinned)
-              Padding(padding: const EdgeInsets.only(bottom: 6),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
                 child: Row(children: [
                   const Icon(Icons.push_pin, size: 13, color: Colors.amber),
                   const SizedBox(width: 4),
-                  Text('Pinned', style: TextStyle(fontFamily: 'Outfit',
-                      fontSize: 11, color: Colors.amber.shade800, fontWeight: FontWeight.w600)),
-                ])),
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              CircleAvatar(radius: 16, backgroundColor: _brandColor.withValues(alpha: 0.2),
-                  backgroundImage: c.authorAvatarUrl != null && c.authorAvatarUrl!.isNotEmpty
-                      ? NetworkImage(c.authorAvatarUrl!) : null,
-                  child: c.authorAvatarUrl == null || c.authorAvatarUrl!.isEmpty
-                      ? const Icon(Icons.person, size: 14, color: _brandColor) : null),
-              const SizedBox(width: 10),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Text(c.authorName, style: const TextStyle(fontFamily: 'Outfit',
-                      fontWeight: FontWeight.bold, fontSize: 13, color: _secondary)),
-                  const SizedBox(width: 6),
-                  Text(_timeAgo(c.createdAt), style: TextStyle(fontFamily: 'Outfit',
-                      fontSize: 11, color: Colors.grey.shade400)),
+                  Text('Pinned',
+                      style: TextStyle(
+                          fontFamily: 'Outfit',
+                          fontSize: 11,
+                          color: Colors.amber.shade800,
+                          fontWeight: FontWeight.w600)),
                 ]),
-                const SizedBox(height: 4),
-                Text(c.text, style: const TextStyle(fontFamily: 'Outfit', fontSize: 14, height: 1.5)),
-              ])),
+              ),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: _brandColor.withValues(alpha: 0.2),
+                backgroundImage: c.authorAvatarUrl != null && c.authorAvatarUrl!.isNotEmpty
+                    ? NetworkImage(c.authorAvatarUrl!)
+                    : null,
+                child: c.authorAvatarUrl == null || c.authorAvatarUrl!.isEmpty
+                    ? const Icon(Icons.person, size: 14, color: _brandColor)
+                    : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Text(c.authorName,
+                        style: const TextStyle(
+                            fontFamily: 'Outfit',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: _secondary)),
+                    const SizedBox(width: 6),
+                    Text(_timeAgo(c.createdAt),
+                        style: TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 11,
+                            color: Colors.grey.shade400)),
+                  ]),
+                  const SizedBox(height: 4),
+                  Text(c.text,
+                      style: const TextStyle(
+                          fontFamily: 'Outfit', fontSize: 14, height: 1.5)),
+                ]),
+              ),
               if (_isOrganizer && !c.isPinned)
                 GestureDetector(
                   onTap: () => _pin(c),
-                  child: const Padding(padding: EdgeInsets.all(4),
-                      child: Icon(Icons.push_pin_outlined, size: 16, color: Colors.grey)),
+                  child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.push_pin_outlined,
+                          size: 16, color: Colors.grey)),
                 ),
             ]),
             const SizedBox(height: 8),
@@ -227,13 +309,17 @@ class _EventDiscussionPageState extends State<EventDiscussionPage> {
                 onTap: () => _react(c),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: Colors.grey.shade100,
+                  decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(20)),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     const Text('👍', style: TextStyle(fontSize: 13)),
                     const SizedBox(width: 4),
-                    Text('${c.reactionCount}', style: const TextStyle(fontFamily: 'Outfit',
-                        fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text('${c.reactionCount}',
+                        style: const TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600)),
                   ]),
                 ),
               ),
@@ -243,8 +329,12 @@ class _EventDiscussionPageState extends State<EventDiscussionPage> {
                   setState(() => _replyingTo = c);
                   _focusNode.requestFocus();
                 },
-                child: Text('Reply', style: TextStyle(fontFamily: 'Outfit',
-                    fontSize: 12, color: _brandColor, fontWeight: FontWeight.w600)),
+                child: Text('Reply',
+                    style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 12,
+                        color: _brandColor,
+                        fontWeight: FontWeight.w600)),
               ),
             ]),
           ]),
@@ -268,40 +358,66 @@ class _EventDiscussionPageState extends State<EventDiscussionPage> {
             child: Row(children: [
               const Icon(Icons.reply, size: 16, color: _brandColor),
               const SizedBox(width: 6),
-              Expanded(child: Text('Replying to ${_replyingTo!.authorName}',
-                  style: const TextStyle(fontFamily: 'Outfit', color: _brandColor,
-                      fontSize: 12, fontWeight: FontWeight.w600))),
-              GestureDetector(onTap: () => setState(() => _replyingTo = null),
+              Expanded(
+                  child: Text('Replying to ${_replyingTo!.authorName}',
+                      style: const TextStyle(
+                          fontFamily: 'Outfit',
+                          color: _brandColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600))),
+              GestureDetector(
+                  onTap: () => setState(() => _replyingTo = null),
                   child: const Icon(Icons.close, size: 16, color: _brandColor)),
             ]),
           ),
         Padding(
-          padding: EdgeInsets.only(left: 16, right: 12, top: 8,
+          padding: EdgeInsets.only(
+              left: 16,
+              right: 12,
+              top: 8,
               bottom: MediaQuery.of(context).viewInsets.bottom + 12),
           child: Row(children: [
-            Expanded(child: TextField(
-              controller: _inputCtrl, focusNode: _focusNode,
-              style: const TextStyle(fontFamily: 'Outfit', fontSize: 14),
-              decoration: InputDecoration(
-                hintText: _replyingTo != null ? 'Write a reply…' : 'Add a comment…',
-                hintStyle: TextStyle(fontFamily: 'Outfit', color: Colors.grey.shade400),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: _brandColor, width: 1.5)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            Expanded(
+              child: TextField(
+                controller: _inputCtrl,
+                focusNode: _focusNode,
+                style: const TextStyle(fontFamily: 'Outfit', fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: _replyingTo != null ? 'Write a reply…' : 'Add a comment…',
+                  hintStyle: TextStyle(
+                      fontFamily: 'Outfit', color: Colors.grey.shade400),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide:
+                          const BorderSide(color: _brandColor, width: 1.5)),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
+                ),
+                maxLines: 3,
+                minLines: 1,
+                onSubmitted: (_) => _send(),
               ),
-              maxLines: 3, minLines: 1,
-              onSubmitted: (_) => _send(),
-            )),
+            ),
             const SizedBox(width: 8),
             _isSending
-                ? const SizedBox(width: 42, height: 42,
-                    child: CircularProgressIndicator(color: _brandColor, strokeWidth: 2))
+                ? const SizedBox(
+                    width: 42,
+                    height: 42,
+                    child: CircularProgressIndicator(
+                        color: _brandColor, strokeWidth: 2))
                 : Material(
-                    color: _brandColor, borderRadius: BorderRadius.circular(24),
-                    child: InkWell(borderRadius: BorderRadius.circular(24), onTap: _send,
-                      child: const Padding(padding: EdgeInsets.all(10),
-                          child: Icon(Icons.send_rounded, color: Colors.white, size: 22))),
+                    color: _brandColor,
+                    borderRadius: BorderRadius.circular(24),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: _send,
+                      child: const Padding(
+                          padding: EdgeInsets.all(10),
+                          child: Icon(Icons.send_rounded,
+                              color: Colors.white, size: 22)),
+                    ),
                   ),
           ]),
         ),
@@ -309,13 +425,21 @@ class _EventDiscussionPageState extends State<EventDiscussionPage> {
     );
   }
 
-  Widget _emptyState() => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-    const Text('💬', style: TextStyle(fontSize: 64)),
-    const SizedBox(height: 16),
-    Text('No comments yet', style: TextStyle(fontFamily: 'Outfit',
-        fontSize: 17, color: Colors.grey.shade500)),
-    const SizedBox(height: 8),
-    Text('Be the first to start the discussion!', style: TextStyle(fontFamily: 'Outfit',
-        fontSize: 13, color: Colors.grey.shade400)),
-  ]));
+  Widget _emptyState() => Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text('💬', style: TextStyle(fontSize: 64)),
+          const SizedBox(height: 16),
+          Text('No comments yet',
+              style: TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 17,
+                  color: Colors.grey.shade500)),
+          const SizedBox(height: 8),
+          Text('Be the first to start the discussion!',
+              style: TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 13,
+                  color: Colors.grey.shade400)),
+        ]),
+      );
 }

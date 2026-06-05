@@ -1648,6 +1648,24 @@ class ApiService {
     }
   }
 
+  /// Fetch all invitations sent for a specific event.
+  static Future<Map<String, dynamic>> getEventInvitations(int eventId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/invitations'),
+        ),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+
   /// Fetch all pending/responded event invitations for a user.
   static Future<Map<String, dynamic>> getMyEventInvitations(
     int userId,

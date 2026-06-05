@@ -74,8 +74,14 @@ class _EventPageState extends State<EventPage>
           _isLoading = false;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load events: $e',
+              style: const TextStyle(fontFamily: 'Outfit')),
+              backgroundColor: Colors.red.shade400));
+      }
     }
   }
 

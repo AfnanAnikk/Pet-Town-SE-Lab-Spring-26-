@@ -4,6 +4,7 @@ import '../../widgets/event_card.dart';
 import '../../widgets/event_category_chip.dart';
 import '../../models/event_model.dart';
 import '../../services/api_service.dart';
+import '../../services/event_notifier.dart';
 import 'event_detail_page.dart';
 import 'event_search_page.dart';
 import 'event_discovery_page.dart';
@@ -40,12 +41,19 @@ class _EventPageState extends State<EventPage>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _init();
+    // Auto-refresh whenever any event action fires the global notifier
+    EventChangeNotifier.instance.addListener(_onEventChanged);
   }
 
   @override
   void dispose() {
+    EventChangeNotifier.instance.removeListener(_onEventChanged);
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _onEventChanged() {
+    if (mounted) _loadData();
   }
 
   Future<void> _init() async {
@@ -102,9 +110,11 @@ class _EventPageState extends State<EventPage>
     await _loadData();
   }
 
-  void _openDetail(EventModel event) {
-    Navigator.push(context,
+  void _openDetail(EventModel event) async {
+    await Navigator.push(context,
         MaterialPageRoute(builder: (_) => EventDetailPage(eventId: event.id)));
+    // Reload in case save/join state changed inside the detail page
+    if (mounted) _loadData();
   }
 
   @override
@@ -320,7 +330,11 @@ class _EventPageState extends State<EventPage>
       onPressed: () async {
         final result = await Navigator.push(context,
             MaterialPageRoute(builder: (_) => const CreateEventPage()));
-        if (result == true && mounted) _loadData();
+        if (result == true && mounted) {
+          // Notify all pages (MyEvents, Discovery, etc.)
+          EventChangeNotifier.instance.notify();
+          _loadData();
+        }
       },
       backgroundColor: _brandColor,
       icon: const Icon(Icons.add, color: Colors.white),

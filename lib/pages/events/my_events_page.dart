@@ -4,6 +4,7 @@ import '../../widgets/event_status_badge.dart';
 import '../../models/event_model.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/event_notifier.dart';
 import 'event_detail_page.dart';
 import 'edit_event_page.dart';
 import 'create_event_page.dart';
@@ -32,10 +33,19 @@ class _MyEventsPageState extends State<MyEventsPage>
     super.initState();
     _tab = TabController(length: 2, vsync: this);
     _load();
+    EventChangeNotifier.instance.addListener(_onEventChanged);
   }
 
   @override
-  void dispose() { _tab.dispose(); super.dispose(); }
+  void dispose() {
+    EventChangeNotifier.instance.removeListener(_onEventChanged);
+    _tab.dispose();
+    super.dispose();
+  }
+
+  void _onEventChanged() {
+    if (mounted) _load();
+  }
 
   Future<void> _load() async {
     final uid = await AuthService.getUserId();
@@ -76,6 +86,8 @@ class _MyEventsPageState extends State<MyEventsPage>
     ));
     if (confirm == true && _userId != null) {
       await ApiService.deleteEvent(ev.id, _userId!);
+      // Notify discover and other tabs
+      EventChangeNotifier.instance.notify();
       _load();
     }
   }
@@ -120,11 +132,10 @@ class _MyEventsPageState extends State<MyEventsPage>
                       trailing: !approved
                           ? ElevatedButton(
                               onPressed: () async {
+                                final nav = Navigator.of(context);
                                 await ApiService.approveParticipant(ev.id, p['user_id'] as int, _userId!);
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                  _showParticipants(ev);
-                                }
+                                nav.pop();
+                                if (mounted) _showParticipants(ev);
                               },
                               style: ElevatedButton.styleFrom(backgroundColor: _brandColor, elevation: 0,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -208,6 +219,8 @@ class _MyEventsPageState extends State<MyEventsPage>
               Navigator.pop(context);
               if (_userId == null) return;
               await ApiService.updateEventStatus(ev.id, s, _userId!);
+              // Notify all tabs of status change
+              EventChangeNotifier.instance.notify();
               _load();
             },
           )),
@@ -242,7 +255,10 @@ class _MyEventsPageState extends State<MyEventsPage>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final r = await Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateEventPage()));
-          if (r == true && mounted) _load();
+          if (r == true && mounted) {
+            EventChangeNotifier.instance.notify();
+            _load();
+          }
         },
         backgroundColor: _brandColor,
         icon: const Icon(Icons.add, color: Colors.white),
@@ -278,8 +294,11 @@ class _MyEventsPageState extends State<MyEventsPage>
               blurRadius: 12, offset: const Offset(0, 4))]),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => EventDetailPage(eventId: ev.id))),
+        onTap: () async {
+          await Navigator.push(context,
+              MaterialPageRoute(builder: (_) => EventDetailPage(eventId: ev.id)));
+          if (mounted) _load();
+        },
         child: Padding(padding: const EdgeInsets.all(14), child: Column(children: [
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             // Thumbnail
@@ -312,7 +331,10 @@ class _MyEventsPageState extends State<MyEventsPage>
             _actionBtn(Icons.edit_outlined, 'Edit', () async {
               final r = await Navigator.push(context,
                   MaterialPageRoute(builder: (_) => EditEventPage(event: ev)));
-              if (r == true && mounted) _load();
+              if (r == true && mounted) {
+                EventChangeNotifier.instance.notify();
+                _load();
+              }
             }),
             _actionBtn(Icons.delete_outline, 'Delete', () => _deleteEvent(ev), color: Colors.red),
             _actionBtn(Icons.people_outline, 'People', () => _showParticipants(ev)),

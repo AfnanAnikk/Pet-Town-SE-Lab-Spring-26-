@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../models/event_model.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/event_notifier.dart';
 import 'event_detail_page.dart';
 
 const _brandColor = Color(0xFF3293B3);
@@ -25,6 +26,17 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
   void initState() {
     super.initState();
     _load();
+    EventChangeNotifier.instance.addListener(_onEventChanged);
+  }
+
+  @override
+  void dispose() {
+    EventChangeNotifier.instance.removeListener(_onEventChanged);
+    super.dispose();
+  }
+
+  void _onEventChanged() {
+    if (mounted) _load();
   }
 
   Future<void> _load() async {
@@ -62,6 +74,8 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     }
     if (status == 'accepted' && _userId != null) {
       await ApiService.joinEvent(inv.eventId, _userId!, 'going');
+      // Notify discover / my events tabs
+      EventChangeNotifier.instance.notify();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('You are now going to "${inv.eventTitle}"! 🎉',
@@ -120,8 +134,11 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
               blurRadius: 12, offset: const Offset(0, 4))]),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => EventDetailPage(eventId: inv.eventId))),
+        onTap: () async {
+          await Navigator.push(context,
+              MaterialPageRoute(builder: (_) => EventDetailPage(eventId: inv.eventId)));
+          if (mounted) _load();
+        },
         child: Padding(padding: const EdgeInsets.all(14), child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [

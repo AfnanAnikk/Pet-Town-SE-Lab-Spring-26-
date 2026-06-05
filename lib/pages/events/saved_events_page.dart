@@ -3,6 +3,7 @@ import '../../widgets/event_card.dart';
 import '../../models/event_model.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/event_notifier.dart';
 import 'event_detail_page.dart';
 import 'event_discovery_page.dart';
 
@@ -25,6 +26,17 @@ class _SavedEventsPageState extends State<SavedEventsPage> {
   void initState() {
     super.initState();
     _load();
+    EventChangeNotifier.instance.addListener(_onEventChanged);
+  }
+
+  @override
+  void dispose() {
+    EventChangeNotifier.instance.removeListener(_onEventChanged);
+    super.dispose();
+  }
+
+  void _onEventChanged() {
+    if (mounted) _load();
   }
 
   Future<void> _load() async {
@@ -50,12 +62,15 @@ class _SavedEventsPageState extends State<SavedEventsPage> {
     if (_userId == null) return;
     await ApiService.unsaveEventBookmark(ev.id, _userId!);
     setState(() => _events.removeWhere((e) => e.id == ev.id));
+    // Notify detail page / discover tab
+    EventChangeNotifier.instance.notify();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Removed "${ev.title}" from saved', style: const TextStyle(fontFamily: 'Outfit')),
         action: SnackBarAction(label: 'Undo', textColor: Colors.white, onPressed: () async {
           await ApiService.saveEventBookmark(ev.id, _userId!);
           setState(() => _events.insert(0, ev));
+          EventChangeNotifier.instance.notify();
         }),
       ));
     }

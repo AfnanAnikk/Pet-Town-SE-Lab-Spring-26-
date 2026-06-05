@@ -3,6 +3,7 @@ import '../../widgets/event_card.dart';
 import '../../widgets/event_category_chip.dart';
 import '../../models/event_model.dart';
 import '../../services/api_service.dart';
+import '../../services/event_notifier.dart';
 import 'event_detail_page.dart';
 
 const _brandColor = Color(0xFF3293B3);
@@ -37,6 +38,17 @@ class _EventDiscoveryPageState extends State<EventDiscoveryPage> {
   void initState() {
     super.initState();
     _load();
+    EventChangeNotifier.instance.addListener(_onEventChanged);
+  }
+
+  @override
+  void dispose() {
+    EventChangeNotifier.instance.removeListener(_onEventChanged);
+    super.dispose();
+  }
+
+  void _onEventChanged() {
+    if (mounted) _load();
   }
 
   Future<void> _load() async {
@@ -303,8 +315,11 @@ class _EventDiscoveryPageState extends State<EventDiscoveryPage> {
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemCount: _events.length,
       itemBuilder: (ctx, i) => EventCard(event: _events[i], isSaved: false,
-          onTap: () => Navigator.push(ctx, MaterialPageRoute(
-              builder: (_) => EventDetailPage(eventId: _events[i].id)))),
+          onTap: () async {
+            await Navigator.push(ctx, MaterialPageRoute(
+                builder: (_) => EventDetailPage(eventId: _events[i].id)));
+            if (mounted) _load();
+          }),
     );
   }
 
@@ -316,8 +331,11 @@ class _EventDiscoveryPageState extends State<EventDiscoveryPage> {
           childAspectRatio: 0.75),
       itemCount: _events.length,
       itemBuilder: (ctx, i) => EventCard(event: _events[i], isSaved: false,
-          onTap: () => Navigator.push(ctx, MaterialPageRoute(
-              builder: (_) => EventDetailPage(eventId: _events[i].id)))),
+          onTap: () async {
+            await Navigator.push(ctx, MaterialPageRoute(
+                builder: (_) => EventDetailPage(eventId: _events[i].id)));
+            if (mounted) _load();
+          }),
     );
   }
 

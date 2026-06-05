@@ -6,6 +6,7 @@ import '../../widgets/event_status_badge.dart';
 import '../../models/event_model.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/event_notifier.dart';
 import 'event_discussion_page.dart';
 import 'edit_event_page.dart';
 
@@ -141,6 +142,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         }
         _participationStatus = null;
       });
+      // Notify other tabs (Discover, My Events, etc.)
+      EventChangeNotifier.instance.notify();
     } else {
       if (_participationStatus != null) {
         // Switch: leave first
@@ -161,6 +164,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
             _event = _event!.copyWith(interestedCount: _event!.interestedCount + 1);
           }
         });
+        // Notify other tabs
+        EventChangeNotifier.instance.notify();
       }
     }
     if (mounted) setState(() => _joiningBusy = false);
@@ -175,6 +180,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
       await ApiService.saveEventBookmark(_event!.id, _currentUserId!);
     }
     if (mounted) setState(() { _isSaved = !_isSaved; _saveBusy = false; });
+    // Notify Saved tab to refresh
+    EventChangeNotifier.instance.notify();
   }
 
   bool get _isOrganizer =>
@@ -329,7 +336,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
             onPressed: () async {
               final updated = await Navigator.push(context,
                   MaterialPageRoute(builder: (_) => EditEventPage(event: ev)));
-              if (updated == true && mounted) _load();
+              if (updated == true && mounted) {
+                EventChangeNotifier.instance.notify();
+                _load();
+              }
             },
             icon: const Icon(Icons.edit, size: 16),
             label: const Text('Edit', style: TextStyle(fontFamily: 'Outfit')),
@@ -631,7 +641,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
           onPressed: () async {
             final updated = await Navigator.push(context,
                 MaterialPageRoute(builder: (_) => EditEventPage(event: ev)));
-            if (updated == true && mounted) _load();
+            if (updated == true && mounted) {
+              EventChangeNotifier.instance.notify();
+              _load();
+            }
           },
           icon: const Icon(Icons.settings, color: Colors.white, size: 18),
           label: const Text('Manage Event', style: TextStyle(fontFamily: 'Outfit',

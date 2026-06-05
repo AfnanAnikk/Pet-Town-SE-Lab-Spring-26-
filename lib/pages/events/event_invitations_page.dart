@@ -36,10 +36,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
     final res = await ApiService.getMyEventInvitations(uid);
     if (!mounted) return;
     List<EventInvitationModel> list = [];
-    if (res['success'] == true && res['data'] is List) {
-      list = (res['data'] as List)
-          .map((e) => EventInvitationModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+    if (res['success'] == true) {
+      final raw = res['data'];
+      final List? rawList = raw is List ? raw : (raw is Map ? raw['data'] as List? : null);
+      if (rawList != null) {
+        list = rawList
+            .map((e) => EventInvitationModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
     }
     setState(() { _invitations = list; _isLoading = false; });
   }

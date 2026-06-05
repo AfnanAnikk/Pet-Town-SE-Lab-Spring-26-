@@ -45,8 +45,12 @@ class _MyEventsPageState extends State<MyEventsPage>
     final res = await ApiService.getEventsByUser(uid);
     if (!mounted) return;
     List<EventModel> all = [];
-    if (res['success'] == true && res['data'] is List) {
-      all = (res['data'] as List).map((e) => EventModel.fromJson(e)).toList();
+    if (res['success'] == true) {
+      final raw = res['data'];
+      final List? list = raw is List ? raw : (raw is Map ? raw['data'] as List? : null);
+      if (list != null) {
+        all = list.map((e) => EventModel.fromJson(e as Map<String, dynamic>)).toList();
+      }
     }
     setState(() {
       _hosting = all.where((e) => ['upcoming','ongoing','draft'].contains(e.status)).toList();
@@ -79,7 +83,11 @@ class _MyEventsPageState extends State<MyEventsPage>
   void _showParticipants(EventModel ev) async {
     final res = await ApiService.getEventParticipants(ev.id);
     if (!mounted) return;
-    final List participants = res['data'] is List ? res['data'] as List : [];
+    final List participants = res['data'] is List
+        ? res['data'] as List
+        : (res['data'] is Map && res['data']['data'] is List
+            ? res['data']['data'] as List
+            : []);
     showModalBottomSheet(context: context, backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (_) => Container(

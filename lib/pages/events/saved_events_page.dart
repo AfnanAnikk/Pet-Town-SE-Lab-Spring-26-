@@ -37,8 +37,12 @@ class _SavedEventsPageState extends State<SavedEventsPage> {
     final res = await ApiService.getSavedEvents(uid);
     if (!mounted) return;
     List<EventModel> list = [];
-    if (res['success'] == true && res['data'] is List) {
-      list = (res['data'] as List).map((e) => EventModel.fromJson(e)).toList();
+    if (res['success'] == true) {
+      final raw = res['data'];
+      final List? rawList = raw is List ? raw : (raw is Map ? raw['data'] as List? : null);
+      if (rawList != null) {
+        list = rawList.map((e) => EventModel.fromJson(e as Map<String, dynamic>)).toList();
+      }
     }
     setState(() { _events = list; _isLoading = false; });
   }

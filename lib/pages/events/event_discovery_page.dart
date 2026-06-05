@@ -52,11 +52,15 @@ class _EventDiscoveryPageState extends State<EventDiscoveryPage> {
     );
     if (!mounted) return;
     List<EventModel> list = [];
-    if (res['success'] == true && res['data'] is List) {
-      list = (res['data'] as List).map((e) => EventModel.fromJson(e)).toList();
-      if (_sortBy == 'popular') {
-        list.sort((a, b) =>
-            (b.goingCount + b.interestedCount).compareTo(a.goingCount + a.interestedCount));
+    if (res['success'] == true) {
+      final raw = res['data'];
+      final List? rawList = raw is List ? raw : (raw is Map ? raw['data'] as List? : null);
+      if (rawList != null) {
+        list = rawList.map((e) => EventModel.fromJson(e as Map<String, dynamic>)).toList();
+        if (_sortBy == 'popular') {
+          list.sort((a, b) =>
+              (b.goingCount + b.interestedCount).compareTo(a.goingCount + a.interestedCount));
+        }
       }
     }
     setState(() { _events = list; _isLoading = false; });

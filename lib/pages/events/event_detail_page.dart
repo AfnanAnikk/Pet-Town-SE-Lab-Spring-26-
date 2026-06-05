@@ -57,7 +57,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final eventRes = results[0];
     EventModel? ev;
     if (eventRes['success'] == true && eventRes['data'] != null) {
-      ev = EventModel.fromJson(eventRes['data']);
+      final raw = eventRes['data'];
+      // data might be the event map directly, or double-wrapped {success, data: {...}}
+      final Map<String, dynamic>? evMap = raw is Map<String, dynamic>
+          ? (raw.containsKey('id') ? raw : raw['data'] as Map<String, dynamic>?)
+          : null;
+      if (evMap != null) ev = EventModel.fromJson(evMap);
     }
 
     String? partStatus;
@@ -75,21 +80,26 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
     final commentsRes = uid != null ? results[3] : results[1];
     List<dynamic> comments = [];
-    if (commentsRes['success'] == true && commentsRes['data'] is List) {
-      final all = commentsRes['data'] as List;
-      comments = all.take(3).toList();
+    if (commentsRes['success'] == true) {
+      final raw = commentsRes['data'];
+      final List? rawList = raw is List ? raw : (raw is Map ? raw['data'] as List? : null);
+      if (rawList != null) comments = rawList.take(3).toList();
     }
 
     final galleryRes = uid != null ? results[4] : results[2];
     List<dynamic> gallery = [];
-    if (galleryRes['success'] == true && galleryRes['data'] is List) {
-      gallery = galleryRes['data'] as List;
+    if (galleryRes['success'] == true) {
+      final raw = galleryRes['data'];
+      final List? rawList = raw is List ? raw : (raw is Map ? raw['data'] as List? : null);
+      if (rawList != null) gallery = rawList;
     }
 
     final participantsRes = uid != null ? results[5] : results[3];
     List<dynamic> participants = [];
-    if (participantsRes['success'] == true && participantsRes['data'] is List) {
-      participants = participantsRes['data'] as List;
+    if (participantsRes['success'] == true) {
+      final raw = participantsRes['data'];
+      final List? rawList = raw is List ? raw : (raw is Map ? raw['data'] as List? : null);
+      if (rawList != null) participants = rawList;
     }
 
     setState(() {

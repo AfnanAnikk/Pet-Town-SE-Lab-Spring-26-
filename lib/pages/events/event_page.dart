@@ -88,7 +88,17 @@ class _EventPageState extends State<EventPage>
   List<EventModel> _parseEvents(Map<String, dynamic> res) {
     if (res['success'] != true) return [];
     final data = res['data'];
-    if (data is List) return data.map((e) => EventModel.fromJson(e)).toList();
+    // Direct list (backend returns plain array)
+    if (data is List) {
+      return data.map((e) => EventModel.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    // Double-wrapped: _handleResponse wraps body, but events backend already
+    // returns {success, data: [...]}, so data here is that inner map.
+    if (data is Map && data['data'] is List) {
+      return (data['data'] as List)
+          .map((e) => EventModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
     return [];
   }
 

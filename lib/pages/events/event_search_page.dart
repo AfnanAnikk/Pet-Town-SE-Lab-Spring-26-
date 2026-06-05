@@ -77,8 +77,12 @@ class _EventSearchPageState extends State<EventSearchPage> {
     final res = await ApiService.getEvents(search: query, limit: 20);
     if (!mounted) return;
     List<EventModel> list = [];
-    if (res['success'] == true && res['data'] is List) {
-      list = (res['data'] as List).map((e) => EventModel.fromJson(e)).toList();
+    if (res['success'] == true) {
+      final raw = res['data'];
+      final List? rawList = raw is List ? raw : (raw is Map ? raw['data'] as List? : null);
+      if (rawList != null) {
+        list = rawList.map((e) => EventModel.fromJson(e as Map<String, dynamic>)).toList();
+      }
     }
     setState(() { _results = list; _isLoading = false; });
     if (query.isNotEmpty) _saveRecent(query);

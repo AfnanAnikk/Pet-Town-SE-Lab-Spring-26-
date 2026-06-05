@@ -1108,6 +1108,608 @@ class ApiService {
       return {'success': false, 'message': e.toString()};
     }
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  EVENTS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Fetch a paginated, optionally-filtered list of public events.
+  static Future<Map<String, dynamic>> getEvents({
+    String? status,
+    String? category,
+    String? petType,
+    String? location,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final params = <String, String>{
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      };
+      if (status != null && status.isNotEmpty) params['status'] = status;
+      if (category != null && category.isNotEmpty) params['category'] = category;
+      if (petType != null && petType.isNotEmpty) params['petType'] = petType;
+      if (location != null && location.isNotEmpty) params['location'] = location;
+      if (search != null && search.isNotEmpty) params['search'] = search;
+      if (dateFrom != null && dateFrom.isNotEmpty) params['dateFrom'] = dateFrom;
+      if (dateTo != null && dateTo.isNotEmpty) params['dateTo'] = dateTo;
+
+      final uri = Uri.parse(
+        AuthService.baseUrl.replaceAll('/api/auth', '/api/events'),
+      ).replace(queryParameters: params);
+
+      final response = await http.get(uri, headers: headers);
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Fetch trending events (sorted by participant count / engagement).
+  static Future<Map<String, dynamic>> getTrendingEvents() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse(
+          AuthService.baseUrl.replaceAll('/api/auth', '/api/events/trending'),
+        ),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Fetch events within [radiusKm] kilometres of a geographic point.
+  static Future<Map<String, dynamic>> getNearbyEvents(
+    double lat,
+    double lon, {
+    double radiusKm = 25,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final uri = Uri.parse(
+        AuthService.baseUrl.replaceAll('/api/auth', '/api/events/nearby'),
+      ).replace(queryParameters: {
+        'lat': lat.toString(),
+        'lon': lon.toString(),
+        'radius': radiusKm.toString(),
+      });
+      final response = await http.get(uri, headers: headers);
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Fetch a single event by its ID.
+  static Future<Map<String, dynamic>> getEventById(int eventId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse(
+          AuthService.baseUrl.replaceAll('/api/auth', '/api/events/$eventId'),
+        ),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Fetch all events created by a specific user.
+  static Future<Map<String, dynamic>> getEventsByUser(int userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse(
+          AuthService.baseUrl.replaceAll('/api/auth', '/api/events/user/$userId'),
+        ),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Create a new event. [eventData] must include at minimum title, description,
+  /// category, petType, startDatetime, location, and userId.
+  static Future<Map<String, dynamic>> createEvent(
+    Map<String, dynamic> eventData,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl.replaceAll('/api/auth', '/api/events'),
+        ),
+        headers: headers,
+        body: jsonEncode(eventData),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Update an existing event. Only the organizer may do this.
+  static Future<Map<String, dynamic>> updateEvent(
+    int eventId,
+    Map<String, dynamic> eventData,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        Uri.parse(
+          AuthService.baseUrl.replaceAll('/api/auth', '/api/events/$eventId'),
+        ),
+        headers: headers,
+        body: jsonEncode(eventData),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Delete an event (organizer only).
+  static Future<Map<String, dynamic>> deleteEvent(
+    int eventId,
+    int userId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.delete(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId'),
+        ).replace(queryParameters: {'userId': userId.toString()}),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Change the lifecycle status of an event (organizer only).
+  /// [status] is one of: draft | upcoming | ongoing | completed | cancelled
+  static Future<Map<String, dynamic>> updateEventStatus(
+    int eventId,
+    String status,
+    int userId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.patch(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/status'),
+        ),
+        headers: headers,
+        body: jsonEncode({'status': status, 'userId': userId}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // ── Participation ─────────────────────────────────────────────────────────
+
+  /// Join an event with either 'interested' or 'going' status.
+  static Future<Map<String, dynamic>> joinEvent(
+    int eventId,
+    int userId,
+    String participationStatus,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/join'),
+        ),
+        headers: headers,
+        body: jsonEncode({
+          'userId': userId,
+          'status': participationStatus,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Leave / cancel participation in an event.
+  static Future<Map<String, dynamic>> leaveEvent(
+    int eventId,
+    int userId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/leave'),
+        ),
+        headers: headers,
+        body: jsonEncode({'userId': userId}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Retrieve all participants for an event.
+  static Future<Map<String, dynamic>> getEventParticipants(
+    int eventId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/participants'),
+        ),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Approve a participant's request to join a private/invite-only event.
+  static Future<Map<String, dynamic>> approveParticipant(
+    int eventId,
+    int participantUserId,
+    int organizerUserId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl.replaceAll(
+              '/api/auth', '/api/events/$eventId/participants/$participantUserId/approve'),
+        ),
+        headers: headers,
+        body: jsonEncode({'organizerUserId': organizerUserId}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Check whether a specific user has already joined an event and their status.
+  static Future<Map<String, dynamic>> getEventParticipationStatus(
+    int eventId,
+    int userId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final uri = Uri.parse(
+        AuthService.baseUrl
+            .replaceAll('/api/auth', '/api/events/$eventId/participation'),
+      ).replace(queryParameters: {'userId': userId.toString()});
+      final response = await http.get(uri, headers: headers);
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // ── Bookmarks ─────────────────────────────────────────────────────────────
+
+  /// Save / bookmark an event for later.
+  static Future<Map<String, dynamic>> saveEventBookmark(
+    int eventId,
+    int userId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/save'),
+        ),
+        headers: headers,
+        body: jsonEncode({'userId': userId}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Remove a previously saved bookmark for an event.
+  static Future<Map<String, dynamic>> unsaveEventBookmark(
+    int eventId,
+    int userId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/unsave'),
+        ),
+        headers: headers,
+        body: jsonEncode({'userId': userId}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Retrieve all events saved/bookmarked by a user.
+  static Future<Map<String, dynamic>> getSavedEvents(int userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/saved/$userId'),
+        ),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Check whether a user has bookmarked a specific event.
+  static Future<Map<String, dynamic>> isEventSaved(
+    int eventId,
+    int userId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final uri = Uri.parse(
+        AuthService.baseUrl
+            .replaceAll('/api/auth', '/api/events/$eventId/saved'),
+      ).replace(queryParameters: {'userId': userId.toString()});
+      final response = await http.get(uri, headers: headers);
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // ── Comments ──────────────────────────────────────────────────────────────
+
+  /// Fetch the top-level comments (with nested replies) for an event.
+  static Future<Map<String, dynamic>> getEventComments(int eventId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/comments'),
+        ),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Post a new comment or a reply to an existing comment ([parentId]) on an event.
+  static Future<Map<String, dynamic>> addEventComment(
+    int eventId,
+    int userId,
+    String text, {
+    int? parentId,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final body = <String, dynamic>{
+        'userId': userId,
+        'text': text,
+      };
+      if (parentId != null) body['parentId'] = parentId;
+
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/comments'),
+        ),
+        headers: headers,
+        body: jsonEncode(body),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Pin a comment so it appears at the top of the comment list (organizer only).
+  static Future<Map<String, dynamic>> pinEventComment(
+    int commentId,
+    int userId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl.replaceAll(
+              '/api/auth', '/api/events/comments/$commentId/pin'),
+        ),
+        headers: headers,
+        body: jsonEncode({'userId': userId}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Add or toggle a reaction (default 'like') on a comment.
+  static Future<Map<String, dynamic>> reactToEventComment(
+    int commentId,
+    int userId, {
+    String reaction = 'like',
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl.replaceAll(
+              '/api/auth', '/api/events/comments/$commentId/react'),
+        ),
+        headers: headers,
+        body: jsonEncode({'userId': userId, 'reaction': reaction}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // ── Gallery ───────────────────────────────────────────────────────────────
+
+  /// Retrieve the photo gallery for an event.
+  static Future<Map<String, dynamic>> getEventGallery(int eventId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/gallery'),
+        ),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Add a photo to an event's gallery (participants / organizer).
+  static Future<Map<String, dynamic>> addEventGalleryImage(
+    int eventId,
+    int userId,
+    String imageUrl,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/gallery'),
+        ),
+        headers: headers,
+        body: jsonEncode({'userId': userId, 'imageUrl': imageUrl}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // ── Invitations ───────────────────────────────────────────────────────────
+
+  /// Send an invitation to [inviteeId] for a private/invite-only event.
+  static Future<Map<String, dynamic>> sendEventInvitation(
+    int eventId,
+    int inviterId,
+    int inviteeId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl
+              .replaceAll('/api/auth', '/api/events/$eventId/invite'),
+        ),
+        headers: headers,
+        body: jsonEncode({
+          'inviterId': inviterId,
+          'inviteeId': inviteeId,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Fetch all pending/responded event invitations for a user.
+  static Future<Map<String, dynamic>> getMyEventInvitations(
+    int userId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final uri = Uri.parse(
+        AuthService.baseUrl
+            .replaceAll('/api/auth', '/api/events/invitations'),
+      ).replace(queryParameters: {'userId': userId.toString()});
+      final response = await http.get(uri, headers: headers);
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Respond to an event invitation.
+  /// [status] must be 'accepted' or 'declined'.
+  static Future<Map<String, dynamic>> respondEventInvitation(
+    int invitationId,
+    String status,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.patch(
+        Uri.parse(
+          AuthService.baseUrl.replaceAll(
+              '/api/auth', '/api/events/invitations/$invitationId'),
+        ),
+        headers: headers,
+        body: jsonEncode({'status': status}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // ── Announcements ─────────────────────────────────────────────────────────
+
+  /// Send a push-style announcement message to all participants of an event.
+  static Future<Map<String, dynamic>> sendEventAnnouncement(
+    int eventId,
+    int userId,
+    String message,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse(
+          AuthService.baseUrl.replaceAll(
+              '/api/auth', '/api/events/$eventId/announce'),
+        ),
+        headers: headers,
+        body: jsonEncode({'userId': userId, 'message': message}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
 }
 
 

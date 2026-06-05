@@ -1,15 +1,50 @@
 const db = require('../config/db');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper: verify organizer ownership
+// Helpers
 // ─────────────────────────────────────────────────────────────────────────────
+function getUserIdFromRequest(req) {
+  if (!req) return undefined;
+  // 1. Check body
+  if (req.body) {
+    if (req.body.user_id) return req.body.user_id;
+    if (req.body.userId) return req.body.userId;
+    if (req.body.organizerUserId) return req.body.organizerUserId;
+  }
+  // 2. Check query
+  if (req.query) {
+    if (req.query.user_id) return req.query.user_id;
+    if (req.query.userId) return req.query.userId;
+    if (req.query.requester_id) return req.query.requester_id;
+  }
+  // 3. Check route params
+  if (req.params) {
+    if (req.params.userId) return req.params.userId;
+    if (req.params.uid) return req.params.uid;
+  }
+  // 4. Fallback: Decode JWT token from headers
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      return decoded.user && decoded.user.id;
+    }
+  } catch (err) {
+    // ignore
+  }
+  return undefined;
+}
+
 async function assertOrganizer(eventId, userId, res) {
   const [eventRows] = await db.execute('SELECT user_id FROM events WHERE id = ?', [eventId]);
   if (!eventRows.length) {
     res.status(404).json({ message: 'Event not found' });
     return false;
   }
-  if (eventRows[0].user_id.toString() !== userId.toString()) {
+  if (!userId || eventRows[0].user_id.toString() !== userId.toString()) {
     res.status(403).json({ message: 'Unauthorized' });
     return false;
   }
@@ -173,11 +208,13 @@ exports.getEventsByUser = async (req, res) => {
 // 6. POST / — create event
 // ─────────────────────────────────────────────────────────────────────────────
 exports.createEvent = async (req, res) => {
+  const user_id = getUserIdFromRequest(req);
   const {
-    user_id, title, description, cover_image_url, category, pet_type,
+    title, description, cover_image_url, category,
     start_datetime, end_datetime, location, latitude, longitude,
     max_participants, contact_info, requires_registration, visibility, status,
   } = req.body;
+  const pet_type = req.body.pet_type || req.body.petType;
 
   if (!user_id || !title || !start_datetime) {
     return res.status(400).json({ message: 'user_id, title, and start_datetime are required' });
@@ -210,11 +247,13 @@ exports.createEvent = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.updateEvent = async (req, res) => {
   const { id } = req.params;
+  const user_id = getUserIdFromRequest(req);
   const {
-    user_id, title, description, cover_image_url, category, pet_type,
+    title, description, cover_image_url, category,
     start_datetime, end_datetime, location, latitude, longitude,
     max_participants, contact_info, requires_registration, visibility, status,
   } = req.body;
+  const pet_type = req.body.pet_type || req.body.petType;
 
   try {
     if (!(await assertOrganizer(id, user_id, res))) return;
@@ -245,7 +284,7 @@ exports.updateEvent = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.deleteEvent = async (req, res) => {
   const { id } = req.params;
-  const { user_id } = req.body;
+  const user_id = getUserIdFromRequest(req);
 
   try {
     if (!(await assertOrganizer(id, user_id, res))) return;
@@ -263,7 +302,8 @@ exports.deleteEvent = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.updateEventStatus = async (req, res) => {
   const { id } = req.params;
-  const { user_id, status } = req.body;
+  const user_id = getUserIdFromRequest(req);
+  const { status } = req.body;
 
   if (!status) {
     return res.status(400).json({ message: 'status is required' });
@@ -288,7 +328,8 @@ exports.updateEventStatus = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.joinEvent = async (req, res) => {
   const eventId = req.params.id;
-  const { user_id, status: participantStatus = 'going' } = req.body;
+  const user_id = getUserIdFromRequest(req);
+  const { status: participantStatus = 'going' } = req.body;
 
   if (!user_id) {
     return res.status(400).json({ message: 'user_id is required' });
@@ -361,7 +402,7 @@ exports.joinEvent = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.leaveEvent = async (req, res) => {
   const eventId = req.params.id;
-  const { user_id } = req.body;
+  const user_id = getUserIdFromRequest(req);
 
   if (!user_id) {
     return res.status(400).json({ message: 'user_id is required' });
@@ -401,7 +442,7 @@ exports.leaveEvent = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getParticipants = async (req, res) => {
   const eventId = req.params.id;
-  const { requester_id } = req.query;
+  const requester_id = getUserIdFromRequest(req); // support body/query/headers
 
   try {
     const [eventRows] = await db.execute(
@@ -438,7 +479,7 @@ exports.getParticipants = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.approveParticipant = async (req, res) => {
   const { id: eventId, uid } = req.params;
-  const { user_id } = req.body;
+  const user_id = getUserIdFromRequest(req);
 
   try {
     if (!(await assertOrganizer(eventId, user_id, res))) return;
@@ -469,7 +510,8 @@ exports.approveParticipant = async (req, res) => {
 // 14. GET /:id/status/:userId — get participation status for a user
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getParticipationStatus = async (req, res) => {
-  const { id: eventId, userId } = req.params;
+  const eventId = req.params.id;
+  const userId = req.params.userId || getUserIdFromRequest(req);
   try {
     const [rows] = await db.execute(
       'SELECT status, approved FROM event_participants WHERE event_id = ? AND user_id = ?',
@@ -490,7 +532,7 @@ exports.getParticipationStatus = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.saveEvent = async (req, res) => {
   const eventId = req.params.id;
-  const { user_id } = req.body;
+  const user_id = getUserIdFromRequest(req);
 
   if (!user_id) {
     return res.status(400).json({ message: 'user_id is required' });
@@ -513,7 +555,7 @@ exports.saveEvent = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.unsaveEvent = async (req, res) => {
   const eventId = req.params.id;
-  const { user_id } = req.body;
+  const user_id = getUserIdFromRequest(req);
 
   if (!user_id) {
     return res.status(400).json({ message: 'user_id is required' });
@@ -560,7 +602,8 @@ exports.getSavedEvents = async (req, res) => {
 // 18. GET /:id/saved/:userId — check if event is saved
 // ─────────────────────────────────────────────────────────────────────────────
 exports.isEventSaved = async (req, res) => {
-  const { id: eventId, userId } = req.params;
+  const eventId = req.params.id;
+  const userId = req.params.userId || getUserIdFromRequest(req);
   try {
     const [rows] = await db.execute(
       'SELECT 1 FROM event_saves WHERE event_id = ? AND user_id = ?',
@@ -625,7 +668,9 @@ exports.getComments = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.addComment = async (req, res) => {
   const eventId = req.params.id;
-  const { user_id, text, parent_id } = req.body;
+  const user_id = getUserIdFromRequest(req);
+  const { text } = req.body;
+  const parent_id = req.body.parent_id || req.body.parentId;
 
   if (!user_id || !text) {
     return res.status(400).json({ message: 'user_id and text are required' });
@@ -658,7 +703,7 @@ exports.addComment = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.pinComment = async (req, res) => {
   const { cid } = req.params;
-  const { user_id } = req.body;
+  const user_id = getUserIdFromRequest(req);
 
   try {
     // Get the comment's event
@@ -686,7 +731,8 @@ exports.pinComment = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.reactToComment = async (req, res) => {
   const { cid } = req.params;
-  const { user_id, reaction = 'like' } = req.body;
+  const user_id = getUserIdFromRequest(req);
+  const { reaction = 'like' } = req.body;
 
   if (!user_id) {
     return res.status(400).json({ message: 'user_id is required' });
@@ -736,7 +782,8 @@ exports.getGallery = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.addGalleryImage = async (req, res) => {
   const eventId = req.params.id;
-  const { user_id, image_url } = req.body;
+  const user_id = getUserIdFromRequest(req);
+  const { image_url } = req.body;
 
   if (!user_id || !image_url) {
     return res.status(400).json({ message: 'user_id and image_url are required' });
@@ -759,7 +806,8 @@ exports.addGalleryImage = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.sendInvitation = async (req, res) => {
   const eventId = req.params.id;
-  const { inviter_id, invitee_id } = req.body;
+  const inviter_id = req.body.inviter_id || req.body.inviterId || getUserIdFromRequest(req);
+  const invitee_id = req.body.invitee_id || req.body.inviteeId;
 
   if (!inviter_id || !invitee_id) {
     return res.status(400).json({ message: 'inviter_id and invitee_id are required' });
@@ -794,7 +842,7 @@ exports.sendInvitation = async (req, res) => {
 // 26. GET /invitations/:userId — get invitations for a user
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getInvitations = async (req, res) => {
-  const { userId } = req.params;
+  const userId = req.params.userId || getUserIdFromRequest(req);
   try {
     const [rows] = await db.execute(`
       SELECT ei.id, ei.event_id, ei.inviter_id, ei.invitee_id, ei.status, ei.created_at,
@@ -818,7 +866,8 @@ exports.getInvitations = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.respondInvitation = async (req, res) => {
   const { id } = req.params;
-  const { user_id, status } = req.body;
+  const user_id = getUserIdFromRequest(req);
+  const { status } = req.body;
 
   if (!status || !['accepted', 'declined'].includes(status)) {
     return res.status(400).json({ message: 'status must be "accepted" or "declined"' });
@@ -853,7 +902,8 @@ exports.respondInvitation = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.sendAnnouncement = async (req, res) => {
   const eventId = req.params.id;
-  const { user_id, message } = req.body;
+  const user_id = getUserIdFromRequest(req);
+  const { message } = req.body;
 
   if (!user_id || !message) {
     return res.status(400).json({ message: 'user_id and message are required' });

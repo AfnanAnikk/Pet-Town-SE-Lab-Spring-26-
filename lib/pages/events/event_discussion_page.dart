@@ -54,10 +54,17 @@ class _EventDiscussionPageState extends State<EventDiscussionPage> {
     final res = await ApiService.getEventComments(widget.eventId);
     if (!mounted) return;
     List<EventCommentModel> list = [];
-    if (res['success'] == true && res['data'] is List) {
-      list = (res['data'] as List)
-          .map((e) => EventCommentModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+    if (res['success'] == true) {
+      final raw = res['data'];
+      // Handle both direct list and double-wrapped {success, data: [...]} responses
+      final List? rawList = raw is List
+          ? raw
+          : (raw is Map ? raw['data'] as List? : null);
+      if (rawList != null) {
+        list = rawList
+            .map((e) => EventCommentModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
     }
     setState(() { _comments = list; _isLoading = false; });
   }

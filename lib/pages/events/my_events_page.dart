@@ -121,8 +121,10 @@ class _MyEventsPageState extends State<MyEventsPage>
                           ? ElevatedButton(
                               onPressed: () async {
                                 await ApiService.approveParticipant(ev.id, p['user_id'] as int, _userId!);
-                                Navigator.pop(context);
-                                _showParticipants(ev);
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  _showParticipants(ev);
+                                }
                               },
                               style: ElevatedButton.styleFrom(backgroundColor: _brandColor, elevation: 0,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

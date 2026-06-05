@@ -7,7 +7,6 @@ import '../../services/api_service.dart';
 import 'event_detail_page.dart';
 
 const _brandColor = Color(0xFF3293B3);
-const _secondary = Color(0xFF374957);
 
 class EventSearchPage extends StatefulWidget {
   const EventSearchPage({super.key});

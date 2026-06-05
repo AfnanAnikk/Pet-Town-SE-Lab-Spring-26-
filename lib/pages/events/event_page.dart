@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
 import '../../widgets/event_card.dart';
 import '../../widgets/event_category_chip.dart';
 import '../../models/event_model.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_service.dart';
 import 'event_detail_page.dart';
 import 'event_search_page.dart';
 import 'event_discovery_page.dart';
@@ -32,7 +30,6 @@ class EventPage extends StatefulWidget {
 class _EventPageState extends State<EventPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int? _currentUserId;
   List<EventModel> _trending = [];
   List<EventModel> _upcoming = [];
   bool _isLoading = true;
@@ -52,8 +49,6 @@ class _EventPageState extends State<EventPage>
   }
 
   Future<void> _init() async {
-    final uid = await AuthService.getUserId();
-    if (mounted) setState(() => _currentUserId = uid);
     await _loadData();
   }
 

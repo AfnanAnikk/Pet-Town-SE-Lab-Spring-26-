@@ -70,11 +70,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
     if (uid != null) {
       final pRes = results[1];
       if (pRes['success'] == true && pRes['data'] != null) {
-        partStatus = pRes['data']['status'] as String?;
+        // Unwrap double-nested: data may be {success, data: {status}} or {status} directly
+        final rawP = pRes['data'];
+        final pData = (rawP is Map && rawP.containsKey('data')) ? rawP['data'] : rawP;
+        if (pData is Map) {
+          partStatus = pData['status'] as String?;
+        }
       }
       final sRes = results[2];
       if (sRes['success'] == true && sRes['data'] != null) {
-        saved = sRes['data']['isSaved'] == true;
+        // Unwrap double-nested: data may be {success, data: {isSaved}} or {isSaved} directly
+        final rawS = sRes['data'];
+        final sData = (rawS is Map && rawS.containsKey('data')) ? rawS['data'] : rawS;
+        if (sData is Map) {
+          saved = sData['isSaved'] == true;
+        }
       }
     }
 

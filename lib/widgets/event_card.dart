@@ -24,7 +24,6 @@ class EventCard extends StatelessWidget {
 
   static const _brandColor = Color(0xFF3293B3);
   static const _accentColor = Color(0xFF2596BE);
-  static const _secondaryText = Color(0xFF374957);
 
   static const _shadow = BoxShadow(
     color: Color(0x14000000), // black ~8% alpha

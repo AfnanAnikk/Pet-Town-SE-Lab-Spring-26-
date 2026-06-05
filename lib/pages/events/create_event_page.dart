@@ -338,7 +338,8 @@ class _CreateEventPageState extends State<CreateEventPage> {
         const SizedBox(height: 16),
         SwitchListTile.adaptive(
           contentPadding: EdgeInsets.zero,
-          activeColor: _brandColor,
+          activeThumbColor: _brandColor,
+          activeTrackColor: _brandColor.withValues(alpha: 0.5),
           title: const Text('Require Registration', style: TextStyle(fontFamily: 'Outfit',
               fontWeight: FontWeight.w600, color: _secondary)),
           subtitle: Text('Participants must be approved', style: TextStyle(fontFamily: 'Outfit',

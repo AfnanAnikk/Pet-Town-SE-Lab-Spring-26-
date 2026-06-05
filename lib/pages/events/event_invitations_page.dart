@@ -60,12 +60,14 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
       );
       setState(() => _invitations[idx] = updated);
     }
-    if (status == 'accepted' && _userId != null && mounted) {
+    if (status == 'accepted' && _userId != null) {
       await ApiService.joinEvent(inv.eventId, _userId!, 'going');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('You are now going to "${inv.eventTitle}"! 🎉',
-            style: const TextStyle(fontFamily: 'Outfit')),
-            backgroundColor: const Color(0xFF27AE60)));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('You are now going to "${inv.eventTitle}"! 🎉',
+              style: const TextStyle(fontFamily: 'Outfit')),
+              backgroundColor: const Color(0xFF27AE60)));
+      }
     }
   }
 

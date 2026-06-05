@@ -7,7 +7,6 @@ import 'event_detail_page.dart';
 import 'event_discovery_page.dart';
 
 const _brandColor = Color(0xFF3293B3);
-const _secondary = Color(0xFF374957);
 
 class SavedEventsPage extends StatefulWidget {
   final bool embedded;

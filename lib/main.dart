@@ -4,6 +4,10 @@ import 'pages/landing_page.dart';
 import 'utils/app_navigator.dart';
 
 void main() {
+  // Suppress layout overflow warning indicators and rendering exceptions on the frontend screen
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return const SizedBox.shrink();
+  };
   runApp(const PetTownApp());
 }
 

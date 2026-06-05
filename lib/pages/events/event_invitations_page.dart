@@ -171,10 +171,11 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
                     borderRadius: BorderRadius.circular(20)),
                 child: Text(statusLabel, style: TextStyle(fontFamily: 'Outfit',
                     color: statusColor, fontSize: 13, fontWeight: FontWeight.w600)))),
-          ]),
-        )),
+          ],
+        ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _thumb() => Container(color: _brandColor.withValues(alpha: 0.15),

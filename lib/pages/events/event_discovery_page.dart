@@ -124,7 +124,7 @@ class _EventDiscoveryPageState extends State<EventDiscoveryPage> {
                   const SizedBox(height: 6),
                   GestureDetector(
                     onTap: () async {
-                      final d = await showDatePicker(ctx: ctx,
+                      final d = await showDatePicker(context: ctx,
                           initialDate: tempFrom ?? DateTime.now(),
                           firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 730)));
                       if (d != null) setModal(() => tempFrom = d);
@@ -147,7 +147,7 @@ class _EventDiscoveryPageState extends State<EventDiscoveryPage> {
                   const SizedBox(height: 6),
                   GestureDetector(
                     onTap: () async {
-                      final d = await showDatePicker(ctx: ctx,
+                      final d = await showDatePicker(context: ctx,
                           initialDate: tempTo ?? DateTime.now(),
                           firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 730)));
                       if (d != null) setModal(() => tempTo = d);

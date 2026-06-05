@@ -208,15 +208,25 @@ class EventCommentModel {
         ? rawReplies.map((r) => EventCommentModel.fromJson(r as Map<String, dynamic>)).toList()
         : [];
 
+    int parseI(dynamic v) {
+      if (v == null) return 0;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? 0;
+      return 0;
+    }
+
+    int? parseNullableI(dynamic v) {
+      if (v == null) return null;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v);
+      return null;
+    }
+
     return EventCommentModel(
-      id: (json['id'] as num?)?.toInt() ?? 0,
-      eventId: (json['eventId'] as num?)?.toInt() ?? (json['event_id'] as num?)?.toInt() ?? 0,
-      userId: (json['userId'] as num?)?.toInt() ?? (json['user_id'] as num?)?.toInt() ?? 0,
-      parentId: json['parentId'] != null
-          ? (json['parentId'] as num).toInt()
-          : json['parent_id'] != null
-              ? (json['parent_id'] as num).toInt()
-              : null,
+      id: parseI(json['id']),
+      eventId: parseI(json['eventId'] ?? json['event_id']),
+      userId: parseI(json['userId'] ?? json['user_id']),
+      parentId: parseNullableI(json['parentId'] ?? json['parent_id']),
       text: json['text'] as String? ?? '',
       isPinned: json['isPinned'] as bool? ?? json['is_pinned'] as bool? ?? false,
       authorName: json['authorName'] as String?
@@ -232,8 +242,7 @@ class EventCommentModel {
           : json['created_at'] != null
               ? DateTime.parse(json['created_at'] as String)
               : DateTime.now(),
-      reactionCount: (json['reactionCount'] as num?)?.toInt()
-          ?? (json['reaction_count'] as num?)?.toInt() ?? 0,
+      reactionCount: parseI(json['reactionCount'] ?? json['reaction_count']),
       replies: parsedReplies,
     );
   }

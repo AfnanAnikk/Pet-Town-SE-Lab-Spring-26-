@@ -69,6 +69,25 @@ class _EventDiscussionPageState extends State<EventDiscussionPage> {
     setState(() { _comments = list; _isLoading = false; });
   }
 
+  /// Refresh comments without showing the full-page spinner (used after send/react/pin).
+  Future<void> _loadSilent() async {
+    final res = await ApiService.getEventComments(widget.eventId);
+    if (!mounted) return;
+    List<EventCommentModel> list = [];
+    if (res['success'] == true) {
+      final raw = res['data'];
+      final List? rawList = raw is List
+          ? raw
+          : (raw is Map ? raw['data'] as List? : null);
+      if (rawList != null) {
+        list = rawList
+            .map((e) => EventCommentModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    }
+    if (mounted) setState(() => _comments = list);
+  }
+
   Future<void> _send() async {
     final text = _inputCtrl.text.trim();
     if (text.isEmpty || _currentUserId == null || _isSending) return;
@@ -83,26 +102,30 @@ class _EventDiscussionPageState extends State<EventDiscussionPage> {
 
     if (res['success'] == true && mounted) {
       _inputCtrl.clear();
-      setState(() { _replyingTo = null; });
-      await _load();
-      if (_scrollCtrl.hasClients) {
-        _scrollCtrl.animateTo(_scrollCtrl.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
-      }
+      setState(() { _replyingTo = null; _isSending = false; });
+      await _loadSilent();
+      // Scroll to bottom after new comment appears
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollCtrl.hasClients) {
+          _scrollCtrl.animateTo(_scrollCtrl.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+        }
+      });
+    } else {
+      if (mounted) setState(() => _isSending = false);
     }
-    if (mounted) setState(() => _isSending = false);
   }
 
   Future<void> _react(EventCommentModel comment) async {
     if (_currentUserId == null) return;
     await ApiService.reactToEventComment(comment.id, _currentUserId!);
-    _load();
+    _loadSilent();
   }
 
   Future<void> _pin(EventCommentModel comment) async {
     if (_currentUserId == null) return;
     await ApiService.pinEventComment(comment.id, _currentUserId!);
-    _load();
+    _loadSilent();
   }
 
   bool get _isOrganizer => _currentUserId == widget.organizerId;

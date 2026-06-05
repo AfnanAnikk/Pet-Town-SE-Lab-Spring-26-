@@ -120,8 +120,15 @@ class _EventInvitationsPageState extends State<EventInvitationsPage> {
           _myEvents = myEventsList;
           _allUsers = usersList.where((u) => u['id'] != _userId).toList();
           _filteredUsers = _allUsers;
-          if (_myEvents.isNotEmpty && _selectedEvent == null) {
-            _selectedEvent = _myEvents.first;
+          if (_myEvents.isNotEmpty) {
+            if (_selectedEvent != null) {
+              final idx = _myEvents.indexWhere((e) => e.id == _selectedEvent!.id);
+              _selectedEvent = idx != -1 ? _myEvents[idx] : _myEvents.first;
+            } else {
+              _selectedEvent = _myEvents.first;
+            }
+          } else {
+            _selectedEvent = null;
           }
         });
       }

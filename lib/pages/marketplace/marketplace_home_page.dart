@@ -57,6 +57,13 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
       _products = productResult['data'];
     }
 
+    debugPrint('STORES LOADED: ${_stores.length}');
+    debugPrint('PRODUCTS LOADED: ${_products.length}');
+
+    if (_products.isNotEmpty) {
+      debugPrint('FIRST PRODUCT: ${_products.first}');
+    }
+
     setState(() {
       _isLoading = false;
     });

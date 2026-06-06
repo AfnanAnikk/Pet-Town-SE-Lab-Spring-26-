@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/vet_model.dart';
-import '../home/home_page.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
+import 'package:intl/intl.dart';
 
 class VetBookingSuccessPage extends StatelessWidget {
   final VetModel vet;
@@ -43,14 +43,13 @@ class VetBookingSuccessPage extends StatelessWidget {
             Row(
               children: const [
                 Text(
-                  'Booking Confirmed ',
+                  'Booking Placed ',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF3293B3),
                   ),
                 ),
-                Icon(Icons.check, color: Colors.green, size: 28),
               ],
             ),
             const SizedBox(height: 24),
@@ -166,7 +165,7 @@ class VetBookingSuccessPage extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Reason for visit: $reason',
-                    style: const TextStyle(fontSize: 14, color: Color(0xFFFF7A7A)), // Reddish text
+                    style: const TextStyle(fontSize: 14, color: Color(0xFFFF7A7A)),
                   ),
                   
                   const SizedBox(height: 24),
@@ -177,22 +176,16 @@ class VetBookingSuccessPage extends StatelessWidget {
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
-                            'Rate',
+                            'Once Your Booking Is Confirmed',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                           ),
                           Text(
-                            'by Jan 29, 2026',
-                            style: TextStyle(fontSize: 12, color: Colors.black54),
-                          ),
+                            'Rate By ${DateFormat('dd/MM/yyyy').format(DateFormat('dd/MM/yyyy').parse(dateStr).add(const Duration(days: 7)))}',
+                            style: const TextStyle(fontSize: 12, color: Colors.black54),
+                          )
                         ],
-                      ),
-                      Row(
-                        children: List.generate(5, (index) => const Padding(
-                          padding: EdgeInsets.only(left: 4),
-                          child: Icon(Icons.star_border, color: Colors.amber, size: 28),
-                        )),
                       ),
                     ],
                   ),

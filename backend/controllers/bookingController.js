@@ -38,14 +38,29 @@ exports.createBooking = async (req, res) => {
 
 exports.getUserBookings = async (req, res) => {
   const userId = req.params.userId;
+
   try {
     const [bookings] = await db.execute(`
-      SELECT b.*, v.name as vet_name, v.service_type 
+      SELECT 
+        b.*, 
+        v.name AS vet_name, 
+        v.service_type,
+        v.user_id AS provider_user_id,
+        u.profile_picture_url AS profile_picture_url,
+        CASE 
+          WHEN vr.id IS NULL THEN false 
+          ELSE true 
+        END AS has_reviewed
       FROM bookings b 
-      JOIN vets v ON b.vet_id = v.id 
+      JOIN vets v ON b.vet_id = v.id
+      JOIN users u ON v.user_id = u.id
+      LEFT JOIN vet_reviews vr 
+        ON vr.vet_id = b.vet_id 
+        AND vr.user_id = b.user_id
       WHERE b.user_id = ? 
       ORDER BY b.id DESC
     `, [userId]);
+
     res.json(bookings);
   } catch (error) {
     console.error(error);

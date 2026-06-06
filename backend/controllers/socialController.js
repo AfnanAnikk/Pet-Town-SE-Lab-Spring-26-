@@ -23,7 +23,7 @@ exports.followUser = async (req, res) => {
       [followerId, followingId]
     );
 
-    // Phase 4 trigger: Create a notification for the user being followed
+    //Create a notification for the user being followed
     await db.execute(
       'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
       [followingId, 'follow', followerId, 'Someone started following you!'] // We'll update the message when we get the follower's name later
@@ -72,7 +72,7 @@ exports.getFollowStatus = async (req, res) => {
   }
 };
 
-// Global Search (Phase 3)
+// Global Search
 exports.globalSearch = async (req, res) => {
   const { q } = req.query;
   if (!q) {

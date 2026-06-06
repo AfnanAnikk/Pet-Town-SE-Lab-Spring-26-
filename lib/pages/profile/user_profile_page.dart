@@ -214,8 +214,13 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
 
     final targetUserId = _user!['id'] as int;
 
+    debugPrint('FRIEND BUTTON CLICKED');
+    debugPrint('friendStatus=$_friendStatus targetUserId=$targetUserId');
+
     if (_friendStatus == 'none') {
       final res = await ApiService.sendFriendRequest(targetUserId);
+
+      debugPrint('SEND FRIEND REQUEST RESPONSE: $res');
 
       if (res['success'] && mounted) {
         setState(() {
@@ -226,12 +231,18 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Friend request sent')),
         );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['message'] ?? 'Failed to send friend request')),
+        );
       }
       return;
     }
 
     if (_friendStatus == 'pending_received' && _friendRequestId != null) {
       final res = await ApiService.respondFriendRequest(_friendRequestId!, 'accepted');
+
+      debugPrint('ACCEPT FRIEND REQUEST RESPONSE: $res');
 
       if (res['success'] && mounted) {
         setState(() {
@@ -240,6 +251,10 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Friend request accepted')),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['message'] ?? 'Failed to accept friend request')),
         );
       }
     }
@@ -362,83 +377,85 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                   ),
                   if (!_isOwnProfile) ...[
                     const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: _toggleFollow,
-                          icon: Icon(
-                            _isFollowing ? Icons.check : Icons.person_add_alt_1,
-                            color: Colors.white,
-                            size: 18,
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: (_friendStatus == 'pending_sent' || _friendStatus == 'friends')
+                                ? null
+                                : _handleFriendAction,
+                            icon: Icon(
+                              _friendStatus == 'friends'
+                                  ? Icons.people
+                                  : _friendStatus == 'pending_sent'
+                                      ? Icons.hourglass_top
+                                      : _friendStatus == 'pending_received'
+                                          ? Icons.person_add_alt_1
+                                          : Icons.person_add,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            label: Text(
+                              _friendStatus == 'friends'
+                                  ? 'Friends'
+                                  : _friendStatus == 'pending_sent'
+                                      ? 'Sent'
+                                      : _friendStatus == 'pending_received'
+                                          ? 'Accept'
+                                          : 'Add',
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3293B3),
+                              disabledBackgroundColor: Colors.grey,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            ),
                           ),
-                          label: Text(
-                            _isFollowing ? 'Following' : 'Follow',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          const SizedBox(width: 6),
+                          ElevatedButton.icon(
+                            onPressed: _toggleFollow,
+                            icon: Icon(
+                              _isFollowing ? Icons.check : Icons.person_add_alt_1,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            label: Text(
+                              _isFollowing ? 'Following' : 'Follow',
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _isFollowing ? const Color.fromARGB(255, 63, 151, 180) : const Color(0xFF3293B3),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _isFollowing ? const Color.fromARGB(255, 63, 151, 180) : const Color(0xFF3293B3),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          const SizedBox(width: 6),
+                          ElevatedButton.icon(
+                            onPressed: _contactUser,
+                            icon: const Icon(Icons.message_rounded, color: Colors.white, size: 18),
+                            label: const Text(
+                              'Message',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3293B3),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        ElevatedButton.icon(
-                          onPressed: (_friendStatus == 'pending_sent' || _friendStatus == 'friends')
-                              ? null
-                              : _handleFriendAction,
-                          icon: Icon(
-                            _friendStatus == 'friends'
-                                ? Icons.people
-                                : _friendStatus == 'pending_sent'
-                                    ? Icons.hourglass_top
-                                    : _friendStatus == 'pending_received'
-                                        ? Icons.person_add_alt_1
-                                        : Icons.person_add,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          label: Text(
-                            _friendStatus == 'friends'
-                                ? 'Friends'
-                                : _friendStatus == 'pending_sent'
-                                    ? 'Requested'
-                                    : _friendStatus == 'pending_received'
-                                        ? 'Accept'
-                                        : 'Add Friend',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3293B3),
-                            disabledBackgroundColor: Colors.grey,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        ElevatedButton.icon(
-                          onPressed: _contactUser,
-                          icon: const Icon(Icons.message_rounded, color: Colors.white, size: 18),
-                          label: const Text(
-                            'Message',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3293B3),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
-                  const SizedBox(height: 32),
                 ],
               ),
             ),

@@ -4,7 +4,7 @@ async function migrate() {
   try {
     console.log('Running migrations...');
     
-    // Follows Table (Phase 2)
+    // Follows Table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS follows (
         id SERIAL PRIMARY KEY,
@@ -18,7 +18,7 @@ async function migrate() {
     `);
     console.log('Created follows table');
 
-    // Notifications Table (Phase 4)
+    // Notifications Table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS notifications (
         id SERIAL PRIMARY KEY,

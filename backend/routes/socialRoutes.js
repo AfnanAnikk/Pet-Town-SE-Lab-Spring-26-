@@ -17,4 +17,10 @@ router.get('/search', socialController.globalSearch);
 router.get('/notifications/unread-count', socialController.getUnreadNotificationsCount);
 router.get('/notifications', socialController.getNotifications);
 
+//friend requests
+router.post('/friend-request', socialController.sendFriendRequest);
+router.post('/friend-request/:requestId/respond', socialController.respondFriendRequest);
+router.get('/friend-status', socialController.getFriendStatus);
+router.get('/friend-requests/:userId', socialController.getFriendRequests);
+
 module.exports = router;

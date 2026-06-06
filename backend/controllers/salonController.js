@@ -217,7 +217,7 @@ exports.updateBookingStatus = async (req, res) => {
   try {
     await db.execute('UPDATE salon_bookings SET status = ? WHERE id = ?', [status, bookingId]);
 
-    // Notification Trigger (Phase 4)
+    // Notification Trigger
     if (status === 'accepted') {
       const [booking] = await db.execute('SELECT user_id, pet_name FROM salon_bookings WHERE id = ?', [bookingId]);
       if (booking.length > 0) {

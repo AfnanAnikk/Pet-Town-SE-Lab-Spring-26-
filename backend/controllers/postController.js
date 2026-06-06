@@ -74,7 +74,7 @@ exports.likePost = async (req, res) => {
     );
     await db.execute('UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?', [postId]);
 
-    // Notification Trigger (Phase 4)
+    // Notification Trigger
     const [post] = await db.execute('SELECT user_id, title FROM posts WHERE id = ?', [postId]);
     if (post.length > 0 && post[0].user_id.toString() !== userId.toString()) {
       await db.execute(

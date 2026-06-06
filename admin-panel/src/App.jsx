@@ -210,15 +210,196 @@ function CommunityEvents() {
   );
 }
 
-// 3. Pet Salon (Uses Store Verifications for now, similar to vets)
+// 3. Pet Salon
 function PetSalons() {
+  const [salons, setSalons] = useState([]);
+  const [selectedSalon, setSelectedSalon] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/salons/verifications`)
+      .then(r => r.json())
+      .then(d => {
+        const pending = (d.verifications || []).filter(s => s.status === 'pending');
+        setSalons(pending);
+      })
+      .catch(console.error);
+  }, []);
+
+  const handleApprove = (id) => {
+    fetch(`${API_BASE}/salons/verifications/${id}/approve`, { method: 'POST' }).then(() => {
+      setSalons(salons.filter(s => s.id !== id));
+      setSelectedSalon(null);
+    });
+  };
+
+  const handleDeny = (id) => {
+    fetch(`${API_BASE}/salons/verifications/${id}/deny`, { method: 'POST' }).then(() => {
+      setSalons(salons.filter(s => s.id !== id));
+      setSelectedSalon(null);
+    });
+  };
+
   return (
     <div className="page">
       <h1>Pet Salon</h1>
       <p>Manage grooming partners, reviews, and booking quality.</p>
+
+      <div className="card" style={{ marginTop: 24 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>
+          Pending Salon Verifications
+        </h3>
+
+        {salons.length === 0 ? (
+          <p style={{ color: '#64748B' }}>No pending salon verifications.</p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
+            {salons.map((s) => (
+              <div key={s.id} style={{ border: '1px solid #E2E8F0', padding: 16, borderRadius: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <div style={{ width: 48, height: 48, background: '#EC4899', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Scissors size={24} color="white" />
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 'bold', padding: '4px 8px', borderRadius: 4, background: '#FEF3C7', color: '#F59E0B' }}>
+                    PENDING
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: 16, fontWeight: 'bold', color: '#0F172A', marginBottom: 4 }}>
+                  {s.salon_name}
+                </h3>
+
+                <p style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>
+                  {s.location || s.email || 'No location provided'}
+                </p>
+
+                <button
+                  style={{ width: '100%', padding: 10, background: '#F1F5F9', border: 'none', borderRadius: 8, color: '#475569', fontWeight: 'bold', cursor: 'pointer' }}
+                  onClick={() => setSelectedSalon(s)}
+                >
+                  Review Documents
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {selectedSalon && (
+        <div className="modal-overlay" style={{ backdropFilter: 'blur(6px)', background: 'rgba(15, 23, 42, 0.45)' }}>
+          <div
+            className="modal-content"
+            style={{
+              zIndex: 101,
+              width: '92%',
+              maxWidth: '900px',
+              height: '86vh',
+              overflow: 'hidden',
+              borderRadius: '24px',
+              padding: 0,
+              background: '#FFFFFF',
+              boxShadow: '0 24px 80px rgba(15, 23, 42, 0.25)',
+            }}
+          >
+            <div style={{ padding: '24px 28px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#EC4899', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
+                  Salon Verification
+                </div>
+                <h2 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                  {selectedSalon.salon_name}
+                </h2>
+                <p style={{ margin: '6px 0 0', color: '#64748B', fontSize: 14 }}>
+                  Review identity and business documents before approving this grooming partner.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setSelectedSalon(null)}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  border: '1px solid #E2E8F0',
+                  background: '#F8FAFC',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={20} color="#64748B" />
+              </button>
+            </div>
+
+            <div style={{ padding: '24px 28px', overflowY: 'auto', height: 'calc(86vh - 174px)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+                <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Owner Name</div>
+                  <div style={{ fontSize: 16, color: '#0F172A', fontWeight: 800 }}>
+                    {selectedSalon.owner_name || 'Not provided'}
+                  </div>
+                </div>
+
+                <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Application Status</div>
+                  <span style={{ display: 'inline-flex', padding: '6px 10px', borderRadius: 999, background: '#FEF3C7', color: '#92400E', fontSize: 12, fontWeight: 800 }}>
+                    {selectedSalon.status?.toUpperCase() || 'PENDING'}
+                  </span>
+                </div>
+              </div>
+
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 14 }}>
+                Submitted Documents
+              </h3>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 18 }}>
+                <DocumentPreview title="NID Front" url={selectedSalon.nid_front_url} />
+                <DocumentPreview title="NID Back" url={selectedSalon.nid_back_url} />
+                <DocumentPreview title="TIN Certificate" url={selectedSalon.tin_url} />
+                <DocumentPreview title="Trade License" url={selectedSalon.trade_url} />
+                <DocumentPreview title="Other Document" url={selectedSalon.other_url} />
+              </div>
+            </div>
+
+            <div style={{ padding: '18px 28px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 12, background: '#F8FAFC', flexShrink: 0 }}>
+              <button
+                onClick={() => handleDeny(selectedSalon.id)}
+                style={{
+                  padding: '12px 18px',
+                  background: '#FFFFFF',
+                  border: '1px solid #FCA5A5',
+                  borderRadius: 12,
+                  color: '#DC2626',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                Deny
+              </button>
+
+              <button
+                onClick={() => handleApprove(selectedSalon.id)}
+                style={{
+                  padding: '12px 20px',
+                  background: '#10B981',
+                  border: 'none',
+                  borderRadius: 12,
+                  color: 'white',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 20px rgba(16, 185, 129, 0.25)',
+                }}
+              >
+                Approve Salon
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 // 4. Marketplace Oversight
 function MarketplaceOversight() {

@@ -285,3 +285,71 @@ exports.getDashboardStats = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+
+exports.getSalonVerifications = async (req, res) => {
+  try {
+    const [verifications] = await db.execute(`
+      SELECT sv.*, s.name as salon_name, s.location, u.email
+      FROM salon_verifications sv
+      JOIN salons s ON sv.salon_id = s.id
+      JOIN users u ON s.user_id = u.id
+      ORDER BY sv.created_at DESC
+    `);
+
+    res.json({ success: true, verifications });
+  } catch (error) {
+    console.error('Error fetching salon verifications:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.approveSalon = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [verifs] = await db.execute(
+      'SELECT salon_id FROM salon_verifications WHERE id = ?',
+      [id]
+    );
+
+    if (verifs.length === 0) {
+      return res.status(404).json({ success: false, message: 'Verification not found' });
+    }
+
+    const salonId = verifs[0].salon_id;
+
+    await db.execute('UPDATE salon_verifications SET status = ? WHERE id = ?', ['approved', id]);
+    await db.execute('UPDATE salons SET is_verified = ? WHERE id = ?', [true, salonId]);
+
+    res.json({ success: true, message: 'Salon approved' });
+  } catch (error) {
+    console.error('Error approving salon:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.denySalon = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [verifs] = await db.execute(
+      'SELECT salon_id FROM salon_verifications WHERE id = ?',
+      [id]
+    );
+
+    if (verifs.length === 0) {
+      return res.status(404).json({ success: false, message: 'Verification not found' });
+    }
+
+    const salonId = verifs[0].salon_id;
+
+    await db.execute('UPDATE salon_verifications SET status = ? WHERE id = ?', ['denied', id]);
+    await db.execute('UPDATE salons SET is_verified = ? WHERE id = ?', [false, salonId]);
+
+    res.json({ success: true, message: 'Salon denied' });
+  } catch (error) {
+    console.error('Error denying salon:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

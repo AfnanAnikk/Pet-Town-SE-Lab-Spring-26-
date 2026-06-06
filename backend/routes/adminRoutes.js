@@ -27,3 +27,8 @@ router.get('/adoptions', adminController.getAdoptions);
 router.post('/adoptions', adminController.addAdoption);
 router.put('/adoptions/:id/status', adminController.updateAdoptionStatus);
 module.exports = router;
+
+//salons
+router.get('/salons/verifications', adminController.getSalonVerifications);
+router.post('/salons/verifications/:id/approve', adminController.approveSalon);
+router.post('/salons/verifications/:id/deny', adminController.denySalon);

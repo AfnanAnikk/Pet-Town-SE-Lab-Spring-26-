@@ -356,3 +356,70 @@ exports.addSalonReview = async (req, res) => {
   }
 };
 
+exports.verifySalon = async (req, res) => {
+  const {
+    userId,
+    ownerName,
+    nidFrontUrl,
+    nidBackUrl,
+    tinUrl,
+    tradeUrl,
+    otherUrl
+  } = req.body;
+
+  try {
+    const [salons] = await db.execute(
+      'SELECT id FROM salons WHERE user_id = ?',
+      [userId]
+    );
+
+    if (salons.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Salon not found for this user'
+      });
+    }
+
+    const salonId = salons[0].id;
+
+    await db.execute(
+      `INSERT INTO salon_verifications
+      (
+        salon_id,
+        owner_name,
+        nid_front_url,
+        nid_back_url,
+        tin_url,
+        trade_url,
+        other_url
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        salonId,
+        ownerName,
+        nidFrontUrl,
+        nidBackUrl,
+        tinUrl,
+        tradeUrl,
+        otherUrl || null
+      ]
+    );
+
+    await db.execute(
+      'UPDATE salons SET is_verified = TRUE WHERE id = ?',
+      [salonId]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Salon verification details submitted successfully'
+    });
+  } catch (error) {
+    console.error('Error verifying salon:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error verifying salon'
+    });
+  }
+};
+

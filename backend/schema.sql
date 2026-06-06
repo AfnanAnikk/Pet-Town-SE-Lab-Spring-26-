@@ -434,6 +434,20 @@ CREATE TABLE IF NOT EXISTS salon_vouchers (
     FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS salon_verifications (
+    id SERIAL PRIMARY KEY,
+    salon_id INT NOT NULL,
+    owner_name VARCHAR(255),
+    nid_front_url VARCHAR(255),
+    nid_back_url VARCHAR(255),
+    tin_url VARCHAR(255),
+    trade_url VARCHAR(255),
+    other_url VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
+);
+
 -- ══════════════════════════════════════════════════════════════════════════════
 --  PET EVENTS FEATURE
 -- ══════════════════════════════════════════════════════════════════════════════

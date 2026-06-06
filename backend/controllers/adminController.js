@@ -3,36 +3,45 @@ const db = require('../config/db');
 // --- FINANCE ---
 exports.getFinanceStats = async (req, res) => {
   try {
-    // Vet Commission (10% of completed bookings)
-    // For demo purposes, we will just sum all bookings since we don't have a 'completed' status universally enforced yet, or we check status='completed'
-    const [bookings] = await db.execute(`
+    const [vetBookings] = await db.execute(`
       SELECT SUM(v.price) as total_vet_revenue 
       FROM bookings b 
       JOIN vets v ON b.vet_id = v.id 
       WHERE b.status != 'cancelled'
     `);
+
+    const [salonBookings] = await db.execute(`
+      SELECT SUM(s.price) as total_salon_revenue
+      FROM salon_bookings sb
+      JOIN salons s ON sb.salon_id = s.id
+      WHERE sb.status != 'cancelled'
+    `);
     
-    // Marketplace Commission (8% of all completed orders)
     const [orders] = await db.execute(`
       SELECT SUM(total_price) as total_marketplace_gmv 
       FROM orders 
       WHERE status != 'cancelled'
     `);
 
-    const vetRevenue = Number(bookings[0].total_vet_revenue) || 0;
-    const vetCommission = vetRevenue * 0.10;
-
+    const vetRevenue = Number(vetBookings[0].total_vet_revenue) || 0;
+    const salonRevenue = Number(salonBookings[0].total_salon_revenue) || 0;
     const marketplaceGMV = Number(orders[0].total_marketplace_gmv) || 0;
+
+    const vetCommission = vetRevenue * 0.10;
+    const salonCommission = salonRevenue * 0.10;
     const marketplaceCommission = marketplaceGMV * 0.08;
 
-    const totalNetRevenue = vetCommission + marketplaceCommission;
+    const serviceCommissions = vetCommission + salonCommission;
+    const totalNetRevenue = serviceCommissions + marketplaceCommission;
     
     res.json({
       success: true,
       stats: {
         totalNetRevenue,
-        adRevenue: 45200, // mock ad revenue
-        serviceCommissions: vetCommission,
+        adRevenue: 45200,
+        serviceCommissions,
+        vetCommission,
+        salonCommission,
         marketplaceFees: marketplaceCommission,
         marketplaceGMV
       }
@@ -242,14 +251,32 @@ exports.getMarketplaceOrders = async (req, res) => {
 exports.getDashboardStats = async (req, res) => {
   try {
     const [users] = await db.execute('SELECT COUNT(*) as count FROM users');
-    const [verifs] = await db.execute('SELECT COUNT(*) as count FROM vet_verifications WHERE status = ?', ['pending']);
+
+    const [vetVerifs] = await db.execute(
+      'SELECT COUNT(*) as count FROM vet_verifications WHERE status = ?',
+      ['pending']
+    );
+
+    const [storeVerifs] = await db.execute(
+      'SELECT COUNT(*) as count FROM store_verifications WHERE status = ?',
+      ['pending']
+    );
+
+    const [salonVerifs] = await db.execute(
+      'SELECT COUNT(*) as count FROM salon_verifications WHERE status = ?',
+      ['pending']
+    );
+
     const [posts] = await db.execute('SELECT COUNT(*) as count FROM posts');
     
     res.json({
       success: true,
       stats: {
         activeUsers: users[0].count,
-        verificationQueue: verifs[0].count,
+        verificationQueue:
+          Number(vetVerifs[0].count || 0) +
+          Number(storeVerifs[0].count || 0) +
+          Number(salonVerifs[0].count || 0),
         totalPosts: posts[0].count
       }
     });

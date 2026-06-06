@@ -22,4 +22,6 @@ router.post('/vouchers/validate', salonController.validateVoucher);
 
 router.post('/:id/reviews', salonController.addSalonReview);
 
+router.post('/verify', salonController.verifySalon);
+
 module.exports = router;

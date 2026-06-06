@@ -294,26 +294,108 @@ function MarketplaceOversight() {
       </div>
 
       {selectedStore && (
-        <div className="modal-overlay">
-          <div className="modal-overlay" onClick={() => setSelectedStore(null)} style={{ background: 'transparent' }}></div>
-          <div className="modal-content" style={{ zIndex: 101, width: '90%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>Verify Store: {selectedStore.store_name}</h2>
-              <X size={24} color="#64748B" style={{ cursor: 'pointer' }} onClick={() => setSelectedStore(null)} />
-            </div>
-            
-            <div style={{ padding: '0 0 24px 0' }}>
-              <p style={{ fontSize: '16px', marginBottom: '24px' }}><strong>Owner Name:</strong> {selectedStore.owner_name}</p>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-                <DocumentPreview title="NID Front" url={selectedStore.nid_number} />
-                <DocumentPreview title="Trade License" url={selectedStore.trade_license} />
+        <div className="modal-overlay" style={{ backdropFilter: 'blur(6px)', background: 'rgba(15, 23, 42, 0.45)' }}>
+          <div
+            className="modal-content"
+            style={{
+              zIndex: 101,
+              width: '92%',
+              maxWidth: '760px',
+              maxHeight: '88vh',
+              overflow: 'hidden',
+              borderRadius: '24px',
+              padding: 0,
+              background: '#FFFFFF',
+              boxShadow: '0 24px 80px rgba(15, 23, 42, 0.25)',
+            }}
+          >
+            <div style={{ padding: '24px 28px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#219EBC', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
+                  Store Verification
+                </div>
+                <h2 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                  {selectedStore.store_name}
+                </h2>
+                <p style={{ margin: '6px 0 0', color: '#64748B', fontSize: 14 }}>
+                  Review seller identity and business documents before approval.
+                </p>
               </div>
 
-              <div style={{ display: 'flex', gap: '16px', marginTop: 32, paddingTop: 24, borderTop: '1px solid #E2E8F0' }}>
-                <button style={{ flex: 1, padding: '12px 16px', background: '#10B981', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleApprove(selectedStore.id)}>Approve Application</button>
-                <button style={{ flex: 1, padding: '12px 16px', background: '#EF4444', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleDeny(selectedStore.id)}>Deny Application</button>
+              <button
+                onClick={() => setSelectedStore(null)}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  border: '1px solid #E2E8F0',
+                  background: '#F8FAFC',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={20} color="#64748B" />
+              </button>
+            </div>
+
+            <div style={{ padding: '24px 28px', overflowY: 'auto', maxHeight: 'calc(88vh - 176px)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+                <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Owner Name</div>
+                  <div style={{ fontSize: 16, color: '#0F172A', fontWeight: 800 }}>{selectedStore.owner_name || 'Not provided'}</div>
+                </div>
+
+                <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Application Status</div>
+                  <span style={{ display: 'inline-flex', padding: '6px 10px', borderRadius: 999, background: '#FEF3C7', color: '#92400E', fontSize: 12, fontWeight: 800 }}>
+                    {selectedStore.status?.toUpperCase() || 'PENDING'}
+                  </span>
+                </div>
               </div>
+
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 14 }}>
+                Submitted Documents
+              </h3>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 18 }}>
+                <DocumentPreview title="NID / Identity Document" url={selectedStore.nid_number} />
+                <DocumentPreview title="Trade License" url={selectedStore.trade_license} />
+              </div>
+            </div>
+
+            <div style={{ padding: '18px 28px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 12, background: '#F8FAFC' }}>
+              <button
+                onClick={() => handleDeny(selectedStore.id)}
+                style={{
+                  padding: '12px 18px',
+                  background: '#FFFFFF',
+                  border: '1px solid #FCA5A5',
+                  borderRadius: 12,
+                  color: '#DC2626',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                Deny
+              </button>
+
+              <button
+                onClick={() => handleApprove(selectedStore.id)}
+                style={{
+                  padding: '12px 20px',
+                  background: '#10B981',
+                  border: 'none',
+                  borderRadius: 12,
+                  color: 'white',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 20px rgba(16, 185, 129, 0.25)',
+                }}
+              >
+                Approve Store
+              </button>
             </div>
           </div>
         </div>
@@ -471,25 +553,111 @@ function VetServices() {
       </div>
 
       {selectedVet && (
-        <div className="modal-overlay">
-          <div className="modal-overlay" onClick={() => setSelectedVet(null)} style={{ background: 'transparent' }}></div>
-          <div className="modal-content" style={{ zIndex: 101, width: '90%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>Verify Vet: {selectedVet.vet_name}</h2>
-              <X size={24} color="#64748B" style={{ cursor: 'pointer' }} onClick={() => setSelectedVet(null)} />
+        <div className="modal-overlay" style={{ backdropFilter: 'blur(6px)', background: 'rgba(15, 23, 42, 0.45)' }}>
+          <div
+            className="modal-content"
+            style={{
+              zIndex: 101,
+              width: '92%',
+              maxWidth: '900px',
+              maxHeight: '88vh',
+              overflow: 'hidden',
+              borderRadius: '24px',
+              padding: 0,
+              background: '#FFFFFF',
+              boxShadow: '0 24px 80px rgba(15, 23, 42, 0.25)',
+            }}
+          >
+            <div style={{ padding: '24px 28px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#14B8A6', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
+                  Vet Verification
+                </div>
+                <h2 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                  {selectedVet.vet_name}
+                </h2>
+                <p style={{ margin: '6px 0 0', color: '#64748B', fontSize: 14 }}>
+                  Review identity, tax, trade, and professional certification documents.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setSelectedVet(null)}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  border: '1px solid #E2E8F0',
+                  background: '#F8FAFC',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={20} color="#64748B" />
+              </button>
             </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-              <DocumentPreview title="NID Front" url={selectedVet.nid_front_url} />
-              <DocumentPreview title="NID Back" url={selectedVet.nid_back_url} />
-              <DocumentPreview title="TIN Certificate" url={selectedVet.tin_url} />
-              <DocumentPreview title="Trade License" url={selectedVet.trade_url} />
-              <DocumentPreview title="BVC Certificate" url={selectedVet.bvc_url} />
+
+            <div style={{ padding: '24px 28px', overflowY: 'auto', maxHeight: 'calc(88vh - 176px)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+                <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Degree</div>
+                  <div style={{ fontSize: 16, color: '#0F172A', fontWeight: 800 }}>{selectedVet.degree || 'Not provided'}</div>
+                </div>
+
+                <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Application Status</div>
+                  <span style={{ display: 'inline-flex', padding: '6px 10px', borderRadius: 999, background: '#FEF3C7', color: '#92400E', fontSize: 12, fontWeight: 800 }}>
+                    {selectedVet.status?.toUpperCase() || 'PENDING'}
+                  </span>
+                </div>
+              </div>
+
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 14 }}>
+                Submitted Documents
+              </h3>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 18 }}>
+                <DocumentPreview title="NID Front" url={selectedVet.nid_front_url} />
+                <DocumentPreview title="NID Back" url={selectedVet.nid_back_url} />
+                <DocumentPreview title="TIN Certificate" url={selectedVet.tin_url} />
+                <DocumentPreview title="Trade License" url={selectedVet.trade_url} />
+                <DocumentPreview title="BVC Certificate" url={selectedVet.bvc_url} />
+              </div>
             </div>
-            
-            <div style={{ display: 'flex', gap: '16px', marginTop: 32, paddingTop: 24, borderTop: '1px solid #E2E8F0' }}>
-              <button style={{ flex: 1, padding: '12px 16px', background: '#10B981', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleApprove(selectedVet.id)}>Approve Application</button>
-              <button style={{ flex: 1, padding: '12px 16px', background: '#EF4444', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleDeny(selectedVet.id)}>Deny Application</button>
+
+            <div style={{ padding: '18px 28px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 12, background: '#F8FAFC' }}>
+              <button
+                onClick={() => handleDeny(selectedVet.id)}
+                style={{
+                  padding: '12px 18px',
+                  background: '#FFFFFF',
+                  border: '1px solid #FCA5A5',
+                  borderRadius: 12,
+                  color: '#DC2626',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                Deny
+              </button>
+
+              <button
+                onClick={() => handleApprove(selectedVet.id)}
+                style={{
+                  padding: '12px 20px',
+                  background: '#10B981',
+                  border: 'none',
+                  borderRadius: 12,
+                  color: 'white',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 20px rgba(16, 185, 129, 0.25)',
+                }}
+              >
+                Approve Vet
+              </button>
             </div>
           </div>
         </div>
@@ -507,7 +675,6 @@ function AdoptionCenter() {
   }, []);
 
   const avail = adoptions.filter(a => a.status === 'available');
-  const pending = adoptions.filter(a => a.status === 'pending');
   const adopted = adoptions.filter(a => a.status === 'adopted');
 
   return (
@@ -536,16 +703,6 @@ function AdoptionCenter() {
             <div className="adoption-badge">{avail.length}</div>
           </div>
           {avail.map((a, i) => <AdoptionCard key={i} data={a} />)}
-        </div>
-
-        <div className="adoption-column">
-          <div className="adoption-col-header">
-            <div className="adoption-col-title">
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F59E0B' }}></div> Application Pending
-            </div>
-            <div className="adoption-badge">{pending.length}</div>
-          </div>
-          {pending.map((a, i) => <AdoptionCard key={i} data={a} />)}
         </div>
 
         <div className="adoption-column">

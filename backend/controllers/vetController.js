@@ -140,27 +140,70 @@ exports.getVetByUserId = async (req, res) => {
 };
 
 exports.verifyVet = async (req, res) => {
-  const { userId, ownerName, nidNumber, tinNumber, tradeLicense, bvcRegistration, otherLicense } = req.body;
+  const {
+    userId,
+    ownerName,
+    nidFrontUrl,
+    nidBackUrl,
+    tinUrl,
+    tradeUrl,
+    bvcUrl,
+    otherUrl
+  } = req.body;
 
   try {
-    const [vets] = await db.execute('SELECT id FROM vets WHERE user_id = ?', [userId]);
+    const [vets] = await db.execute(
+      'SELECT id FROM vets WHERE user_id = ?',
+      [userId]
+    );
+
     if (vets.length === 0) {
-      return res.status(404).json({ message: 'Vet not found for this user' });
+      return res.status(404).json({
+        message: 'Vet not found for this user'
+      });
     }
+
     const vetId = vets[0].id;
 
     await db.execute(
-      'INSERT INTO vet_verifications (vet_id, owner_name, nid_front_url, tin_url, trade_url, bvc_url, other_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [vetId, ownerName, nidNumber, tinNumber, tradeLicense, bvcRegistration, otherLicense || null]
+      `INSERT INTO vet_verifications
+      (
+        vet_id,
+        owner_name,
+        nid_front_url,
+        nid_back_url,
+        tin_url,
+        trade_url,
+        bvc_url,
+        other_url
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        vetId,
+        ownerName,
+        nidFrontUrl,
+        nidBackUrl,
+        tinUrl,
+        tradeUrl,
+        bvcUrl,
+        otherUrl || null
+      ]
     );
 
-    // Also mark them as verified (for demo purposes)
-    await db.execute('UPDATE vets SET is_verified = TRUE WHERE id = ?', [vetId]);
+    await db.execute(
+      'UPDATE vets SET is_verified = TRUE WHERE id = ?',
+      [vetId]
+    );
 
-    res.status(201).json({ message: 'Verification details submitted successfully' });
+    res.status(201).json({
+      message: 'Verification details submitted successfully'
+    });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({
+      message: 'Server error'
+    });
   }
 };
 

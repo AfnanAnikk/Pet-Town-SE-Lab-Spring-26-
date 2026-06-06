@@ -64,15 +64,15 @@ CREATE TABLE IF NOT EXISTS vet_areas (
 
 CREATE TABLE IF NOT EXISTS vet_reviews (
     id SERIAL PRIMARY KEY,
+    booking_id INT NOT NULL UNIQUE,
     vet_id INT NOT NULL,
     user_id INT NOT NULL,
-    author_name VARCHAR(255) NOT NULL,
-    author_initial CHAR(1) NOT NULL,
-    review_date VARCHAR(255) NOT NULL,
-    text TEXT NOT NULL,
+    rating FLOAT NOT NULL,
+    review_text TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
     FOREIGN KEY (vet_id) REFERENCES vets(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE (vet_id, user_id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS posts (
@@ -390,14 +390,15 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 CREATE TABLE IF NOT EXISTS salon_reviews (
     id SERIAL PRIMARY KEY,
+    booking_id INT NOT NULL UNIQUE,
     salon_id INT NOT NULL,
     user_id INT NOT NULL,
     rating FLOAT NOT NULL,
     review_text TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES salon_bookings(id) ON DELETE CASCADE,
     FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE (salon_id, user_id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS salon_bookings (

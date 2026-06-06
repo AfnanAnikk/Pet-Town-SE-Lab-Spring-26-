@@ -319,14 +319,20 @@ exports.validateVoucher = async (req, res) => {
 
 exports.addSalonReview = async (req, res) => {
   const salonId = req.params.id;
-  const { userId, rating, reviewText } = req.body;
+  const { userId, bookingId, rating, reviewText } = req.body;
 
   try {
     // 1. Insert the review
     await db.execute(
-      'INSERT INTO salon_reviews (salon_id, user_id, rating, review_text) VALUES (?, ?, ?, ?)',
-      [salonId, userId, rating, reviewText]
+      'INSERT INTO salon_reviews (booking_id, salon_id, user_id, rating, review_text) VALUES (?, ?, ?, ?, ?)',
+      [bookingId, salonId, userId, rating, reviewText]
     );
+    if (error.code === '23505') {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already reviewed this booking',
+      });
+    }
 
     // 2. Calculate new average rating and review count
     const [stats] = await db.execute(

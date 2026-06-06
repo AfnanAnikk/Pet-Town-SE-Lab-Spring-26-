@@ -232,13 +232,13 @@ exports.updateVetProfile = async (req, res) => {
 
 exports.addVetReview = async (req, res) => {
   const vetId = req.params.id;
-  const { userId, rating, reviewText } = req.body;
+  const { userId, bookingId, rating, reviewText } = req.body;
 
   try {
     // 1. Insert the review
     await db.execute(
-      'INSERT INTO vet_reviews (vet_id, user_id, rating, review_text) VALUES (?, ?, ?, ?)',
-      [vetId, userId, rating, reviewText]
+      'INSERT INTO vet_reviews (booking_id, vet_id, user_id, rating, review_text) VALUES (?, ?, ?, ?, ?)',
+      [bookingId, vetId, userId, rating, reviewText]
     );
 
     // 2. Calculate new average rating and review count

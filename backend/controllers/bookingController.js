@@ -55,8 +55,7 @@ exports.getUserBookings = async (req, res) => {
       JOIN vets v ON b.vet_id = v.id
       JOIN users u ON v.user_id = u.id
       LEFT JOIN vet_reviews vr 
-        ON vr.vet_id = b.vet_id 
-        AND vr.user_id = b.user_id
+        ON vr.booking_id = b.id
       WHERE b.user_id = ? 
       ORDER BY b.id DESC
     `, [userId]);

@@ -176,9 +176,19 @@ class _UserHistoryPageState extends State<UserHistoryPage> {
 
                           Map<String, dynamic> res;
                           if (booking['provider_type'] == 'salon') {
-                            res = await ApiService.addSalonReview(booking['salon_id'].toString(), _rating.toDouble(), _reviewController.text.trim());
+                            res = await ApiService.addSalonReview(
+                              booking['salon_id'].toString(),
+                              booking['id'].toString(),
+                              _rating.toDouble(),
+                              _reviewController.text.trim(),
+                            );
                           } else {
-                            res = await ApiService.addVetReview(booking['vet_id'].toString(), _rating.toDouble(), _reviewController.text.trim());
+                            res = await ApiService.addVetReview(
+                              booking['vet_id'].toString(),
+                              booking['id'].toString(),
+                              _rating.toDouble(),
+                              _reviewController.text.trim(),
+                            );
                           }
 
                           setSheetState(() {
@@ -210,7 +220,12 @@ class _UserHistoryPageState extends State<UserHistoryPage> {
   Widget _buildBookingCard(dynamic booking) {
     final bool isSalon = booking['provider_type'] == 'salon';
     final String status = booking['status'] ?? 'pending';
+    final hasReviewed = booking['has_reviewed'] == true ||
+    booking['has_reviewed'] == 1 ||
+    booking['has_reviewed'].toString() == 'true';
     final profileImageUrl = booking['profile_picture_url'];
+    debugPrint('BOOKING DEBUG: $booking');
+    debugPrint('status=$status has_reviewed=${booking['has_reviewed']} hasReviewed=$hasReviewed');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -292,7 +307,7 @@ class _UserHistoryPageState extends State<UserHistoryPage> {
             isSalon ? Icons.spa : Icons.healing,
             isSalon ? 'Service: ${booking['service_name'] ?? 'Grooming'}' : 'Concern: ${booking['concern'] ?? ''}',
           ),
-          if ((booking['status'] == 'accepted' || booking['status'] == 'completed') && booking['has_reviewed'] != true && booking['has_reviewed'] != 1) ...[
+          if ((status == 'accepted' || status == 'completed') && !hasReviewed) ...[
             const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,

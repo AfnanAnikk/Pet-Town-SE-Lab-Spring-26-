@@ -969,7 +969,7 @@ class ApiService {
   }
 
   // Add Vet Review
-  static Future<Map<String, dynamic>> addVetReview(String vetId, double rating, String reviewText) async {
+  static Future<Map<String, dynamic>> addVetReview(String vetId, String bookingId, double rating, String reviewText) async {
     try {
       final headers = await _getHeaders();
       final userId = await AuthService.getUserId();
@@ -978,11 +978,12 @@ class ApiService {
       final response = await http.post(
         Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vets')}/$vetId/reviews'),
         headers: headers,
-        body: jsonEncode({
-          'userId': userId,
-          'rating': rating,
-          'reviewText': reviewText,
-        }),
+          body: jsonEncode({
+            'userId': userId,
+            'bookingId': bookingId,
+            'rating': rating,
+            'reviewText': reviewText,
+          }),
       );
       return _handleResponse(response);
     } catch (e) {
@@ -991,7 +992,7 @@ class ApiService {
   }
 
   // Add Salon Review
-  static Future<Map<String, dynamic>> addSalonReview(String salonId, double rating, String reviewText) async {
+  static Future<Map<String, dynamic>> addSalonReview(String salonId, String bookingId, double rating, String reviewText) async {
     try {
       final headers = await _getHeaders();
       final userId = await AuthService.getUserId();
@@ -1002,6 +1003,7 @@ class ApiService {
         headers: headers,
         body: jsonEncode({
           'userId': userId,
+          'bookingId': bookingId,
           'rating': rating,
           'reviewText': reviewText,
         }),

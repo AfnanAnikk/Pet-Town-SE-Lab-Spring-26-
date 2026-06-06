@@ -221,8 +221,7 @@ function PetSalons() {
       .then(d => {
         const pending = (d.verifications || []).filter(s => s.status === 'pending');
         setSalons(pending);
-      })
-      .catch(console.error);
+      });
   }, []);
 
   const handleApprove = (id) => {
@@ -244,45 +243,30 @@ function PetSalons() {
       <h1>Pet Salon</h1>
       <p>Manage grooming partners, reviews, and booking quality.</p>
 
-      <div className="card" style={{ marginTop: 24 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>
-          Pending Salon Verifications
-        </h3>
-
-        {salons.length === 0 ? (
-          <p style={{ color: '#64748B' }}>No pending salon verifications.</p>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
-            {salons.map((s) => (
-              <div key={s.id} style={{ border: '1px solid #E2E8F0', padding: 16, borderRadius: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <div style={{ width: 48, height: 48, background: '#EC4899', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {salons.length > 0 && (
+        <div className="card" style={{ marginTop: '24px', marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '16px' }}>Pending Verifications</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
+            {salons.map((s, idx) => (
+              <div key={idx} style={{ border: '1px solid #E2E8F0', padding: '16px', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <div style={{ width: 48, height: 48, background: '#EC4899', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Scissors size={24} color="white" />
                   </div>
-                  <span style={{ fontSize: 10, fontWeight: 'bold', padding: '4px 8px', borderRadius: 4, background: '#FEF3C7', color: '#F59E0B' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px', background: '#FEF3C7', color: '#F59E0B' }}>
                     PENDING
                   </span>
                 </div>
-
-                <h3 style={{ fontSize: 16, fontWeight: 'bold', color: '#0F172A', marginBottom: 4 }}>
-                  {s.salon_name}
-                </h3>
-
-                <p style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>
-                  {s.location || s.email || 'No location provided'}
-                </p>
-
-                <button
-                  style={{ width: '100%', padding: 10, background: '#F1F5F9', border: 'none', borderRadius: 8, color: '#475569', fontWeight: 'bold', cursor: 'pointer' }}
-                  onClick={() => setSelectedSalon(s)}
-                >
-                  Review Documents
-                </button>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0F172A', marginBottom: '4px' }}>{s.salon_name}</h3>
+                <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '16px' }}>{s.location || s.email}</p>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button style={{ flex: 1, padding: '8px', background: '#F1F5F9', border: 'none', borderRadius: '6px', color: '#475569', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => setSelectedSalon(s)}>Review Documents</button>
+                </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {selectedSalon && (
         <div className="modal-overlay" style={{ backdropFilter: 'blur(6px)', background: 'rgba(15, 23, 42, 0.45)' }}>
@@ -292,7 +276,7 @@ function PetSalons() {
               zIndex: 101,
               width: '92%',
               maxWidth: '900px',
-              height: '86vh',
+              maxHeight: '88vh',
               overflow: 'hidden',
               borderRadius: '24px',
               padding: 0,
@@ -309,7 +293,7 @@ function PetSalons() {
                   {selectedSalon.salon_name}
                 </h2>
                 <p style={{ margin: '6px 0 0', color: '#64748B', fontSize: 14 }}>
-                  Review identity and business documents before approving this grooming partner.
+                  Review identity, tax, and business documents.
                 </p>
               </div>
 
@@ -331,13 +315,11 @@ function PetSalons() {
               </button>
             </div>
 
-            <div style={{ padding: '24px 28px', overflowY: 'auto', height: 'calc(86vh - 174px)' }}>
+            <div style={{ padding: '24px 28px', overflowY: 'auto', maxHeight: 'calc(88vh - 176px)' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                 <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Owner Name</div>
-                  <div style={{ fontSize: 16, color: '#0F172A', fontWeight: 800 }}>
-                    {selectedSalon.owner_name || 'Not provided'}
-                  </div>
+                  <div style={{ fontSize: 16, color: '#0F172A', fontWeight: 800 }}>{selectedSalon.owner_name || 'Not provided'}</div>
                 </div>
 
                 <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
@@ -361,7 +343,7 @@ function PetSalons() {
               </div>
             </div>
 
-            <div style={{ padding: '18px 28px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 12, background: '#F8FAFC', flexShrink: 0 }}>
+            <div style={{ padding: '18px 28px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 12, background: '#F8FAFC' }}>
               <button
                 onClick={() => handleDeny(selectedSalon.id)}
                 style={{

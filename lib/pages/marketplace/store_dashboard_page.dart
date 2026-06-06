@@ -115,6 +115,223 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
     }
   }
 
+  void _showEditStoreDialog() {
+    _storeNameController.text = _storeData?['name'] ?? '';
+    _storeDescController.text = _storeData?['description'] ?? '';
+    _locationController.text = _storeData?['location'] ?? '';
+    _contactController.text = _storeData?['contact_info'] ?? '';
+    _bannerImage = null;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Container(
+              margin: const EdgeInsets.only(top: 70),
+              padding: EdgeInsets.only(
+                left: 22,
+                right: 22,
+                top: 18,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 22,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Edit Store Details',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF374957),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      GestureDetector(
+                        onTap: () async {
+                          final picker = ImagePicker();
+                          final picked = await picker.pickImage(source: ImageSource.gallery);
+                          if (picked != null) {
+                            setDialogState(() {
+                              _bannerImage = File(picked.path);
+                            });
+                          }
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(22),
+                          child: Stack(
+                            children: [
+                              Container(
+                                height: 170,
+                                width: double.infinity,
+                                color: Colors.grey.shade200,
+                                child: _bannerImage != null
+                                    ? Image.file(_bannerImage!, fit: BoxFit.cover)
+                                    : (_storeData?['banner_url'] != null
+                                        ? Image.network(
+                                            _storeData!['banner_url'],
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => const Icon(Icons.store, size: 55, color: Colors.grey),
+                                          )
+                                        : const Icon(Icons.store, size: 55, color: Colors.grey)),
+                              ),
+                              Positioned(
+                                right: 12,
+                                bottom: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.65),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.camera_alt_outlined, color: Colors.white, size: 16),
+                                      SizedBox(width: 6),
+                                      Text('Change Banner', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      _editField(controller: _storeNameController, label: 'Store Name', icon: Icons.storefront_outlined),
+                      const SizedBox(height: 12),
+                      _editField(controller: _storeDescController, label: 'Description', icon: Icons.description_outlined, maxLines: 3),
+                      const SizedBox(height: 12),
+                      _editField(controller: _locationController, label: 'Location', icon: Icons.location_on_outlined),
+                      const SizedBox(height: 12),
+                      _editField(controller: _contactController, label: 'Contact Number', icon: Icons.phone_outlined, keyboardType: TextInputType.phone),
+
+                      const SizedBox(height: 22),
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            String? bannerUrl = _storeData?['banner_url'];
+
+                            if (_bannerImage != null) {
+                              final uploadRes = await ApiService.uploadImage(_bannerImage!.path);
+                              if (uploadRes['success']) {
+                                bannerUrl = uploadRes['data']['url'];
+                              }
+                            }
+
+                            final res = await ApiService.updateStore(_storeData!['id'], {
+                              'name': _storeNameController.text.trim(),
+                              'description': _storeDescController.text.trim(),
+                              'bannerUrl': bannerUrl,
+                              'location': _locationController.text.trim(),
+                              'contactInfo': _contactController.text.trim(),
+                            });
+
+                            if (mounted) Navigator.pop(context);
+
+                            if (res['success']) {
+                              _bannerImage = null;
+                              await _fetchStoreData();
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Store updated successfully!')),
+                                );
+                              }
+                            } else {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(res['message'] ?? 'Failed to update store')),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3293B3),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _editField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: const Color(0xFF3293B3)),
+        filled: true,
+        fillColor: const Color(0xFFF8F9FA),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF3293B3), width: 1.5),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -145,21 +362,8 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
             backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
-              onPressed: () async {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                } else {
-                  await AuthService.logout();
-                  if (mounted) {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                      (route) => false,
-                    );
-                  }
-                }
-              },
+              icon: const Icon(Icons.settings, color: Colors.grey),
+              onPressed: _showEditStoreDialog,
             ),
             title: const Text('Set Up Your Shop', style: TextStyle(color: Color(0xFF374957))),
           ),
@@ -278,7 +482,13 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
           backgroundColor: Colors.white,
           elevation: 1,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+            icon: const Icon(Icons.settings, color: Colors.grey),
+            onPressed: _showEditStoreDialog,
+          ),
+        title: Text(_storeData!['name'], style: const TextStyle(color: Color(0xFF374957))),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.red, size: 28),
             onPressed: () async {
               if (Navigator.canPop(context)) {
                 Navigator.pop(context);
@@ -294,12 +504,6 @@ class _StoreDashboardPageState extends State<StoreDashboardPage> {
               }
             },
           ),
-        title: Text(_storeData!['name'], style: const TextStyle(color: Color(0xFF374957))),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.grey),
-            onPressed: () {},
-          )
         ],
       ),
       body: CustomScrollView(

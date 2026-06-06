@@ -44,12 +44,31 @@ exports.createStore = async (req, res) => {
 };
 
 exports.updateStore = async (req, res) => {
-  const { name, description, category, bannerColor, location } = req.body;
+  const { name, description, category, bannerColor, bannerUrl, location, contactInfo } = req.body;
+
   try {
     await db.execute(
-      'UPDATE stores SET name = ?, description = ?, category = ?, banner_color = ?, location = ? WHERE id = ?',
-      [name, description, category, bannerColor, location, req.params.id]
+      `UPDATE stores 
+       SET name = ?, 
+           description = ?, 
+           category = ?, 
+           banner_color = COALESCE(?, banner_color), 
+           banner_url = COALESCE(?, banner_url),
+           location = ?,
+           contact_info = ?
+       WHERE id = ?`,
+      [
+        name,
+        description,
+        category || 'General',
+        bannerColor || null,
+        bannerUrl || null,
+        location || '',
+        contactInfo || '',
+        req.params.id,
+      ]
     );
+
     res.json({ message: 'Store updated successfully' });
   } catch (error) {
     console.error(error);

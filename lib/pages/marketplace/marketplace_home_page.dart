@@ -17,6 +17,7 @@ class MarketplaceHomePage extends StatefulWidget {
 class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
   bool _isLoading = true;
   List<dynamic> _stores = [];
+  List<dynamic> _products = [];
   String _searchQuery = '';
   String _selectedCategory = ''; // empty = no filter
 
@@ -45,15 +46,124 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
   }
 
   Future<void> _fetchStores() async {
-    final result = await ApiService.getAllStores();
-    if (result['success']) {
-      setState(() {
-        _stores = result['data'];
-      });
+    final storeResult = await ApiService.getAllStores();
+    final productResult = await ApiService.getAllProducts();
+
+    if (storeResult['success']) {
+      _stores = storeResult['data'];
     }
+
+    if (productResult['success']) {
+      _products = productResult['data'];
+    }
+
     setState(() {
       _isLoading = false;
     });
+  }
+
+  Future<void> _showCategoryProductsSheet(String category) async {
+    final res = await ApiService.getAllProducts();
+
+    if (!res['success']) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['message'] ?? 'Failed to load products')),
+        );
+      }
+      return;
+    }
+
+    final products = (res['data'] as List).where((p) {
+      final productCategory = p['category']?.toString().toLowerCase() ?? '';
+      return productCategory == category.toLowerCase();
+    }).toList();
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.75,
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 42,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '$category Products',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF3293B3),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: products.isEmpty
+                    ? const Center(child: Text('No products found.'))
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          final p = products[index];
+                          final imageUrl = p['image_path']?.toString();
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(12),
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  width: 60,
+                                  height: 60,
+                                  color: Colors.grey.shade200,
+                                  child: imageUrl != null && imageUrl.isNotEmpty
+                                      ? Image.network(
+                                          imageUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Icon(Icons.image, color: Colors.grey),
+                                        )
+                                      : const Icon(Icons.image, color: Colors.grey),
+                                ),
+                              ),
+                              title: Text(
+                                p['name'] ?? 'Product',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text(
+                                '${p['store_name'] ?? 'Unknown Store'}\n৳${p['price']}',
+                              ),
+                              isThreeLine: true,
+                              trailing: const Icon(Icons.chevron_right),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -71,6 +181,17 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
           storeCategory.contains(_selectedCategory.toLowerCase());
 
       return matchesSearch && matchesCategory;
+    }).toList();
+
+    final filteredProducts = _products.where((p) {
+      final q = _searchQuery.toLowerCase().trim();
+      if (q.isEmpty) return false;
+
+      final name = p['name']?.toString().toLowerCase() ?? '';
+      final category = p['category']?.toString().toLowerCase() ?? '';
+      final storeName = p['store_name']?.toString().toLowerCase() ?? '';
+
+      return name.contains(q) || category.contains(q) || storeName.contains(q);
     }).toList();
 
     return Scaffold(
@@ -138,7 +259,7 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
                             onChanged: (val) => setState(() => _searchQuery = val),
                             decoration: const InputDecoration(
                               icon: Icon(Icons.search, color: Colors.grey),
-                              hintText: 'Search for shops or locations...',
+                              hintText: 'Search products, shops, or categories...',
                               border: InputBorder.none,
                             ),
                           ),
@@ -214,11 +335,7 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
                             final isSelected = _selectedCategory == cat['name'];
                             return GestureDetector(
                               onTap: () {
-                                setState(() {
-                                  // Tap same category again → deselect
-                                  _selectedCategory =
-                                      isSelected ? '' : cat['name'] as String;
-                                });
+                                _showCategoryProductsSheet(cat['name'] as String);
                               },
                               child: Column(
                                 children: [
@@ -277,9 +394,9 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          _selectedCategory.isEmpty
-                              ? 'Nearby Shops'
-                              : '$_selectedCategory Shops',
+                          _searchQuery.trim().isNotEmpty
+                              ? 'Search Results'
+                              : 'Nearby Shops',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -306,22 +423,43 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
                 // Shops Grid
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  sliver: filteredStores.isEmpty
-                      ? const SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.all(32.0),
-                            child: Center(child: Text('No nearby shops found.')),
-                          ),
-                        )
-                      : SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final store = filteredStores[index];
-                              return _buildStoreCard(store);
-                            },
-                            childCount: filteredStores.length,
-                          ),
-                        ),
+                  sliver: _searchQuery.trim().isNotEmpty
+                      ? (filteredProducts.isEmpty && filteredStores.isEmpty
+                          ? const SliverToBoxAdapter(
+                              child: Padding(
+                                padding: EdgeInsets.all(32.0),
+                                child: Center(child: Text('No results found.')),
+                              ),
+                            )
+                          : SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  if (index < filteredProducts.length) {
+                                    return _buildProductSearchCard(filteredProducts[index]);
+                                  }
+
+                                  final storeIndex = index - filteredProducts.length;
+                                  return _buildStoreCard(filteredStores[storeIndex]);
+                                },
+                                childCount: filteredProducts.length + filteredStores.length,
+                              ),
+                            ))
+                      : (filteredStores.isEmpty
+                          ? const SliverToBoxAdapter(
+                              child: Padding(
+                                padding: EdgeInsets.all(32.0),
+                                child: Center(child: Text('No nearby shops found.')),
+                              ),
+                            )
+                          : SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final store = filteredStores[index];
+                                  return _buildStoreCard(store);
+                                },
+                                childCount: filteredStores.length,
+                              ),
+                            )),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
               ],
@@ -358,8 +496,12 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
               height: 120,
               width: double.infinity,
               color: Colors.grey.shade200,
-              child: store['banner_url'] != null
-                  ? Image.network(store['banner_url'], fit: BoxFit.cover)
+              child: store['banner_url'] != null && store['banner_url'].toString().isNotEmpty
+                  ? Image.network(
+                      store['banner_url'].toString(),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.store, color: Colors.grey, size: 50),
+                    )
                   : const Icon(Icons.store, color: Colors.grey, size: 50),
             ),
             
@@ -426,6 +568,78 @@ class _MarketplaceHomePageState extends State<MarketplaceHomePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildProductSearchCard(dynamic product) {
+    final imageUrl = product['image_path']?.toString();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: 72,
+              height: 72,
+              color: Colors.grey.shade200,
+              child: imageUrl != null && imageUrl.isNotEmpty
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.image, color: Colors.grey),
+                    )
+                  : const Icon(Icons.image, color: Colors.grey),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product['name'] ?? 'Product',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF374957),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  product['store_name'] ?? 'Unknown Store',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF3293B3),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${product['category'] ?? 'General'} • ৳${product['price']}',
+                  style: const TextStyle(fontSize: 13, color: Colors.black54),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

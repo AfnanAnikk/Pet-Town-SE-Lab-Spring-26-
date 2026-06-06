@@ -160,3 +160,66 @@ exports.getUnreadNotificationsCount = async (req, res) => {
   }
 };
 
+exports.getFollowCounts = async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const [followers] = await db.execute(
+      'SELECT COUNT(*)::int as count FROM follows WHERE following_id = ?',
+      [userId]
+    );
+
+    const [following] = await db.execute(
+      'SELECT COUNT(*)::int as count FROM follows WHERE follower_id = ?',
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      followersCount: followers[0].count || 0,
+      followingCount: following[0].count || 0,
+    });
+  } catch (error) {
+    console.error('Error getting follow counts:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getFollowers = async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const [users] = await db.execute(`
+      SELECT u.id, u.username, u.display_name, u.email, u.profile_picture_url
+      FROM follows f
+      JOIN users u ON f.follower_id = u.id
+      WHERE f.following_id = ?
+      ORDER BY f.created_at DESC
+    `, [userId]);
+
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error('Error getting followers:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getFollowing = async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const [users] = await db.execute(`
+      SELECT u.id, u.username, u.display_name, u.email, u.profile_picture_url
+      FROM follows f
+      JOIN users u ON f.following_id = u.id
+      WHERE f.follower_id = ?
+      ORDER BY f.created_at DESC
+    `, [userId]);
+
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error('Error getting following:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+

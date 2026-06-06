@@ -475,7 +475,7 @@ class _ProviderDashboardPageState extends State<ProviderDashboardPage> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    child: const Text('Start Consultation', style: TextStyle(color: Colors.white)),
+                    child: const Text('Close', style: TextStyle(color: Colors.white)),
                   ),
                 ),
               ],

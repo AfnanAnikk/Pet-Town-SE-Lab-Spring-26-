@@ -27,6 +27,9 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
   int _postCount = 0;
   bool _isOwnProfile = true;
   int? _loggedInUserId;
+  bool _isFollowing = false;
+  int _followersCount = 0;
+  int _followingCount = 0;
 
   @override
   void initState() {
@@ -51,6 +54,7 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
           _posts = result['data']['posts'];
         });
         _fetchSavedPosts(targetUserId);
+        await _loadFollowData(targetUserId);
       }
     }
     setState(() => _isLoading = false);
@@ -84,6 +88,46 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
       });
     }
   }
+
+  Future<void> _loadFollowData(int targetUserId) async {
+    final countsRes = await ApiService.getFollowCounts(targetUserId);
+
+    if (countsRes['success'] && mounted) {
+      setState(() {
+        _followersCount = countsRes['data']['followersCount'] ?? 0;
+        _followingCount = countsRes['data']['followingCount'] ?? 0;
+      });
+    }
+
+    if (!_isOwnProfile) {
+      final statusRes = await ApiService.getFollowStatus(targetUserId);
+
+      if (statusRes['success'] && mounted) {
+        setState(() {
+          _isFollowing = statusRes['data']['isFollowing'] ?? false;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleFollow() async {
+    if (_user == null) return;
+
+    final targetUserId = _user!['id'] as int;
+
+    final res = _isFollowing
+        ? await ApiService.unfollowUser(targetUserId)
+        : await ApiService.followUser(targetUserId);
+
+    if (res['success'] && mounted) {
+      setState(() {
+        _isFollowing = !_isFollowing;
+        _followersCount += _isFollowing ? 1 : -1;
+      });
+    }
+  }
+
+  
 
   void _handleLogout() async {
     await AuthService.logout();
@@ -263,29 +307,52 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                     children: [
                       _buildStatColumn('$_postCount', 'Pins'),
                       const SizedBox(width: 40),
-                      _buildStatColumn('0', 'Followers'),
+                      _buildStatColumn('$_followersCount', 'Followers'),
                       const SizedBox(width: 40),
-                      _buildStatColumn('0', 'Following'),
+                      _buildStatColumn('$_followingCount', 'Following'),
                     ],
                   ),
                   if (!_isOwnProfile) ...[
                     const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: _contactUser,
-                      icon: const Icon(Icons.message_rounded, color: Colors.white, size: 18),
-                      label: const Text(
-                        'Message',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3293B3),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: _toggleFollow,
+                          icon: Icon(
+                            _isFollowing ? Icons.check : Icons.person_add_alt_1,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          label: Text(
+                            _isFollowing ? 'Following' : 'Follow',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _isFollowing ? Colors.grey : const Color(0xFF3293B3),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
+                          onPressed: _contactUser,
+                          icon: const Icon(Icons.message_rounded, color: Colors.white, size: 18),
+                          label: const Text(
+                            'Message',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3293B3),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                   const SizedBox(height: 32),

@@ -2,19 +2,29 @@ const db = require('../config/db');
 
 exports.getConversations = async (req, res) => {
   const userId = req.params.userId;
+
   try {
-    // Get all conversations where the user is either user1 or user2
     const query = `
-      SELECT c.id as conversation_id, c.last_message_at,
-             u.id as other_user_id, u.username as other_user_name, u.email as other_user_email,
-             (SELECT text FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
-             (SELECT is_read FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as is_read,
-             (SELECT sender_id FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_sender_id
+      SELECT 
+        c.id as conversation_id, 
+        c.last_message_at,
+        u.id as other_user_id, 
+        u.username as other_user_name, 
+        u.email as other_user_email,
+        COALESCE(s.profile_picture_url, u.profile_picture_url) as other_user_profile_picture_url,
+        (SELECT text FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
+        (SELECT is_read FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as is_read,
+        (SELECT sender_id FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_sender_id
       FROM conversations c
-      JOIN users u ON (c.user1_id = u.id OR c.user2_id = u.id)
-      WHERE (c.user1_id = ? OR c.user2_id = ?) AND u.id != ?
+      JOIN users u 
+        ON (c.user1_id = u.id OR c.user2_id = u.id)
+      LEFT JOIN salons s
+        ON s.user_id = u.id
+      WHERE (c.user1_id = ? OR c.user2_id = ?) 
+        AND u.id != ?
       ORDER BY c.last_message_at DESC
     `;
+
     const [conversations] = await db.execute(query, [userId, userId, userId]);
     res.json(conversations);
   } catch (error) {

@@ -6,6 +6,9 @@ const socialController = require('../controllers/socialController');
 router.post('/follow', socialController.followUser);
 router.post('/unfollow', socialController.unfollowUser);
 router.get('/follow-status', socialController.getFollowStatus);
+router.get('/counts/:userId', socialController.getFollowCounts);
+router.get('/followers/:userId', socialController.getFollowers);
+router.get('/following/:userId', socialController.getFollowing);
 
 // Search
 router.get('/search', socialController.globalSearch);

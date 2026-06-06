@@ -1028,7 +1028,7 @@ class ApiService {
     }
   }
 
-  // Social Features (Phase 2)
+  // Social Features
   static Future<Map<String, dynamic>> followUser(int followingId) async {
     try {
       final headers = await _getHeaders();
@@ -1084,6 +1084,47 @@ class ApiService {
       return {'success': false, 'message': e.toString()};
     }
   }
+
+  static Future<Map<String, dynamic>> getFollowCounts(int userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/counts/$userId')}'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getFollowers(int userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/followers/$userId')}'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getFollowing(int userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/following/$userId')}'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  
 
   static Future<Map<String, dynamic>> globalSearch(String query) async {
     try {

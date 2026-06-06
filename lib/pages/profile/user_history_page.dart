@@ -15,6 +15,8 @@ class _UserHistoryPageState extends State<UserHistoryPage> {
   bool _isLoading = true;
   List<dynamic> _bookings = [];
   String _errorMessage = '';
+  String _selectedType = 'all';
+  
 
   @override
   void initState() {
@@ -346,8 +348,62 @@ class _UserHistoryPageState extends State<UserHistoryPage> {
     );
   }
 
+  Widget _buildTypeFilterBar() {
+    Widget tab(String label, String value) {
+      final bool selected = _selectedType == value;
+
+      return Expanded(
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedType = value;
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: selected ? const Color(0xFF3293B3) : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: selected ? Colors.white : const Color(0xFF3293B3),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F1F8),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF3293B3).withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: [
+          tab('All', 'all'),
+          tab('Vet', 'vet'),
+          tab('Salon', 'salon'),
+        ],
+      ),
+    );
+  }
+
+  
+
   @override
   Widget build(BuildContext context) {
+    final visibleBookings = _selectedType == 'all'
+    ? _bookings
+    : _bookings.where((b) => b['provider_type'] == _selectedType).toList();
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -366,34 +422,41 @@ class _UserHistoryPageState extends State<UserHistoryPage> {
           ),
         ),
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : _errorMessage.isNotEmpty
-          ? Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)))
-          : RefreshIndicator(
-              onRefresh: _fetchBookings,
-              child: _bookings.isEmpty
-                ? ListView(
-                    padding: const EdgeInsets.all(24),
-                    children: const [
-                      SizedBox(height: 100),
-                      Center(
-                        child: Text(
-                          'No bookings found.',
-                          style: TextStyle(fontSize: 18, color: Colors.black54),
-                        ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage.isNotEmpty
+              ? Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)))
+              : Column(
+                  children: [
+                    _buildTypeFilterBar(),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _fetchBookings,
+                        child: visibleBookings.isEmpty
+                            ? ListView(
+                                padding: const EdgeInsets.all(24),
+                                children: const [
+                                  SizedBox(height: 100),
+                                  Center(
+                                    child: Text(
+                                      'No bookings found.',
+                                      style: TextStyle(fontSize: 18, color: Colors.black54),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.all(24),
+                                itemCount: visibleBookings.length,
+                                itemBuilder: (context, index) {
+                                  return _buildBookingCard(visibleBookings[index]);
+                                },
+                              ),
                       ),
-                    ],
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(24),
-                    itemCount: _bookings.length,
-                    itemBuilder: (context, index) {
-                      return _buildBookingCard(_bookings[index]);
-                    },
-                  ),
-            ),
-            bottomNavigationBar: AppBottomNavBar(currentIndex: 4),
+                    ),
+                  ],
+                ),
+    bottomNavigationBar: AppBottomNavBar(currentIndex: 4),
     );
   }
 }

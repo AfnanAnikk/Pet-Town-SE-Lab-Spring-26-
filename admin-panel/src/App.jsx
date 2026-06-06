@@ -301,7 +301,7 @@ function MarketplaceOversight() {
               zIndex: 101,
               width: '92%',
               maxWidth: '760px',
-              maxHeight: '88vh',
+              maxHeight: '86vh',
               overflow: 'hidden',
               borderRadius: '24px',
               padding: 0,
@@ -340,7 +340,7 @@ function MarketplaceOversight() {
               </button>
             </div>
 
-            <div style={{ padding: '24px 28px', overflowY: 'auto', maxHeight: 'calc(88vh - 176px)' }}>
+            <div style={{ padding: '24px 28px', overflowY: 'auto', height: 'calc(86vh - 174px)' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                 <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Owner Name</div>
@@ -365,7 +365,7 @@ function MarketplaceOversight() {
               </div>
             </div>
 
-            <div style={{ padding: '18px 28px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 12, background: '#F8FAFC' }}>
+            <div style={{ padding: '18px 28px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 12, background: '#F8FAFC', flexShrink: 0,}}>
               <button
                 onClick={() => handleDeny(selectedStore.id)}
                 style={{

@@ -30,6 +30,8 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
   bool _isFollowing = false;
   int _followersCount = 0;
   int _followingCount = 0;
+  String _friendStatus = 'none';
+  int? _friendRequestId;
 
   @override
   void initState() {
@@ -105,6 +107,16 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
       if (statusRes['success'] && mounted) {
         setState(() {
           _isFollowing = statusRes['data']['isFollowing'] ?? false;
+        });
+      }
+
+      final friendRes = await ApiService.getFriendStatus(targetUserId);
+      
+      if (friendRes['success'] && mounted) {
+        final data = friendRes['data'];
+        setState(() {
+          _friendStatus = data['status'] ?? 'none';
+          _friendRequestId = data['request']?['id'];
         });
       }
     }
@@ -193,6 +205,42 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
       } else {
         setState(() => _isLoading = false);
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(uploadRes['message'])));
+      }
+    }
+  }
+
+  Future<void> _handleFriendAction() async {
+    if (_user == null) return;
+
+    final targetUserId = _user!['id'] as int;
+
+    if (_friendStatus == 'none') {
+      final res = await ApiService.sendFriendRequest(targetUserId);
+
+      if (res['success'] && mounted) {
+        setState(() {
+          _friendStatus = 'pending_sent';
+          _friendRequestId = res['data']?['requestId'];
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Friend request sent')),
+        );
+      }
+      return;
+    }
+
+    if (_friendStatus == 'pending_received' && _friendRequestId != null) {
+      final res = await ApiService.respondFriendRequest(_friendRequestId!, 'accepted');
+
+      if (res['success'] && mounted) {
+        setState(() {
+          _friendStatus = 'friends';
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Friend request accepted')),
+        );
       }
     }
   }
@@ -329,10 +377,45 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _isFollowing ? Colors.grey : const Color(0xFF3293B3),
+                            backgroundColor: _isFollowing ? const Color.fromARGB(255, 63, 151, 180) : const Color(0xFF3293B3),
                             foregroundColor: Colors.white,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
+                          onPressed: (_friendStatus == 'pending_sent' || _friendStatus == 'friends')
+                              ? null
+                              : _handleFriendAction,
+                          icon: Icon(
+                            _friendStatus == 'friends'
+                                ? Icons.people
+                                : _friendStatus == 'pending_sent'
+                                    ? Icons.hourglass_top
+                                    : _friendStatus == 'pending_received'
+                                        ? Icons.person_add_alt_1
+                                        : Icons.person_add,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          label: Text(
+                            _friendStatus == 'friends'
+                                ? 'Friends'
+                                : _friendStatus == 'pending_sent'
+                                    ? 'Requested'
+                                    : _friendStatus == 'pending_received'
+                                        ? 'Accept'
+                                        : 'Add Friend',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3293B3),
+                            disabledBackgroundColor: Colors.grey,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                           ),
                         ),

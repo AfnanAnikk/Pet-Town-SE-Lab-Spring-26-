@@ -1785,6 +1785,71 @@ class ApiService {
       return {'success': false, 'message': e.toString()};
     }
   }
+
+  //friend request
+  static Future<Map<String, dynamic>> sendFriendRequest(int receiverId) async {
+    try {
+      final headers = await _getHeaders();
+      final senderId = await AuthService.getUserId();
+      if (senderId == null) return {'success': false, 'message': 'Not logged in'};
+
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/friend-request')}'),
+        headers: headers,
+        body: jsonEncode({
+          'senderId': senderId,
+          'receiverId': receiverId,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getFriendStatus(int targetUserId) async {
+    try {
+      final headers = await _getHeaders();
+      final userId = await AuthService.getUserId();
+      if (userId == null) return {'success': false, 'message': 'Not logged in'};
+
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/friend-status')}?userId=$userId&targetUserId=$targetUserId'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> respondFriendRequest(int requestId, String status) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/friend-request/$requestId/respond')}'),
+        headers: headers,
+        body: jsonEncode({'status': status}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getFriendRequests(int userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/social/friend-requests/$userId')}'),
+        headers: headers,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
 }
 
 

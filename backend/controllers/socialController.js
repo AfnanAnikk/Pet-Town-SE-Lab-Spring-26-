@@ -223,3 +223,112 @@ exports.getFollowing = async (req, res) => {
   }
 };
 
+
+exports.sendFriendRequest = async (req, res) => {
+  const { senderId, receiverId } = req.body;
+
+  if (senderId === receiverId) {
+    return res.status(400).json({ success: false, message: 'You cannot send request to yourself' });
+  }
+
+  try {
+    const [existing] = await db.execute(
+      `SELECT * FROM friend_requests 
+       WHERE (sender_id = ? AND receiver_id = ?) 
+       OR (sender_id = ? AND receiver_id = ?)`,
+      [senderId, receiverId, receiverId, senderId]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ success: false, message: 'Friend request already exists' });
+    }
+
+    const [result] = await db.execute(
+      'INSERT INTO friend_requests (sender_id, receiver_id, status) VALUES (?, ?, ?)',
+      [senderId, receiverId, 'pending']
+    );
+
+    await db.execute(
+      'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
+      [receiverId, 'friend_request', result.insertId, 'Someone sent you a friend request!']
+    );
+
+    res.json({ success: true, message: 'Friend request sent', requestId: result.insertId });
+  } catch (error) {
+    console.error('Error sending friend request:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.respondFriendRequest = async (req, res) => {
+  const requestId = req.params.requestId;
+  const { status } = req.body;
+
+  if (!['accepted', 'declined'].includes(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid status' });
+  }
+
+  try {
+    await db.execute(
+      'UPDATE friend_requests SET status = ? WHERE id = ?',
+      [status, requestId]
+    );
+
+    res.json({ success: true, message: `Friend request ${status}` });
+  } catch (error) {
+    console.error('Error responding friend request:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getFriendStatus = async (req, res) => {
+  const { userId, targetUserId } = req.query;
+
+  try {
+    const [rows] = await db.execute(
+      `SELECT * FROM friend_requests 
+       WHERE (sender_id = ? AND receiver_id = ?) 
+       OR (sender_id = ? AND receiver_id = ?)`,
+      [userId, targetUserId, targetUserId, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.json({ success: true, status: 'none' });
+    }
+
+    const request = rows[0];
+
+    if (request.status === 'accepted') {
+      return res.json({ success: true, status: 'friends', request });
+    }
+
+    if (request.sender_id.toString() === userId.toString()) {
+      return res.json({ success: true, status: 'pending_sent', request });
+    }
+
+    return res.json({ success: true, status: 'pending_received', request });
+  } catch (error) {
+    console.error('Error getting friend status:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getFriendRequests = async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const [requests] = await db.execute(`
+      SELECT fr.*, u.username, u.display_name, u.email, u.profile_picture_url
+      FROM friend_requests fr
+      JOIN users u ON fr.sender_id = u.id
+      WHERE fr.receiver_id = ? AND fr.status = 'pending'
+      ORDER BY fr.created_at DESC
+    `, [userId]);
+
+    res.json({ success: true, requests });
+  } catch (error) {
+    console.error('Error getting friend requests:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+

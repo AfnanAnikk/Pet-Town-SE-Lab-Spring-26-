@@ -47,6 +47,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       'price': i.price,
     }).toList();
 
+    debugPrint('STORE ID: ${cart.storeId}');
+    debugPrint('ORDER ITEMS: $items');
+
     final res = await ApiService.createOrder({
       'userId': userId,
       'storeId': cart.storeId,
@@ -57,7 +60,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       'tipAmount': _tipAmount,
       'couponCode': _appliedCouponCode,
     });
-
+  
     setState(() => _isLoading = false);
 
     if (res['success']) {

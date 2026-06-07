@@ -309,7 +309,9 @@ class _ChatPageState extends State<ChatPage> {
                           alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: (msg['image_url'] != null && msg['image_url'].toString().isNotEmpty)
+                                ? EdgeInsets.zero
+                                : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
                               color: isMe ? const Color(0xFF3293B3) : Colors.white,
                               borderRadius: BorderRadius.only(
@@ -329,12 +331,32 @@ class _ChatPageState extends State<ChatPage> {
                             constraints: BoxConstraints(
                               maxWidth: MediaQuery.of(context).size.width * 0.75,
                             ),
-                            child: Text(
-                              msg['text'],
-                              style: TextStyle(
-                                color: isMe ? Colors.white : const Color(0xFF374957),
-                                fontSize: 15,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (msg['image_url'] != null && msg['image_url'].toString().isNotEmpty)
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.network(
+                                      msg['image_url'],
+                                      width: 260,
+                                      height: 260,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+
+                                if (msg['text'] != null && msg['text'].toString().isNotEmpty) ...[
+                                  if (msg['image_url'] != null && msg['image_url'].toString().isNotEmpty)
+                                    const SizedBox(height: 8),
+                                  Text(
+                                    msg['text'],
+                                    style: TextStyle(
+                                      color: isMe ? Colors.white : const Color(0xFF374957),
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         );

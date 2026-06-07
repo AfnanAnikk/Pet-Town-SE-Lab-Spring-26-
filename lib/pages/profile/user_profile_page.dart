@@ -264,7 +264,7 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                           image: DecorationImage(
                             image: (_user?['profile_picture_url'] != null && _user!['profile_picture_url'].isNotEmpty)
                                 ? NetworkImage(_user!['profile_picture_url'])
-                                : const AssetImage('assets/images/user1.png') as ImageProvider,
+                                : const AssetImage('assets/images/p1.png') as ImageProvider,
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -364,22 +364,6 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                               ),
                             ),
                           ],
-                          const SizedBox(width: 6),
-                          ElevatedButton.icon(
-                            onPressed: _contactUser,
-                            icon: const Icon(Icons.message_rounded, color: Colors.white, size: 18),
-                            label: const Text(
-                              'Message',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF3293B3),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            ),
-                          ),
                         ],
                       ),
                     ),

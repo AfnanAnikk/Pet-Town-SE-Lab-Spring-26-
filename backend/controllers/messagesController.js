@@ -48,7 +48,7 @@ exports.getMessages = async (req, res) => {
 };
 
 exports.sendMessage = async (req, res) => {
-  const { senderId, receiverId, text } = req.body;
+  const { senderId, receiverId, text, imageUrl } = req.body;
   try {
     // Find or create conversation
     let [convs] = await db.execute(
@@ -71,8 +71,8 @@ exports.sendMessage = async (req, res) => {
 
     // Insert message
     const [msgRes] = await db.execute(
-      'INSERT INTO messages (conversation_id, sender_id, text) VALUES (?, ?, ?)',
-      [conversationId, senderId, text]
+      'INSERT INTO messages (conversation_id, sender_id, text, image_url) VALUES (?, ?, ?, ?)',
+      [conversationId, senderId, text || '', imageUrl || null]
     );
 
     const [newMsg] = await db.execute('SELECT * FROM messages WHERE id = ?', [msgRes.insertId]);

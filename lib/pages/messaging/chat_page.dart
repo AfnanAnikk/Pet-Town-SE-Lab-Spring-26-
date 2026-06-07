@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import 'call_page.dart';
 import '../../services/call_service.dart';
 import '../profile/user_profile_page.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ChatPage extends StatefulWidget {
   final int? conversationId;
@@ -193,6 +194,37 @@ class _ChatPageState extends State<ChatPage> {
     return null;
   }
 
+  Future<void> _sendImage() async {
+    if (_currentUserId == null) return;
+
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    final uploadRes = await ApiService.uploadImage(picked.path);
+
+    if (!uploadRes['success']) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(uploadRes['message'] ?? 'Image upload failed')),
+        );
+      }
+      return;
+    }
+
+    final imageUrl = uploadRes['data']['url'];
+    final caption = _messageController.text.trim();
+
+    _messageController.clear();
+
+    await ApiService.sendMessage(
+      _currentUserId!,
+      widget.otherUserId,
+      caption,
+      imageUrl: imageUrl,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -327,7 +359,7 @@ class _ChatPageState extends State<ChatPage> {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.add_circle_outline, color: Colors.grey, size: 28),
-                          onPressed: () {},
+                          onPressed: _sendImage,
                         ),
                         Expanded(
                           child: Container(

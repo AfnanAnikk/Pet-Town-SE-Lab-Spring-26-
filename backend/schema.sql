@@ -166,6 +166,7 @@ CREATE TABLE IF NOT EXISTS messages (
     conversation_id INT NOT NULL,
     sender_id INT NOT NULL,
     text TEXT NOT NULL,
+    image_url TEXT,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,

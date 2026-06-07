@@ -474,7 +474,7 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> sendMessage(int senderId, int receiverId, String text) async {
+  static Future<Map<String, dynamic>> sendMessage(int senderId, int receiverId, String text, {String? imageUrl}) async {
     try {
       final headers = await _getHeaders();
       final response = await http.post(
@@ -484,6 +484,7 @@ class ApiService {
           'senderId': senderId,
           'receiverId': receiverId,
           'text': text,
+          'imageUrl': imageUrl,
         }),
       );
       return _handleResponse(response);

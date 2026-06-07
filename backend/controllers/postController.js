@@ -129,9 +129,37 @@ exports.unlikePost = async (req, res) => {
 exports.addComment = async (req, res) => {
   const { userId, text } = req.body;
   const postId = req.params.id;
+
   try {
-    await db.execute('INSERT INTO post_comments (post_id, user_id, text) VALUES (?, ?, ?)', [postId, userId, text]);
-    await db.execute('UPDATE posts SET comments_count = comments_count + 1 WHERE id = ?', [postId]);
+    await db.execute(
+      'INSERT INTO post_comments (post_id, user_id, text) VALUES (?, ?, ?)',
+      [postId, userId, text]
+    );
+
+    await db.execute(
+      'UPDATE posts SET comments_count = comments_count + 1 WHERE id = ?',
+      [postId]
+    );
+
+    const [post] = await db.execute(
+      'SELECT user_id, title FROM posts WHERE id = ?',
+      [postId]
+    );
+
+    if (post.length > 0 && post[0].user_id.toString() !== userId.toString()) {
+      const [commenterRows] = await db.execute(
+        'SELECT COALESCE(display_name, username, email) AS name FROM users WHERE id = ?',
+        [userId]
+      );
+
+      const commenterName = commenterRows[0]?.name || 'Someone';
+
+      await db.execute(
+        'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
+        [post[0].user_id, 'comment', postId, `${commenterName} commented on your post "${post[0].title}"!`]
+      );
+    }
+
     res.status(201).json({ message: 'Comment added' });
   } catch (error) {
     console.error(error);

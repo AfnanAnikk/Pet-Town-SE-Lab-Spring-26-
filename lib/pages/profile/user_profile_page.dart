@@ -30,8 +30,8 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
   bool _isFollowing = false;
   int _followersCount = 0;
   int _followingCount = 0;
-  String _friendStatus = 'none';
-  int? _friendRequestId;
+  bool _followsMe = false;
+  bool _isMutual = false;
 
   @override
   void initState() {
@@ -107,16 +107,8 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
       if (statusRes['success'] && mounted) {
         setState(() {
           _isFollowing = statusRes['data']['isFollowing'] ?? false;
-        });
-      }
-
-      final friendRes = await ApiService.getFriendStatus(targetUserId);
-      
-      if (friendRes['success'] && mounted) {
-        final data = friendRes['data'];
-        setState(() {
-          _friendStatus = data['status'] ?? 'none';
-          _friendRequestId = data['request']?['id'];
+          _followsMe = statusRes['data']['followsMe'] ?? false;
+          _isMutual = statusRes['data']['isMutual'] ?? false;
         });
       }
     }
@@ -135,6 +127,7 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
       setState(() {
         _isFollowing = !_isFollowing;
         _followersCount += _isFollowing ? 1 : -1;
+        _isMutual = _isFollowing && _followsMe;
       });
     }
   }
@@ -209,56 +202,7 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
     }
   }
 
-  Future<void> _handleFriendAction() async {
-    if (_user == null) return;
 
-    final targetUserId = _user!['id'] as int;
-
-    debugPrint('FRIEND BUTTON CLICKED');
-    debugPrint('friendStatus=$_friendStatus targetUserId=$targetUserId');
-
-    if (_friendStatus == 'none') {
-      final res = await ApiService.sendFriendRequest(targetUserId);
-
-      debugPrint('SEND FRIEND REQUEST RESPONSE: $res');
-
-      if (res['success'] && mounted) {
-        setState(() {
-          _friendStatus = 'pending_sent';
-          _friendRequestId = res['data']?['requestId'];
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Friend request sent')),
-        );
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res['message'] ?? 'Failed to send friend request')),
-        );
-      }
-      return;
-    }
-
-    if (_friendStatus == 'pending_received' && _friendRequestId != null) {
-      final res = await ApiService.respondFriendRequest(_friendRequestId!, 'accepted');
-
-      debugPrint('ACCEPT FRIEND REQUEST RESPONSE: $res');
-
-      if (res['success'] && mounted) {
-        setState(() {
-          _friendStatus = 'friends';
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Friend request accepted')),
-        );
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res['message'] ?? 'Failed to accept friend request')),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -383,41 +327,6 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           ElevatedButton.icon(
-                            onPressed: (_friendStatus == 'pending_sent' || _friendStatus == 'friends')
-                                ? null
-                                : _handleFriendAction,
-                            icon: Icon(
-                              _friendStatus == 'friends'
-                                  ? Icons.people
-                                  : _friendStatus == 'pending_sent'
-                                      ? Icons.hourglass_top
-                                      : _friendStatus == 'pending_received'
-                                          ? Icons.person_add_alt_1
-                                          : Icons.person_add,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            label: Text(
-                              _friendStatus == 'friends'
-                                  ? 'Friends'
-                                  : _friendStatus == 'pending_sent'
-                                      ? 'Sent'
-                                      : _friendStatus == 'pending_received'
-                                          ? 'Accept'
-                                          : 'Add',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF3293B3),
-                              disabledBackgroundColor: Colors.grey,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          ElevatedButton.icon(
                             onPressed: _toggleFollow,
                             icon: Icon(
                               _isFollowing ? Icons.check : Icons.person_add_alt_1,
@@ -425,7 +334,7 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                               size: 18,
                             ),
                             label: Text(
-                              _isFollowing ? 'Following' : 'Follow',
+                              _isFollowing ? 'Following' : (_followsMe ? 'Follow Back' : 'Follow'),
                               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -436,6 +345,25 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                             ),
                           ),
+
+                          if (_isMutual) ...[
+                            const SizedBox(width: 6),
+                            ElevatedButton.icon(
+                              onPressed: _contactUser,
+                              icon: const Icon(Icons.message_rounded, color: Colors.white, size: 18),
+                              label: const Text(
+                                'Message',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF3293B3),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                              ),
+                            ),
+                          ],
                           const SizedBox(width: 6),
                           ElevatedButton.icon(
                             onPressed: _contactUser,

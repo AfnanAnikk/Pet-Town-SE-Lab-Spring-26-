@@ -547,13 +547,3 @@ CREATE TABLE IF NOT EXISTS event_invitations (
     FOREIGN KEY (invitee_id) REFERENCES users(id)  ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS friend_requests (
-    id SERIAL PRIMARY KEY,
-    sender_id INT NOT NULL,
-    receiver_id INT NOT NULL,
-    status VARCHAR(20) DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE (sender_id, receiver_id)
-);

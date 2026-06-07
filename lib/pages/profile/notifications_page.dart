@@ -50,6 +50,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
         return Icons.person_add;
       case 'order':
         return Icons.shopping_bag;
+      case 'comment':
+        return Icons.comment;
       default:
         return Icons.notifications;
     }
@@ -63,6 +65,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
         return const Color(0xFF3293B3);
       case 'order':
         return Colors.green;
+      case 'comment':
+        return Colors.orange;
       default:
         return Colors.grey;
     }
@@ -75,7 +79,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        automaticallyImplyLeading: false, // We're using bottom nav
+        automaticallyImplyLeading: false,
         title: const Text('Notifications', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
       body: SafeArea(

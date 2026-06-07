@@ -261,13 +261,16 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.grey.shade200,
-                          image: DecorationImage(
-                            image: (_user?['profile_picture_url'] != null && _user!['profile_picture_url'].isNotEmpty)
-                                ? NetworkImage(_user!['profile_picture_url'])
-                                : const AssetImage('assets/images/p1.png') as ImageProvider,
-                            fit: BoxFit.cover,
-                          ),
+                          image: (_user?['profile_picture_url'] != null && _user!['profile_picture_url'].isNotEmpty)
+                              ? DecorationImage(
+                                  image: NetworkImage(_user!['profile_picture_url']),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
+                        child: (_user?['profile_picture_url'] == null || _user!['profile_picture_url'].isEmpty)
+                            ? const Icon(Icons.person, size: 60, color: Colors.grey)
+                            : null,
                       ),
                       if (_isOwnProfile)
                         Positioned(

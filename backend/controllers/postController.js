@@ -59,27 +59,43 @@ exports.createPost = async (req, res) => {
 exports.likePost = async (req, res) => {
   const { userId } = req.body;
   const postId = req.params.id;
+
   try {
-    // Check if already liked
     const [existing] = await db.execute(
       'SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?',
       [postId, userId]
     );
+
     if (existing.length > 0) {
       return res.json({ message: 'Already liked' });
     }
+
     await db.execute(
       'INSERT INTO post_likes (post_id, user_id) VALUES (?, ?) ON CONFLICT (post_id, user_id) DO NOTHING',
       [postId, userId]
     );
-    await db.execute('UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?', [postId]);
 
-    // Notification Trigger
-    const [post] = await db.execute('SELECT user_id, title FROM posts WHERE id = ?', [postId]);
+    await db.execute(
+      'UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?',
+      [postId]
+    );
+
+    const [post] = await db.execute(
+      'SELECT user_id, title FROM posts WHERE id = ?',
+      [postId]
+    );
+
     if (post.length > 0 && post[0].user_id.toString() !== userId.toString()) {
+      const [likerRows] = await db.execute(
+        'SELECT COALESCE(display_name, username, email) AS name FROM users WHERE id = ?',
+        [userId]
+      );
+
+      const likerName = likerRows[0]?.name || 'Someone';
+
       await db.execute(
         'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
-        [post[0].user_id, 'like', postId, `Someone liked your post "${post[0].title}"!`]
+        [post[0].user_id, 'like', postId, `${likerName} liked your post "${post[0].title}"!`]
       );
     }
 

@@ -27,7 +27,12 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
   final _tagInputController = TextEditingController();
   
   List<String> _tags = [];
-  final List<String> _suggestedTags = ['Dogs', 'Cats', 'Training', 'Grooming', 'Health', 'Adoption', 'Funny'];
+  final List<String> _suggestedTags = [
+    'Dogs', 'Cats', 'Puppy', 'Kitten', 'Birds', 'Rabbit', 'Fish',
+    'Training', 'Grooming', 'Health', 'Vaccination', 'Adoption',
+    'Rescue', 'Lost Pet', 'Found Pet', 'Funny', 'Cute', 'Food',
+    'Pet Care', 'Behavior', 'Walking', 'Vet Visit'
+  ];
 
   final _cropController = CropController();
   Uint8List? _croppedImageData;
@@ -438,63 +443,84 @@ class _CreatePostFlowState extends State<CreatePostFlow> {
                   )).toList(),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _tagInputController,
-                        decoration: InputDecoration(
-                          hintText: 'Add custom tag',
-                          filled: true,
-                          fillColor: const Color(0xFFE2E8E8),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.trim().isEmpty) {
+                      return const Iterable<String>.empty();
+                    }
+
+                    return _suggestedTags.where((tag) {
+                      return tag.toLowerCase().contains(textEditingValue.text.toLowerCase()) &&
+                          !_tags.contains(tag);
+                    });
+                  },
+                  onSelected: (String selection) {
+                    setState(() {
+                      if (!_tags.contains(selection)) {
+                        _tags.add(selection);
+                      }
+                    });
+                  },
+                  fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                    return TextField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Type a tag',
+                        filled: true,
+                        fillColor: const Color(0xFFE2E8E8),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
                         ),
-                        onSubmitted: (value) {
-                          if (value.trim().isNotEmpty && !_tags.contains(value.trim())) {
-                            setState(() {
-                              _tags.add(value.trim());
-                              _tagInputController.clear();
-                            });
-                          }
-                        },
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.add_circle, color: Color(0xFF374957)),
+                          onPressed: () {
+                            final value = textEditingController.text.trim();
+                            if (value.isNotEmpty && !_tags.contains(value)) {
+                              setState(() {
+                                _tags.add(value);
+                                textEditingController.clear();
+                              });
+                            }
+                          },
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF374957),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                      ),
-                      onPressed: () {
-                        if (_tagInputController.text.trim().isNotEmpty && !_tags.contains(_tagInputController.text.trim())) {
+                      onSubmitted: (value) {
+                        final tag = value.trim();
+                        if (tag.isNotEmpty && !_tags.contains(tag)) {
                           setState(() {
-                            _tags.add(_tagInputController.text.trim());
-                            _tagInputController.clear();
+                            _tags.add(tag);
+                            textEditingController.clear();
                           });
                         }
                       },
-                      child: const Text('Add', style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Text('Suggested Tags:', style: TextStyle(fontSize: 14, color: Colors.grey)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _suggestedTags.map((tag) => ActionChip(
-                    label: Text(tag),
-                    backgroundColor: Colors.grey.shade200,
-                    onPressed: () {
-                      if (!_tags.contains(tag)) {
-                        setState(() {
-                          _tags.add(tag);
-                        });
-                      }
-                    },
-                  )).toList(),
+                    );
+                  },
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4,
+                        borderRadius: BorderRadius.circular(12),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 220, maxWidth: 320),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: options.length,
+                            itemBuilder: (context, index) {
+                              final option = options.elementAt(index);
+                              return ListTile(
+                                title: Text(option),
+                                onTap: () => onSelected(option),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 40),
                 Center(

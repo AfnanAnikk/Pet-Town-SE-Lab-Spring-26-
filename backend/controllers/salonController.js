@@ -214,24 +214,27 @@ exports.getProviderBookings = async (req, res) => {
 exports.updateBookingStatus = async (req, res) => {
   const bookingId = req.params.id;
   const { status } = req.body;
+
   try {
     await db.execute('UPDATE salon_bookings SET status = ? WHERE id = ?', [status, bookingId]);
 
-    // Notification Trigger
-    if (status === 'accepted') {
-      const [booking] = await db.execute('SELECT user_id, pet_name FROM salon_bookings WHERE id = ?', [bookingId]);
+    if (status === 'accepted' || status === 'completed') {
+      const [booking] = await db.execute(`
+        SELECT b.user_id, b.pet_name, s.name AS salon_name
+        FROM salon_bookings b
+        JOIN salons s ON b.salon_id = s.id
+        WHERE b.id = ?
+      `, [bookingId]);
+
       if (booking.length > 0) {
+        const salonName = booking[0].salon_name || 'Your salon';
+        const message = status === 'accepted'
+          ? `${salonName} accepted your salon booking for ${booking[0].pet_name}!`
+          : `${salonName} completed your salon booking for ${booking[0].pet_name}. Please leave a review.`;
+
         await db.execute(
           'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
-          [booking[0].user_id, 'order', bookingId, `Your salon booking for ${booking[0].pet_name} was accepted!`]
-        );
-      }
-    } else if (status === 'completed') {
-      const [booking] = await db.execute('SELECT user_id, pet_name FROM salon_bookings WHERE id = ?', [bookingId]);
-      if (booking.length > 0) {
-        await db.execute(
-          'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
-          [booking[0].user_id, 'order', bookingId, `Your salon booking for ${booking[0].pet_name} is completed! Please leave a review.`]
+          [booking[0].user_id, 'order', bookingId, message]
         );
       }
     }

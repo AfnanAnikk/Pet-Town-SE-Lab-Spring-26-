@@ -3,12 +3,12 @@ const db = require('../config/db');
 // Follow a user
 exports.followUser = async (req, res) => {
   const { followerId, followingId } = req.body;
+
   if (followerId === followingId) {
     return res.status(400).json({ success: false, message: 'You cannot follow yourself' });
   }
 
   try {
-    // Check if already following
     const [existing] = await db.execute(
       'SELECT id FROM follows WHERE follower_id = ? AND following_id = ?',
       [followerId, followingId]
@@ -23,10 +23,16 @@ exports.followUser = async (req, res) => {
       [followerId, followingId]
     );
 
-    //Create a notification for the user being followed
+    const [followerRows] = await db.execute(
+      'SELECT COALESCE(display_name, username, email) AS name FROM users WHERE id = ?',
+      [followerId]
+    );
+
+    const followerName = followerRows[0]?.name || 'Someone';
+
     await db.execute(
       'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
-      [followingId, 'follow', followerId, 'Someone started following you!'] // We'll update the message when we get the follower's name later
+      [followingId, 'follow', followerId, `${followerName} started following you!`]
     );
 
     res.json({ success: true, message: 'Successfully followed user' });

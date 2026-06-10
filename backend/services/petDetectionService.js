@@ -12,13 +12,20 @@ exports.checkPetImage = async (imageUrl) => {
     timeout: 20000
   });
 
+  const base64Image = Buffer.from(imageResponse.data).toString('base64');
+
   const response = await axios.post(
     'https://router.huggingface.co/hf-inference/models/facebook/detr-resnet-50',
-    imageResponse.data,
+    {
+      inputs: base64Image,
+      parameters: {
+        threshold: 0.5
+      }
+    },
     {
       headers: {
         Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-        'Content-Type': 'application/octet-stream'
+        'Content-Type': 'application/json'
       },
       timeout: 30000
     }

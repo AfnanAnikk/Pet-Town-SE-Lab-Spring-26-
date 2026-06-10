@@ -358,14 +358,33 @@ exports.getModerationAlerts = async (req, res) => {
   try {
     const [alerts] = await db.execute(`
       SELECT 
-        ma.*,
+        ma.id AS alert_id,
+        ma.post_id,
+        ma.user_id,
+        ma.image_url,
+        ma.confidence,
+        ma.is_pet,
+        ma.status,
+        ma.reason,
+        ma.created_at AS alert_created_at,
+
         p.title,
         p.description,
         p.author_name,
+        p.likes_count,
+        p.comments_count,
+        p.image_path,
+        p.placeholder_color,
+        p.placeholder_height,
+
         u.username,
         u.display_name,
         u.email,
-        u.profile_picture_url
+        u.phone_number,
+        u.role,
+        u.profile_picture_url,
+        u.warning_count,
+        u.is_banned
       FROM moderation_alerts ma
       JOIN posts p ON ma.post_id = p.id
       JOIN users u ON ma.user_id = u.id

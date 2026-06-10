@@ -567,12 +567,159 @@ function MarketplaceOversight() {
   );
 }
 
-// 5. Content Safety (Mocked as no backend table exists for cases)
+// 5. Content Safety
 function ContentSafety() {
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAlerts = () => {
+    fetch(`${API_BASE}/moderation/alerts`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) setAlerts(d.alerts || []);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchAlerts();
+  }, []);
+
+  const handleAction = (id, action) => {
+    fetch(`${API_BASE}/moderation/alerts/${id}/${action}`, { method: 'POST' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          setAlerts(prev => prev.filter(a => (a.alert_id || a.id) !== id));
+        } else {
+          alert(d.message || 'Action failed');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Action failed');
+      });
+  };
+
   return (
     <div className="page">
       <h1>Content Safety</h1>
-      <p>Review flagged content and maintain community guidelines.</p>
+      <p>Review flagged posts detected by pet image moderation.</p>
+
+      <div className="card" style={{ marginTop: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 'bold', color: '#0F172A' }}>Pet Detection Alerts</h3>
+          <span style={{ background: '#FEF3C7', color: '#92400E', padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 800 }}>
+            {alerts.length} Pending
+          </span>
+        </div>
+
+        {loading ? (
+          <p style={{ color: '#64748B' }}>Loading alerts...</p>
+        ) : alerts.length === 0 ? (
+          <p style={{ color: '#64748B' }}>No pending moderation alerts.</p>
+        ) : (
+          <div style={{ display: 'grid', gap: 18 }}>
+            {alerts.map(alert => {
+              const alertId = alert.alert_id || alert.id;
+              const postImage = alert.image_path || alert.image_url;
+              const userName = alert.display_name || alert.username || alert.author_name || alert.email || 'Unknown User';
+
+              return (
+                <div key={alertId} style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 20, padding: 18, border: '1px solid #E2E8F0', borderRadius: 18, background: '#FFFFFF' }}>
+                  <a href={postImage} target="_blank" rel="noreferrer">
+                    <img src={postImage} alt="Flagged post" style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 14, background: '#F1F5F9' }} />
+                  </a>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginBottom: 14 }}>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <img
+                          src={alert.profile_picture_url || 'https://via.placeholder.com/48'}
+                          alt={userName}
+                          style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', background: '#E2E8F0' }}
+                        />
+
+                        <div>
+                          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0 }}>{userName}</h3>
+                          <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>{alert.email}</p>
+                        </div>
+                      </div>
+
+                      <span style={{ height: 'fit-content', background: '#FEE2E2', color: '#991B1B', padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 800 }}>
+                        Confidence: {Math.round(Number(alert.confidence || 0) * 100)}%
+                      </span>
+                    </div>
+
+                    <div style={{ marginBottom: 14 }}>
+                      <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: '0 0 6px' }}>{alert.title}</h2>
+                      <p style={{ color: '#475569', fontSize: 14, margin: 0 }}>{alert.description || 'No description'}</p>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
+                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
+                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Likes</div>
+                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>{alert.likes_count ?? 0}</div>
+                      </div>
+
+                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
+                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Comments</div>
+                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>{alert.comments_count ?? 0}</div>
+                      </div>
+
+                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
+                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Warnings</div>
+                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>{alert.warning_count ?? 0}</div>
+                      </div>
+
+                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
+                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Banned</div>
+                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>{alert.is_banned ? 'Yes' : 'No'}</div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+                      <div style={{ background: '#FFF7ED', padding: 10, borderRadius: 10 }}>
+                        <div style={{ fontSize: 11, color: '#9A3412', fontWeight: 700 }}>Reason</div>
+                        <div style={{ fontSize: 13, color: '#7C2D12', fontWeight: 800 }}>{alert.reason || 'Low pet confidence'}</div>
+                      </div>
+
+                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
+                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Pet Detected</div>
+                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>{alert.is_pet ? 'Yes' : 'No'}</div>
+                      </div>
+
+                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
+                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Post ID</div>
+                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>#{alert.post_id}</div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      <button onClick={() => handleAction(alertId, 'delete-post')} style={{ padding: '10px 14px', background: '#DC2626', color: 'white', border: 'none', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}>
+                        Delete Post
+                      </button>
+
+                      <button onClick={() => handleAction(alertId, 'warn-user')} style={{ padding: '10px 14px', background: '#F97316', color: 'white', border: 'none', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}>
+                        Warn User
+                      </button>
+
+                      <button onClick={() => handleAction(alertId, 'ban-user')} style={{ padding: '10px 14px', background: '#0F172A', color: 'white', border: 'none', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}>
+                        Ban User
+                      </button>
+
+                      <button onClick={() => handleAction(alertId, 'dismiss')} style={{ padding: '10px 14px', background: '#E2E8F0', color: '#334155', border: 'none', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}>
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

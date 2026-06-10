@@ -1,5 +1,7 @@
 const db = require('../config/db');
 
+const { checkPetImage } = require('../services/petDetectionService');
+
 exports.getAllPosts = async (req, res) => {
   try {
     const [posts] = await db.execute(`
@@ -45,8 +47,36 @@ exports.createPost = async (req, res) => {
 
     if (tags && Array.isArray(tags)) {
       for (const tag of tags) {
-        if (tag) await db.execute('INSERT INTO post_tags (post_id, tag_name) VALUES (?, ?)', [postId, tag]);
+        if (tag) {
+          await db.execute(
+            'INSERT INTO post_tags (post_id, tag_name) VALUES (?, ?)',
+            [postId, tag]
+          );
+        }
       }
+    }
+
+    try {
+      const detection = await checkPetImage(image_path);
+
+      if (!detection.isPet || detection.confidence < 0.6) {
+        await db.execute(
+          `INSERT INTO moderation_alerts 
+          (post_id, user_id, image_url, confidence, is_pet, status, reason)
+          VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            postId,
+            user_id,
+            image_path,
+            detection.confidence,
+            detection.isPet,
+            'pending',
+            'Low pet confidence'
+          ]
+        );
+      }
+    } catch (mlError) {
+      console.error('Pet detection failed:', mlError.message);
     }
 
     res.status(201).json({ message: 'Post created successfully', postId });
@@ -55,6 +85,7 @@ exports.createPost = async (req, res) => {
     res.status(500).json({ message: error.message || 'Server error creating post' });
   }
 };
+
 
 exports.likePost = async (req, res) => {
   const { userId } = req.body;

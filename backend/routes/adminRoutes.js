@@ -26,9 +26,18 @@ router.get('/orders', adminController.getMarketplaceOrders);
 router.get('/adoptions', adminController.getAdoptions);
 router.post('/adoptions', adminController.addAdoption);
 router.put('/adoptions/:id/status', adminController.updateAdoptionStatus);
-module.exports = router;
+
 
 //salons
 router.get('/salons/verifications', adminController.getSalonVerifications);
 router.post('/salons/verifications/:id/approve', adminController.approveSalon);
 router.post('/salons/verifications/:id/deny', adminController.denySalon);
+
+// Moderation
+router.get('/moderation/alerts', adminController.getModerationAlerts);
+router.post('/moderation/alerts/:id/delete-post', adminController.deleteFlaggedPost);
+router.post('/moderation/alerts/:id/warn-user', adminController.warnFlaggedUser);
+router.post('/moderation/alerts/:id/ban-user', adminController.banFlaggedUser);
+router.post('/moderation/alerts/:id/dismiss', adminController.dismissModerationAlert);
+
+module.exports = router;

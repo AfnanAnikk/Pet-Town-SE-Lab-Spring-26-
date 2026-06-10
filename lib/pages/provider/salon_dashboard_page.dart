@@ -228,7 +228,7 @@ class _SalonDashboardPageState extends State<SalonDashboardPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Upcoming Appointments',
+                'Upcoming Orders',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -247,7 +247,7 @@ class _SalonDashboardPageState extends State<SalonDashboardPage> {
               : _errorMessage.isNotEmpty
                   ? Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)))
                   : _bookings.isEmpty
-                      ? const Center(child: Padding(padding: EdgeInsets.all(32), child: Text("No upcoming appointments.")))
+                      ? const Center(child: Padding(padding: EdgeInsets.all(32), child: Text("No upcoming orders.")))
                       : ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -422,7 +422,7 @@ class _SalonDashboardPageState extends State<SalonDashboardPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Appointment Details',
+                  'Orders Details',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF3293B3)),
                 ),
                 IconButton(

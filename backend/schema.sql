@@ -12,6 +12,26 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT false;
+
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS warning_count INT DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS moderation_alerts (
+    id SERIAL PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    image_url TEXT NOT NULL,
+    confidence NUMERIC(5,4),
+    is_pet BOOLEAN,
+    status VARCHAR(30) DEFAULT 'pending',
+    reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS vets (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,

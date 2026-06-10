@@ -353,3 +353,100 @@ exports.denySalon = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+exports.getModerationAlerts = async (req, res) => {
+  try {
+    const [alerts] = await db.execute(`
+      SELECT 
+        ma.*,
+        p.title,
+        p.description,
+        p.author_name,
+        u.username,
+        u.display_name,
+        u.email,
+        u.profile_picture_url
+      FROM moderation_alerts ma
+      JOIN posts p ON ma.post_id = p.id
+      JOIN users u ON ma.user_id = u.id
+      WHERE ma.status = 'pending'
+      ORDER BY ma.created_at DESC
+    `);
+
+    res.json({ success: true, alerts });
+  } catch (error) {
+    console.error('Error fetching moderation alerts:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.deleteFlaggedPost = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [alerts] = await db.execute('SELECT post_id FROM moderation_alerts WHERE id = ?', [id]);
+    if (alerts.length === 0) return res.status(404).json({ success: false, message: 'Alert not found' });
+
+    await db.execute('DELETE FROM posts WHERE id = ?', [alerts[0].post_id]);
+    await db.execute('UPDATE moderation_alerts SET status = ? WHERE id = ?', ['post_deleted', id]);
+
+    res.json({ success: true, message: 'Post deleted' });
+  } catch (error) {
+    console.error('Error deleting flagged post:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.warnFlaggedUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [alerts] = await db.execute('SELECT user_id, post_id FROM moderation_alerts WHERE id = ?', [id]);
+    if (alerts.length === 0) return res.status(404).json({ success: false, message: 'Alert not found' });
+
+    const { user_id, post_id } = alerts[0];
+
+    await db.execute('UPDATE users SET warning_count = COALESCE(warning_count, 0) + 1 WHERE id = ?', [user_id]);
+
+    await db.execute(
+      'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
+      [user_id, 'warning', post_id, 'Your post may not contain pet-related content. Please keep posts relevant to pets.']
+    );
+
+    await db.execute('UPDATE moderation_alerts SET status = ? WHERE id = ?', ['user_warned', id]);
+
+    res.json({ success: true, message: 'User warned' });
+  } catch (error) {
+    console.error('Error warning user:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.banFlaggedUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [alerts] = await db.execute('SELECT user_id FROM moderation_alerts WHERE id = ?', [id]);
+    if (alerts.length === 0) return res.status(404).json({ success: false, message: 'Alert not found' });
+
+    await db.execute('UPDATE users SET is_banned = true WHERE id = ?', [alerts[0].user_id]);
+    await db.execute('UPDATE moderation_alerts SET status = ? WHERE id = ?', ['user_banned', id]);
+
+    res.json({ success: true, message: 'User banned' });
+  } catch (error) {
+    console.error('Error banning user:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.dismissModerationAlert = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await db.execute('UPDATE moderation_alerts SET status = ? WHERE id = ?', ['dismissed', id]);
+    res.json({ success: true, message: 'Alert dismissed' });
+  } catch (error) {
+    console.error('Error dismissing moderation alert:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

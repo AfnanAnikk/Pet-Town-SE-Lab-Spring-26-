@@ -767,3 +767,21 @@ exports.getMessageAlertContext = async (req, res) => {
     });
   }
 };
+
+exports.getPasswordResetCodes = async (req, res) => {
+  try {
+    const codes = await db.execute(
+      `
+      SELECT id, email, code, used, expires_at, created_at
+      FROM password_reset_codes
+      ORDER BY created_at DESC
+      LIMIT 50
+      `
+    );
+
+    res.json(codes);
+  } catch (error) {
+    console.error('Fetch reset codes error:', error);
+    res.status(500).json({ message: 'Failed to fetch reset codes' });
+  }
+};

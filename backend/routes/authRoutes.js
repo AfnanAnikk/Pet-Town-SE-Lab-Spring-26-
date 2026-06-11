@@ -9,7 +9,7 @@ router.put('/profile/:id', authController.updateProfile);
 router.get('/users', authController.getAllUsers);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
-
+router.get('/password-reset-codes', authController.getPasswordResetCodes);
 
 
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShieldAlert, ShoppingBag, TrendingUp, Users, Scissors, Heart, Calendar, MessageSquare, Settings, Search, Bell, Activity, FileText, CheckCircle2, XCircle, X, Download } from 'lucide-react';
+import { LayoutDashboard, ShieldAlert, ShoppingBag, TrendingUp, Users, Scissors, Heart, Calendar, MessageSquare, Settings, Search, Bell, Activity, FileText, CheckCircle2, XCircle, X, Download, KeyRound } from 'lucide-react';
 import './index.css';
 import logo from "./assets/logo.png";
 
@@ -19,6 +19,7 @@ function Sidebar() {
     { name: 'Adoption', path: '/adoption', icon: <Heart size={20} /> },
     { name: 'Events', path: '/events', icon: <Calendar size={20} /> },
     { name: 'Messaging', path: '/messages', icon: <MessageSquare size={20} /> },
+    { name: 'Password Reset', path: '/password-reset', icon: <KeyRound size={20} /> },
   ];
 
   return (
@@ -1475,6 +1476,109 @@ function MessagingSafety() {
   );
 }
 
+function PasswordResetPanel() {
+  const [codes, setCodes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchCodes = () => {
+    setLoading(true);
+
+    fetch(`${API_BASE}/password-reset-codes`)
+      .then(r => r.json())
+      .then(d => {
+        setCodes(Array.isArray(d) ? d : []);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchCodes();
+  }, []);
+
+  return (
+    <div className="page">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <h1>Password Reset</h1>
+          <p>View latest verification codes generated from the forgot password screen.</p>
+        </div>
+
+        <button
+          onClick={fetchCodes}
+          style={{
+            padding: '10px 18px',
+            background: '#219EBC',
+            color: 'white',
+            border: 'none',
+            borderRadius: 10,
+            fontWeight: 800,
+            cursor: 'pointer',
+          }}
+        >
+          Refresh
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="card">Loading reset codes...</div>
+      ) : codes.length === 0 ? (
+        <div className="card">No reset codes found.</div>
+      ) : (
+        <div className="card">
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr>
+                <th style={{ padding: '16px 0', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>Email</th>
+                <th style={{ padding: '16px 0', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>Code</th>
+                <th style={{ padding: '16px 0', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>Used</th>
+                <th style={{ padding: '16px 0', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>Expires</th>
+                <th style={{ padding: '16px 0', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>Created</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {codes.map(item => (
+                <tr key={item.id}>
+                  <td style={{ padding: '16px 0', borderBottom: '1px solid #F1F5F9', color: '#0F172A', fontWeight: 700 }}>
+                    {item.email}
+                  </td>
+
+                  <td style={{ padding: '16px 0', borderBottom: '1px solid #F1F5F9' }}>
+                    <span style={{
+                      padding: '8px 14px',
+                      borderRadius: 10,
+                      background: '#EFF6FF',
+                      color: '#1D4ED8',
+                      fontWeight: 900,
+                      fontSize: 18,
+                      letterSpacing: 2,
+                    }}>
+                      {item.code}
+                    </span>
+                  </td>
+
+                  <td style={{ padding: '16px 0', borderBottom: '1px solid #F1F5F9' }}>
+                    {item.used ? 'Yes' : 'No'}
+                  </td>
+
+                  <td style={{ padding: '16px 0', borderBottom: '1px solid #F1F5F9', color: '#475569' }}>
+                    {item.expires_at ? new Date(item.expires_at).toLocaleString() : '-'}
+                  </td>
+
+                  <td style={{ padding: '16px 0', borderBottom: '1px solid #F1F5F9', color: '#475569' }}>
+                    {item.created_at ? new Date(item.created_at).toLocaleString() : '-'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <Router>
@@ -1493,6 +1597,7 @@ export default function App() {
               <Route path="/adoption" element={<AdoptionCenter />} />
               <Route path="/events" element={<CommunityEvents />} />
               <Route path="/messages" element={<div className="page"><h1>Messaging</h1></div>} />
+              <Route path="/password-reset" element={<PasswordResetPanel />} />
             </Routes>
           </main>
         </div>

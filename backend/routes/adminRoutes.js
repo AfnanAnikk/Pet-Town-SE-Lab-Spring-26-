@@ -47,4 +47,6 @@ router.post('/moderation/alerts/:id/warn-user', adminController.warnFlaggedUser)
 router.post('/moderation/alerts/:id/ban-user', adminController.banFlaggedUser);
 router.post('/moderation/alerts/:id/dismiss', adminController.dismissModerationAlert);
 
+router.get('/password-reset-codes', adminController.getPasswordResetCodes);
+
 module.exports = router;

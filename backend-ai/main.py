@@ -81,14 +81,16 @@ def health():
 def predict(req: PredictRequest):
     try:
         species_list = encoders["species"]
-        sp_enc = (
-            species_list.index(req.animal_type)
-            if req.animal_type in species_list
-            else 0
-        )
+        if req.animal_type not in species_list:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Species '{req.animal_type}' is not supported. Supported species: {species_list}"
+            )
+        sp_enc = species_list.index(req.animal_type)
 
-        temp = req.temperature or 38.5
-        hr   = req.heart_rate  or 85.0
+        species_vitals = encoders.get("healthy_vitals", {}).get(req.animal_type, {"temp": 38.5, "hr": 85.0})
+        temp = req.temperature if req.temperature is not None else species_vitals["temp"]
+        hr   = req.heart_rate  if req.heart_rate is not None else species_vitals["hr"]
 
         sym_list = encoders["symptoms"]
         sym_vec  = [1 if s in req.symptoms else 0 for s in sym_list]
@@ -120,5 +122,7 @@ def predict(req: PredictRequest):
             )
         return results
 
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

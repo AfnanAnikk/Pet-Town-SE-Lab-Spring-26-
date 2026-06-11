@@ -21,6 +21,25 @@ INFO_OUT_PATH = os.path.join(_HERE, "data", "disease_info.json")
 
 os.makedirs(os.path.join(_HERE, "data"), exist_ok=True)
 
+
+def clean_disease_name(name):
+    if pd.isna(name):
+        return ""
+    # Standardize string: replace hyphens/underscores with space, strip, and lowercase
+    s = str(name).replace('-', ' ').replace('_', ' ').strip().lower()
+    s = re.sub(r'\s+', ' ', s)
+    words = s.split()
+    cap_words = []
+    for i, w in enumerate(words):
+        if i == 0 or i == len(words) - 1:
+            cap_words.append(w.capitalize())
+        elif w in {'and', 'or', 'of', 'in', 'to', 'for', 'with', 'on', 'at', 'by', 'from', 'a', 'an', 'the'}:
+            cap_words.append(w)
+        else:
+            cap_words.append(w.capitalize())
+    return " ".join(cap_words)
+
+
 # ─── Lookup maps ──────────────────────────────────────────────────────────────
 SYMPTOM_MAP = {
     'loss of appetite': 'Appetite Loss',
@@ -141,10 +160,10 @@ def load_data():
         temp = clean_temp(row['Body_Temperature'])
         records.append({
             'species': species,
-            'disease': DISEASE_MAP.get(
+            'disease': clean_disease_name(DISEASE_MAP.get(
                 str(row['Disease_Prediction']).strip().lower(),
-                str(row['Disease_Prediction']).strip().title(),
-            ),
+                str(row['Disease_Prediction'])
+            )),
             'temp': temp if temp else DEFAULT_TEMP.get(species, 38.5),
             'hr': float(row['Heart_Rate']) if not pd.isna(row['Heart_Rate'])
                   else HEALTHY_VITALS.get(species, {}).get('hr', 90),
@@ -236,8 +255,8 @@ def train():
     y = le_disease.fit_transform(df['disease'])
 
     rf = RandomForestClassifier(
-        n_estimators=200,
-        max_depth=20,
+        n_estimators=100,
+        max_depth=10,
         min_samples_split=2,
         random_state=42,
         n_jobs=-1,
@@ -253,6 +272,7 @@ def train():
         'disease':       le_disease.classes_.tolist(),
         'symptoms':      mlb.classes_.tolist(),
         'feature_names': X.columns.tolist(),
+        'healthy_vitals': HEALTHY_VITALS,
     }
     with open(ENCODERS_PATH, 'w') as f:
         json.dump(encoders, f, indent=2)
@@ -272,7 +292,7 @@ def _build_disease_info():
         name = row.get('Unnamed: 0')
         if pd.isna(name):
             continue
-        info_map[str(name).strip().title()] = {
+        info_map[clean_disease_name(name)] = {
             'description': str(row.get('Description', '')).strip(),
             'treatment':   str(row.get('Treatment', '')).strip(),
             'prevention':  str(row.get('Advice/ Prevention', '')).strip(),

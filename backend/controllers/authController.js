@@ -196,7 +196,7 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const userResult = await db.query(
+    const userResult = await db.execute(
       'SELECT id FROM users WHERE email = $1',
       [email]
     );
@@ -208,12 +208,12 @@ exports.forgotPassword = async (req, res) => {
     const code = crypto.randomInt(100000, 999999).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await db.query(
+    await db.execute(
       'UPDATE password_reset_codes SET used = true WHERE email = $1 AND used = false',
       [email]
     );
 
-    await db.query(
+    await db.execute(
       `INSERT INTO password_reset_codes (email, code, expires_at)
        VALUES ($1, $2, $3)`,
       [email, code, expiresAt]
@@ -261,7 +261,7 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
 
-    const codeResult = await db.query(
+    const codeResult = await db.execute(
       `SELECT id FROM password_reset_codes
        WHERE email = $1
        AND code = $2
@@ -278,12 +278,12 @@ exports.resetPassword = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await db.query(
+    await db.execute(
       'UPDATE users SET password_hash = $1 WHERE email = $2',
       [hashedPassword, email]
     );
 
-    await db.query(
+    await db.execute(
       'UPDATE password_reset_codes SET used = true WHERE id = $1',
       [codeResult.rows[0].id]
     );

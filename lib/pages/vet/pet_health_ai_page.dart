@@ -163,7 +163,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           _buildHeader(),

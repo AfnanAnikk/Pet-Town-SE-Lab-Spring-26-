@@ -2,7 +2,6 @@ const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
-const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key';
@@ -197,7 +196,7 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const userResult = await pool.query(
+    const userResult = await db.query(
       'SELECT id FROM users WHERE email = $1',
       [email]
     );
@@ -209,12 +208,12 @@ exports.forgotPassword = async (req, res) => {
     const code = crypto.randomInt(100000, 999999).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await pool.query(
+    await db.query(
       'UPDATE password_reset_codes SET used = true WHERE email = $1 AND used = false',
       [email]
     );
 
-    await pool.query(
+    await db.query(
       `INSERT INTO password_reset_codes (email, code, expires_at)
        VALUES ($1, $2, $3)`,
       [email, code, expiresAt]
@@ -262,7 +261,7 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
 
-    const codeResult = await pool.query(
+    const codeResult = await db.query(
       `SELECT id FROM password_reset_codes
        WHERE email = $1
        AND code = $2
@@ -279,12 +278,12 @@ exports.resetPassword = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await pool.query(
+    await db.query(
       'UPDATE users SET password = $1 WHERE email = $2',
       [hashedPassword, email]
     );
 
-    await pool.query(
+    await db.query(
       'UPDATE password_reset_codes SET used = true WHERE id = $1',
       [codeResult.rows[0].id]
     );

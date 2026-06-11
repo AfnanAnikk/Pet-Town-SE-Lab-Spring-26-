@@ -8,6 +8,8 @@ import '../provider/provider_dashboard_page.dart';
 import '../provider/salon_dashboard_page.dart';
 import '../marketplace/store_dashboard_page.dart';
 import '../../services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,6 +23,27 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _rememberMe = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLogin();
+  }
+
+  Future<void> _loadSavedLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final rememberMe = prefs.getBool('remember_me') ?? false;
+
+    setState(() {
+      _rememberMe = rememberMe;
+
+      if (rememberMe) {
+        _emailController.text = prefs.getString('saved_email') ?? '';
+        _passwordController.text = prefs.getString('saved_password') ?? '';
+      }
+    });
+  }
 
   // ── Validators ──────────────────────────────────────────────────────────
   bool _isValidEmail(String email) {
@@ -81,6 +104,18 @@ class _LoginPageState extends State<LoginPage> {
       if (isBanned) {
         _showError('Your account has been banned.');
         return;
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+
+      if (_rememberMe) {
+        await prefs.setBool('remember_me', true);
+        await prefs.setString('saved_email', email);
+        await prefs.setString('saved_password', password);
+      } else {
+        await prefs.setBool('remember_me', false);
+        await prefs.remove('saved_email');
+        await prefs.remove('saved_password');
       }
 
       final role = result['data']['user']['role'];
@@ -203,9 +238,16 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ForgotPasswordPage(),
+                        ),
+                      );
+                    },
                     child: const Text(
-                      'Forget Password?',
+                      'Forgot Password?',
                       style: TextStyle(
                         color: Color(0xFF374957),
                         fontWeight: FontWeight.bold,

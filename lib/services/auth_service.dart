@@ -154,16 +154,19 @@ class AuthService {
       final response = await http.post(
         Uri.parse('$baseUrl/forgot-password'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-        }),
+        body: jsonEncode({'email': email}),
       );
 
-      return jsonDecode(response.body);
+      print('Forgot password status: ${response.statusCode}');
+      print('Forgot password body: ${response.body}');
+
+      return _handleResponse(response);
     } catch (e) {
+      print('Forgot password error: $e');
+
       return {
         'success': false,
-        'message': 'Something went wrong. Please try again.',
+        'message': e.toString(),
       };
     }
   }

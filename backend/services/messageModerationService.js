@@ -29,20 +29,27 @@ exports.checkMessageSafety = async (text) => {
     )
     .sort((a, b) => Number(b.score) - Number(a.score))[0];
 
+  const moneyRegex = /(\$|৳|bdt|usd|tk|taka)\s?\d+|\d+\s?(dollars?|taka|tk|bdt|usd)/i;
   const moneyKeywords = [
     'send money',
+    'send me money',
+    'send me',
     'bkash',
+    'b-kash',
     'nagad',
     'rocket',
     'bank transfer',
     'loan me',
     'pay me',
-    'give me money'
-  ];
-
-  const hasMoneySpam = moneyKeywords.some(k =>
-    text.toLowerCase().includes(k)
-  );
+    'give me money',
+    'need money',
+    'cash app',
+    'paypal'
+    ];
+  const lowerText = text.toLowerCase();
+  const hasMoneySpam =
+    moneyKeywords.some(k => lowerText.includes(k)) ||
+    moneyRegex.test(text);
 
   return {
     isRisky: !!risky || hasMoneySpam,

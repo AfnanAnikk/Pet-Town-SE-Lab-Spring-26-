@@ -590,11 +590,8 @@ function ContentSafety() {
     fetch(`${API_BASE}/moderation/alerts/${id}/${action}`, { method: 'POST' })
       .then(r => r.json())
       .then(d => {
-        if (d.success) {
-          setAlerts(prev => prev.filter(a => (a.alert_id || a.id) !== id));
-        } else {
-          alert(d.message || 'Action failed');
-        }
+        if (d.success) setAlerts(prev => prev.filter(a => (a.alert_id || a.id) !== id));
+        else alert(d.message || 'Action failed');
       })
       .catch(err => {
         console.error(err);
@@ -604,112 +601,105 @@ function ContentSafety() {
 
   return (
     <div className="page">
-      <h1>Content Safety</h1>
-      <p>Review flagged posts detected by pet image moderation.</p>
-
-      <div className="card" style={{ marginTop: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 'bold', color: '#0F172A' }}>Pet Detection Alerts</h3>
-          <span style={{ background: '#FEF3C7', color: '#92400E', padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 800 }}>
-            {alerts.length} Pending
-          </span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+        <div>
+          <h1>Content Safety</h1>
+          <p>Review AI-flagged posts and take moderation action.</p>
         </div>
 
+        <div style={{ padding: '10px 14px', borderRadius: 999, background: alerts.length ? '#FEF3C7' : '#DCFCE7', color: alerts.length ? '#92400E' : '#166534', fontSize: 13, fontWeight: 900 }}>
+          {alerts.length} Pending
+        </div>
+      </div>
+
+      <div style={{ marginTop: 24 }}>
         {loading ? (
-          <p style={{ color: '#64748B' }}>Loading alerts...</p>
+          <div className="card" style={{ padding: 28 }}>
+            <p style={{ color: '#64748B', margin: 0 }}>Loading alerts...</p>
+          </div>
         ) : alerts.length === 0 ? (
-          <p style={{ color: '#64748B' }}>No pending moderation alerts.</p>
+          <div style={{ padding: 42, borderRadius: 24, background: '#F8FAFC', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+            <CheckCircle2 size={42} color="#10B981" />
+            <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: '14px 0 6px' }}>All clear</h2>
+            <p style={{ color: '#64748B', margin: 0 }}>No pending moderation alerts right now.</p>
+          </div>
         ) : (
-          <div style={{ display: 'grid', gap: 18 }}>
+          <div style={{ display: 'grid', gap: 22 }}>
             {alerts.map(alert => {
               const alertId = alert.alert_id || alert.id;
               const postImage = alert.image_path || alert.image_url;
               const userName = alert.display_name || alert.username || alert.author_name || alert.email || 'Unknown User';
+              const confidence = Math.round(Number(alert.confidence || 0) * 100);
 
               return (
-                <div key={alertId} style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 20, padding: 18, border: '1px solid #E2E8F0', borderRadius: 18, background: '#FFFFFF' }}>
-                  <a href={postImage} target="_blank" rel="noreferrer">
-                    <img src={postImage} alt="Flagged post" style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 14, background: '#F1F5F9' }} />
+                <div key={alertId} style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24, padding: 18, borderRadius: 26, background: '#FFFFFF', border: '1px solid #CBD5E1', boxShadow: '0 16px 40px rgba(15, 23, 42, 0.08)' }}>
+                  <a href={postImage} target="_blank" rel="noreferrer" style={{ display: 'block', borderRadius: 20, overflow: 'hidden', background: '#E2E8F0' }}>
+                    <img src={postImage} alt="Flagged post" style={{ width: '100%', height: 320, objectFit: 'cover', display: 'block' }} />
                   </a>
 
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginBottom: 14 }}>
-                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <img
-                          src={alert.profile_picture_url || 'https://via.placeholder.com/48'}
-                          alt={userName}
-                          style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', background: '#E2E8F0' }}
-                        />
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginBottom: 18 }}>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center', minWidth: 0 }}>
+                        <img src={alert.profile_picture_url || 'https://via.placeholder.com/48'} alt={userName} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', background: '#E2E8F0', border: '2px solid #FFFFFF', boxShadow: '0 6px 16px rgba(15,23,42,0.16)' }} />
 
-                        <div>
-                          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0 }}>{userName}</h3>
-                          <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>{alert.email}</p>
+                        <div style={{ minWidth: 0 }}>
+                          <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</h3>
+                          <p style={{ fontSize: 13, color: '#64748B', margin: '3px 0 0' }}>{alert.email || 'No email'}</p>
                         </div>
                       </div>
 
-                      <span style={{ height: 'fit-content', background: '#FEE2E2', color: '#991B1B', padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 800 }}>
-                        Confidence: {Math.round(Number(alert.confidence || 0) * 100)}%
+                      <span style={{ height: 'fit-content', background: '#FEE2E2', color: '#991B1B', padding: '8px 12px', borderRadius: 999, fontSize: 12, fontWeight: 900, border: '1px solid #FCA5A5' }}>
+                        {confidence}% confidence
                       </span>
                     </div>
 
-                    <div style={{ marginBottom: 14 }}>
-                      <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: '0 0 6px' }}>{alert.title}</h2>
-                      <p style={{ color: '#475569', fontSize: 14, margin: 0 }}>{alert.description || 'No description'}</p>
+                    <div style={{ padding: 18, borderRadius: 20, background: '#F8FAFC', border: '1px solid #E2E8F0', marginBottom: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <ShieldAlert size={18} color="#DC2626" />
+                        <span style={{ fontSize: 12, color: '#DC2626', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                          {alert.reason || 'Low pet confidence'}
+                        </span>
+                      </div>
+
+                      <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0F172A', margin: '0 0 8px' }}>
+                        {alert.title || 'Untitled post'}
+                      </h2>
+
+                      <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+                        {alert.description || 'No description'}
+                      </p>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
-                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
-                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Likes</div>
-                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>{alert.likes_count ?? 0}</div>
-                      </div>
-
-                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
-                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Comments</div>
-                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>{alert.comments_count ?? 0}</div>
-                      </div>
-
-                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
-                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Warnings</div>
-                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>{alert.warning_count ?? 0}</div>
-                      </div>
-
-                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
-                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Banned</div>
-                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>{alert.is_banned ? 'Yes' : 'No'}</div>
-                      </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10, marginBottom: 18 }}>
+                      {[
+                        ['Likes', alert.likes_count ?? 0],
+                        ['Comments', alert.comments_count ?? 0],
+                        ['Warnings', alert.warning_count ?? 0],
+                        ['Banned', alert.is_banned ? 'Yes' : 'No'],
+                        ['Pet', alert.is_pet ? 'Yes' : 'No'],
+                        ['Post', `#${alert.post_id}`],
+                      ].map(([label, value]) => (
+                        <div key={label} style={{ background: '#FFFFFF', padding: '10px 12px', borderRadius: 14, border: '1px solid #E2E8F0' }}>
+                          <div style={{ fontSize: 11, color: '#64748B', fontWeight: 800, marginBottom: 4 }}>{label}</div>
+                          <div style={{ fontSize: 14, color: '#0F172A', fontWeight: 900 }}>{value}</div>
+                        </div>
+                      ))}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
-                      <div style={{ background: '#FFF7ED', padding: 10, borderRadius: 10 }}>
-                        <div style={{ fontSize: 11, color: '#9A3412', fontWeight: 700 }}>Reason</div>
-                        <div style={{ fontSize: 13, color: '#7C2D12', fontWeight: 800 }}>{alert.reason || 'Low pet confidence'}</div>
-                      </div>
-
-                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
-                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Pet Detected</div>
-                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>{alert.is_pet ? 'Yes' : 'No'}</div>
-                      </div>
-
-                      <div style={{ background: '#F8FAFC', padding: 10, borderRadius: 10 }}>
-                        <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>Post ID</div>
-                        <div style={{ fontSize: 13, color: '#0F172A', fontWeight: 800 }}>#{alert.post_id}</div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                      <button onClick={() => handleAction(alertId, 'delete-post')} style={{ padding: '10px 14px', background: '#DC2626', color: 'white', border: 'none', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 'auto' }}>
+                      <button onClick={() => handleAction(alertId, 'delete-post')} style={{ padding: '12px 16px', background: '#DC2626', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(220, 38, 38, 0.24)' }}>
                         Delete Post
                       </button>
 
-                      <button onClick={() => handleAction(alertId, 'warn-user')} style={{ padding: '10px 14px', background: '#F97316', color: 'white', border: 'none', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}>
+                      <button onClick={() => handleAction(alertId, 'warn-user')} style={{ padding: '12px 16px', background: '#F97316', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(249, 115, 22, 0.24)' }}>
                         Warn User
                       </button>
 
-                      <button onClick={() => handleAction(alertId, 'ban-user')} style={{ padding: '10px 14px', background: '#0F172A', color: 'white', border: 'none', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}>
+                      <button onClick={() => handleAction(alertId, 'ban-user')} style={{ padding: '12px 16px', background: '#0F172A', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(15, 23, 42, 0.22)' }}>
                         Ban User
                       </button>
 
-                      <button onClick={() => handleAction(alertId, 'dismiss')} style={{ padding: '10px 14px', background: '#E2E8F0', color: '#334155', border: 'none', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}>
+                      <button onClick={() => handleAction(alertId, 'dismiss')} style={{ padding: '12px 16px', background: '#FFFFFF', color: '#334155', border: '1px solid #CBD5E1', borderRadius: 14, fontWeight: 900, cursor: 'pointer' }}>
                         Dismiss
                       </button>
                     </div>

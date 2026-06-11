@@ -33,6 +33,13 @@ router.get('/salons/verifications', adminController.getSalonVerifications);
 router.post('/salons/verifications/:id/approve', adminController.approveSalon);
 router.post('/salons/verifications/:id/deny', adminController.denySalon);
 
+// Message Moderation
+router.get('/message-moderation/alerts', adminController.getMessageModerationAlerts);
+router.post('/message-moderation/alerts/:id/warn-recipient', adminController.warnMessageRecipient);
+router.post('/message-moderation/alerts/:id/ban-sender', adminController.banMessageSender);
+router.post('/message-moderation/alerts/:id/dismiss', adminController.dismissMessageAlert);
+router.get('/message-moderation/alerts/:id/context', adminController.getMessageAlertContext);
+
 // Moderation
 router.get('/moderation/alerts', adminController.getModerationAlerts);
 router.post('/moderation/alerts/:id/delete-post', adminController.deleteFlaggedPost);

@@ -18,6 +18,25 @@ ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT false;
 ALTER TABLE users 
 ADD COLUMN IF NOT EXISTS warning_count INT DEFAULT 0;
 
+CREATE TABLE IF NOT EXISTS message_moderation_alerts (
+  id SERIAL PRIMARY KEY,
+  message_id INT NOT NULL,
+  conversation_id INT,
+  sender_id INT NOT NULL,
+  receiver_id INT,
+  snippet TEXT,
+  reason TEXT,
+  label VARCHAR(100),
+  confidence NUMERIC(5,4),
+  status VARCHAR(30) DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+  FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS moderation_alerts (
     id SERIAL PRIMARY KEY,
     post_id INT NOT NULL,

@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { checkMessageSafety } = require('../services/messageModerationService');
 
 exports.getConversations = async (req, res) => {
   const userId = req.params.userId;
@@ -76,6 +77,32 @@ exports.sendMessage = async (req, res) => {
     );
 
     const [newMsg] = await db.execute('SELECT * FROM messages WHERE id = ?', [msgRes.insertId]);
+    
+    if (text && text.trim().length > 0) {
+      try {
+        const moderation = await checkMessageSafety(text.trim());
+
+        if (moderation.isRisky) {
+          await db.execute(
+            `INSERT INTO message_moderation_alerts 
+            (message_id, conversation_id, sender_id, receiver_id, snippet, reason, label, confidence)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              msgRes.insertId,
+              conversationId,
+              senderId,
+              receiverId,
+              text.trim().slice(0, 300),
+              moderation.reason,
+              moderation.label,
+              moderation.confidence
+            ]
+          );
+        }
+      } catch (moderationError) {
+        console.error('Message moderation failed:', moderationError.message);
+      }
+    }
 
     // Emit to receiver and sender room using Socket.IO attached to req
     if (req.io) {

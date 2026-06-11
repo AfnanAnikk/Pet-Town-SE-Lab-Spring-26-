@@ -476,3 +476,294 @@ exports.dismissModerationAlert = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+exports.getMessageModerationAlerts = async (req, res) => {
+  try {
+    const [alerts] = await db.execute(`
+      SELECT
+        mma.id AS alert_id,
+        mma.message_id,
+        mma.conversation_id,
+        mma.sender_id,
+        mma.receiver_id,
+        mma.snippet,
+        mma.reason,
+        mma.label,
+        mma.confidence,
+        mma.status,
+        mma.created_at,
+
+        sender.username AS sender_username,
+        sender.display_name AS sender_display_name,
+        sender.email AS sender_email,
+        sender.profile_picture_url AS sender_profile_picture_url,
+        sender.is_banned,
+
+        receiver.username AS receiver_username,
+        receiver.display_name AS receiver_display_name,
+        receiver.email AS receiver_email,
+        receiver.profile_picture_url AS receiver_profile_picture_url
+
+      FROM message_moderation_alerts mma
+
+      JOIN users sender
+        ON mma.sender_id = sender.id
+
+      JOIN users receiver
+        ON mma.receiver_id = receiver.id
+
+      WHERE mma.status = 'pending'
+
+      ORDER BY mma.created_at DESC
+    `);
+
+    res.json({
+      success: true,
+      alerts
+    });
+
+  } catch (error) {
+    console.error('Error fetching message moderation alerts:', error);
+
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+exports.warnMessageRecipient = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [alerts] = await db.execute(`
+      SELECT
+        mma.receiver_id,
+        mma.sender_id,
+        sender.username AS sender_username
+
+      FROM message_moderation_alerts mma
+
+      JOIN users sender
+        ON mma.sender_id = sender.id
+
+      WHERE mma.id = ?
+    `, [id]);
+
+    if (alerts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Alert not found'
+      });
+    }
+
+    const alert = alerts[0];
+
+    await db.execute(`
+      INSERT INTO notifications
+      (user_id, type, reference_id, message)
+
+      VALUES (?, ?, ?, ?)
+    `, [
+      alert.receiver_id,
+      'message_safety',
+      id,
+
+      `⚠ Safety Alert: @${alert.sender_username} may be attempting to scam or manipulate users through private messages. Please avoid sending money or sharing sensitive information.`
+    ]);
+
+    res.json({
+      success: true,
+      message: 'Recipient warned'
+    });
+
+  } catch (error) {
+    console.error('Error warning recipient:', error);
+
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+exports.banMessageSender = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [alerts] = await db.execute(`
+      SELECT sender_id
+      FROM message_moderation_alerts
+      WHERE id = ?
+    `, [id]);
+
+    if (alerts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Alert not found'
+      });
+    }
+
+    await db.execute(`
+      UPDATE users
+      SET is_banned = true
+      WHERE id = ?
+    `, [alerts[0].sender_id]);
+
+    res.json({
+      success: true,
+      message: 'Sender banned'
+    });
+
+  } catch (error) {
+    console.error('Error banning sender:', error);
+
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+exports.dismissMessageAlert = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await db.execute(`
+      UPDATE message_moderation_alerts
+      SET status = 'dismissed'
+      WHERE id = ?
+    `, [id]);
+
+    res.json({
+      success: true,
+      message: 'Alert dismissed'
+    });
+
+  } catch (error) {
+    console.error('Error dismissing message alert:', error);
+
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+exports.getMessageAlertContext = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Get flagged message information
+    const [alerts] = await db.execute(`
+      SELECT
+        mma.message_id,
+        mma.conversation_id
+      FROM message_moderation_alerts mma
+      WHERE mma.id = ?
+    `, [id]);
+
+    if (alerts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Alert not found'
+      });
+    }
+
+    const { message_id, conversation_id } = alerts[0];
+
+    // Get flagged message timestamp
+    const [flaggedMessages] = await db.execute(`
+      SELECT created_at
+      FROM messages
+      WHERE id = ?
+    `, [message_id]);
+
+    if (flaggedMessages.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Flagged message not found'
+      });
+    }
+
+    const flaggedTime = flaggedMessages[0].created_at;
+
+    // 2 messages before
+    const [before] = await db.execute(`
+      SELECT
+        m.id,
+        m.sender_id,
+        m.text,
+        m.image_url,
+        m.created_at,
+        u.username,
+        u.profile_picture_url
+      FROM messages m
+      JOIN users u
+        ON m.sender_id = u.id
+      WHERE
+        m.conversation_id = ?
+        AND m.created_at < ?
+      ORDER BY m.created_at DESC
+      LIMIT 2
+    `, [conversation_id, flaggedTime]);
+
+    // flagged message
+    const [flagged] = await db.execute(`
+      SELECT
+        m.id,
+        m.sender_id,
+        m.text,
+        m.image_url,
+        m.created_at,
+        u.username,
+        u.profile_picture_url
+      FROM messages m
+      JOIN users u
+        ON m.sender_id = u.id
+      WHERE m.id = ?
+    `, [message_id]);
+
+    // 2 messages after
+    const [after] = await db.execute(`
+      SELECT
+        m.id,
+        m.sender_id,
+        m.text,
+        m.image_url,
+        m.created_at,
+        u.username,
+        u.profile_picture_url
+      FROM messages m
+      JOIN users u
+        ON m.sender_id = u.id
+      WHERE
+        m.conversation_id = ?
+        AND m.created_at > ?
+      ORDER BY m.created_at ASC
+      LIMIT 2
+    `, [conversation_id, flaggedTime]);
+
+    const messages = [
+      ...before.reverse(),
+      ...flagged.map(m => ({
+        ...m,
+        is_flagged: true
+      })),
+      ...after
+    ];
+
+    res.json({
+      success: true,
+      messages
+    });
+
+  } catch (error) {
+    console.error('Error fetching message context:', error);
+
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};

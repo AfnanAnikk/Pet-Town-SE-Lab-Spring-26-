@@ -1067,6 +1067,414 @@ function AdoptionCard({ data }) {
   );
 }
 
+
+// 9. Messaging Safety
+function MessagingSafety() {
+  const [alerts, setAlerts] = useState([]);
+  const [selectedAlert, setSelectedAlert] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [contextLoading, setContextLoading] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/message-moderation/alerts`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          setAlerts(d.alerts || []);
+
+          if ((d.alerts || []).length > 0) {
+            loadContext(d.alerts[0]);
+          }
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const loadContext = (alert) => {
+    const alertId = alert.alert_id || alert.id;
+
+    setSelectedAlert(alert);
+    setContextLoading(true);
+
+    fetch(`${API_BASE}/message-moderation/alerts/${alertId}/context`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          setMessages(d.messages || []);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setContextLoading(false));
+  };
+
+  const handleAction = (id, action) => {
+    fetch(`${API_BASE}/message-moderation/alerts/${id}/${action}`, {
+      method: 'POST'
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (!d.success) {
+          alert(d.message || 'Action failed');
+          return;
+        }
+
+        if (action === 'dismiss') {
+          const updated = alerts.filter(
+            a => (a.alert_id || a.id) !== id
+          );
+
+          setAlerts(updated);
+
+          if ((selectedAlert?.alert_id || selectedAlert?.id) === id) {
+            if (updated.length > 0) {
+              loadContext(updated[0]);
+            } else {
+              setSelectedAlert(null);
+              setMessages([]);
+            }
+          }
+        }
+
+        if (action === 'warn-recipient') {
+          setAlerts(prev =>
+            prev.map(a =>
+              (a.alert_id || a.id) === id
+                ? { ...a, recipient_warned: true }
+                : a
+            )
+          );
+
+          setSelectedAlert(prev =>
+            prev && (prev.alert_id || prev.id) === id
+              ? { ...prev, recipient_warned: true }
+              : prev
+          );
+        }
+
+        if (action === 'ban-sender') {
+          setAlerts(prev =>
+            prev.map(a =>
+              (a.alert_id || a.id) === id
+                ? { ...a, is_banned: true }
+                : a
+            )
+          );
+
+          setSelectedAlert(prev =>
+            prev && (prev.alert_id || prev.id) === id
+              ? { ...prev, is_banned: true }
+              : prev
+          );
+        }
+      })
+      .catch(console.error);
+  };
+
+  return (
+    <div className="page">
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 24
+      }}>
+        <div>
+          <h1>Messaging Safety</h1>
+          <p>Review AI-flagged conversations and protect users.</p>
+        </div>
+
+        <div style={{
+          padding: '10px 14px',
+          borderRadius: 999,
+          background: alerts.length ? '#FEF3C7' : '#DCFCE7',
+          color: alerts.length ? '#92400E' : '#166534',
+          fontSize: 13,
+          fontWeight: 900,
+        }}>
+          {alerts.length} Pending
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="card">
+          Loading...
+        </div>
+      ) : alerts.length === 0 ? (
+        <div style={{
+          padding: 42,
+          borderRadius: 24,
+          background: '#F8FAFC',
+          border: '1px solid #E2E8F0',
+          textAlign: 'center',
+        }}>
+          <CheckCircle2 size={42} color="#10B981" />
+
+          <h2 style={{
+            fontSize: 22,
+            fontWeight: 900,
+            color: '#0F172A',
+            margin: '14px 0 6px',
+          }}>
+            All clear
+          </h2>
+
+          <p style={{
+            color: '#64748B',
+            margin: 0,
+          }}>
+            No harmful conversations detected.
+          </p>
+        </div>
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '340px 1fr',
+          gap: 24,
+        }}>
+          <div className="card">
+            <h3 style={{
+              fontSize: 18,
+              fontWeight: 900,
+              marginBottom: 20,
+            }}>
+              Flagged Conversations
+            </h3>
+
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+            }}>
+              {alerts.map(alert => {
+                const id = alert.alert_id || alert.id;
+                const selected =
+                  (selectedAlert?.alert_id || selectedAlert?.id) === id;
+
+                return (
+                  <div
+                    key={id}
+                    onClick={() => loadContext(alert)}
+                    style={{
+                      padding: 18,
+                      borderRadius: 18,
+                      cursor: 'pointer',
+                      border: selected
+                        ? '2px solid #3B82F6'
+                        : '1px solid #E2E8F0',
+                      background: selected
+                        ? '#EFF6FF'
+                        : '#FFFFFF',
+                    }}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      marginBottom: 8,
+                    }}>
+                      <span style={{
+                        fontSize: 12,
+                        fontWeight: 900,
+                        color: '#DC2626',
+                      }}>
+                        {Math.round(
+                          Number(alert.confidence || 0) * 100
+                        )}% RISK
+                      </span>
+
+                      <span style={{
+                        fontSize: 12,
+                        color: '#64748B',
+                      }}>
+                        {alert.created_at
+                          ? new Date(alert.created_at).toLocaleDateString()
+                          : ''}
+                      </span>
+                    </div>
+
+                    <div style={{
+                      fontWeight: 800,
+                      color: '#0F172A',
+                      marginBottom: 6,
+                    }}>
+                      {alert.reason || alert.label}
+                    </div>
+
+                    <div style={{
+                      color: '#64748B',
+                      fontSize: 13,
+                    }}>
+                      @{alert.sender_username} → @{alert.receiver_username}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="card">
+            {selectedAlert && (
+              <>
+                <div style={{
+                  marginBottom: 20,
+                }}>
+                  <h2 style={{
+                    margin: 0,
+                    fontWeight: 900,
+                  }}>
+                    Conversation Review
+                  </h2>
+
+                  <p style={{
+                    marginTop: 8,
+                    color: '#64748B',
+                  }}>
+                    @{selectedAlert.sender_username} →
+                    {' '}
+                    @{selectedAlert.receiver_username}
+                  </p>
+                </div>
+
+                <div style={{
+                  minHeight: 450,
+                  padding: 24,
+                  borderRadius: 20,
+                  background: '#F8FAFC',
+                  border: '1px solid #E2E8F0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                }}>
+                  {contextLoading ? (
+                    <p>Loading conversation...</p>
+                  ) : (
+                    messages.map(msg => (
+                      <div
+                        key={msg.id}
+                        style={{
+                          alignSelf:
+                            msg.sender_id === selectedAlert.sender_id
+                              ? 'flex-end'
+                              : 'flex-start',
+
+                          maxWidth: '70%',
+
+                          padding: '12px 16px',
+
+                          borderRadius: 18,
+
+                          background: msg.is_flagged
+                            ? '#FEF2F2'
+                            : msg.sender_id === selectedAlert.sender_id
+                              ? '#DBEAFE'
+                              : '#FFFFFF',
+
+                          border: msg.is_flagged
+                            ? '2px solid #EF4444'
+                            : '1px solid #E2E8F0',
+                        }}
+                      >
+                        <div style={{
+                          fontSize: 12,
+                          fontWeight: 800,
+                          marginBottom: 6,
+                          color: '#64748B',
+                        }}>
+                          @{msg.username}
+                        </div>
+
+                        <div style={{
+                          color: '#0F172A',
+                        }}>
+                          {msg.text}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  gap: 12,
+                  marginTop: 24,
+                  flexWrap: 'wrap',
+                }}>
+                  <button
+                    onClick={() =>
+                      handleAction(
+                        selectedAlert.alert_id || selectedAlert.id,
+                        'warn-recipient'
+                      )
+                    }
+                    disabled={selectedAlert.recipient_warned}
+                    style={{
+                      padding: '12px 16px',
+                      background: '#F97316',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: 14,
+                      fontWeight: 900,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {selectedAlert.recipient_warned
+                      ? 'Recipient Warned'
+                      : 'Warn Recipient'}
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      handleAction(
+                        selectedAlert.alert_id || selectedAlert.id,
+                        'ban-sender'
+                      )
+                    }
+                    disabled={selectedAlert.is_banned}
+                    style={{
+                      padding: '12px 16px',
+                      background: '#0F172A',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: 14,
+                      fontWeight: 900,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {selectedAlert.is_banned
+                      ? 'Sender Banned'
+                      : 'Ban Sender'}
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      handleAction(
+                        selectedAlert.alert_id || selectedAlert.id,
+                        'dismiss'
+                      )
+                    }
+                    style={{
+                      padding: '12px 16px',
+                      background: '#FFFFFF',
+                      color: '#334155',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: 14,
+                      fontWeight: 900,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <Router>

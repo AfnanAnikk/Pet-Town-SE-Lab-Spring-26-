@@ -196,12 +196,12 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const userResult = await db.execute(
+    const users = await db.execute(
       'SELECT id FROM users WHERE email = $1',
       [email]
     );
 
-    if (userResult.rows.length === 0) {
+    if (!users || users.length === 0) {
       return res.status(404).json({ message: 'No account found with this email' });
     }
 
@@ -261,7 +261,7 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
 
-    const codeResult = await db.execute(
+    const codes = await db.execute(
       `SELECT id FROM password_reset_codes
        WHERE email = $1
        AND code = $2
@@ -272,7 +272,7 @@ exports.resetPassword = async (req, res) => {
       [email, code]
     );
 
-    if (codeResult.rows.length === 0) {
+    if (!codes || codes.length === 0) {
       return res.status(400).json({ message: 'Invalid or expired verification code' });
     }
 
@@ -285,7 +285,7 @@ exports.resetPassword = async (req, res) => {
 
     await db.execute(
       'UPDATE password_reset_codes SET used = true WHERE id = $1',
-      [codeResult.rows[0].id]
+      [codes[0].id]
     );
 
     return res.json({ message: 'Password reset successful' });

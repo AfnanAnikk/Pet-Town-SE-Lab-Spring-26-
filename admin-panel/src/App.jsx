@@ -590,7 +590,41 @@ function ContentSafety() {
     fetch(`${API_BASE}/moderation/alerts/${id}/${action}`, { method: 'POST' })
       .then(r => r.json())
       .then(d => {
-        if (d.success) setAlerts(prev => prev.filter(a => (a.alert_id || a.id) !== id));
+        if (d.success) {
+          if (action === 'dismiss') {
+            setAlerts(prev => prev.filter(a => (a.alert_id || a.id) !== id));
+          }
+
+          if (action === 'delete-post') {
+            setAlerts(prev =>
+              prev.map(a =>
+                (a.alert_id || a.id) === id
+                  ? { ...a, post_deleted: true }
+                  : a
+              )
+            );
+          }
+
+          if (action === 'warn-user') {
+            setAlerts(prev =>
+              prev.map(a =>
+                (a.alert_id || a.id) === id
+                  ? { ...a, user_warned: true, warning_count: Number(a.warning_count || 0) + 1 }
+                  : a
+              )
+            );
+          }
+
+          if (action === 'ban-user') {
+            setAlerts(prev =>
+              prev.map(a =>
+                (a.alert_id || a.id) === id
+                  ? { ...a, is_banned: true }
+                  : a
+              )
+            );
+          }
+        }
         else alert(d.message || 'Action failed');
       })
       .catch(err => {
@@ -687,16 +721,16 @@ function ContentSafety() {
                     </div>
 
                     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 'auto' }}>
-                      <button onClick={() => handleAction(alertId, 'delete-post')} style={{ padding: '12px 16px', background: '#DC2626', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(220, 38, 38, 0.24)' }}>
-                        Delete Post
+                      <button onClick={() => handleAction(alertId, 'delete-post')} disabled={alert.post_deleted} style={{ padding: '12px 16px', background: '#DC2626', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(220, 38, 38, 0.24)' }}>
+                        {alert.post_deleted ? 'Post Deleted' : 'Delete Post'}
                       </button>
 
-                      <button onClick={() => handleAction(alertId, 'warn-user')} style={{ padding: '12px 16px', background: '#F97316', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(249, 115, 22, 0.24)' }}>
-                        Warn User
+                      <button onClick={() => handleAction(alertId, 'warn-user')} disabled={alert.user_warned} style={{ padding: '12px 16px', background: '#F97316', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(249, 115, 22, 0.24)' }}>
+                        {alert.user_warned ? 'User Warned' : 'Warn User'}
                       </button>
 
-                      <button onClick={() => handleAction(alertId, 'ban-user')} style={{ padding: '12px 16px', background: '#0F172A', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(15, 23, 42, 0.22)' }}>
-                        Ban User
+                      <button onClick={() => handleAction(alertId, 'ban-user')} disabled={alert.is_banned} style={{ padding: '12px 16px', background: '#0F172A', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(15, 23, 42, 0.22)' }}>
+                        {alert.user_warned ? 'User Banned' : 'Ban User'}
                       </button>
 
                       <button onClick={() => handleAction(alertId, 'dismiss')} style={{ padding: '12px 16px', background: '#FFFFFF', color: '#334155', border: '1px solid #CBD5E1', borderRadius: 14, fontWeight: 900, cursor: 'pointer' }}>

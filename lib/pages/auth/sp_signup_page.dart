@@ -4,6 +4,7 @@ import '../../widgets/primary_button.dart';
 import 'login_page.dart';
 import 'sp_verification_page.dart';
 import '../../services/auth_service.dart';
+import 'sp_terms_conditions.dart';
 
 class SpSignupPage extends StatefulWidget {
   const SpSignupPage({super.key});
@@ -18,7 +19,7 @@ class _SpSignupPageState extends State<SpSignupPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   bool _isLoading = false;
-  bool _agreedToTerms = true;
+  bool _agreedToTerms = false;
   String _selectedServiceType = '';
 
   // ── Validators ────────────────────────────────────────────────────────────
@@ -297,15 +298,28 @@ class _SpSignupPageState extends State<SpSignupPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: RichText(
-                      text: const TextSpan(
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                      text: TextSpan(
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
                         children: [
-                          TextSpan(text: 'I agreed to the all '),
-                          TextSpan(
-                            text: 'Terms and Conditions',
-                            style: TextStyle(
-                              color: Color(0xFF3293B3),
-                              fontWeight: FontWeight.bold,
+                          const TextSpan(text: 'I agree to the '),
+                          WidgetSpan(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SpTermsConditionsPage(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Terms and Conditions',
+                                style: TextStyle(
+                                  color: Color(0xFF3293B3),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ),
                           ),
                         ],

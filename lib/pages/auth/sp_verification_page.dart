@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../widgets/primary_button.dart';
 import 'login_page.dart';
 import '../../services/api_service.dart';
+import 'sp_terms_conditions.dart';
 
 class SpVerificationPage extends StatefulWidget {
   final int userId;
@@ -268,15 +269,28 @@ class _SpVerificationPageState extends State<SpVerificationPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: RichText(
-                      text: const TextSpan(
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                      text: TextSpan(
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
                         children: [
-                          TextSpan(text: 'I agreed to the all '),
-                          TextSpan(
-                            text: 'Terms and Conditions',
-                            style: TextStyle(
-                              color: Color(0xFF3293B3),
-                              fontWeight: FontWeight.bold,
+                          const TextSpan(text: 'I agree to the '),
+                          WidgetSpan(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SpTermsConditionsPage(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Terms and Conditions',
+                                style: TextStyle(
+                                  color: Color(0xFF3293B3),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ),
                           ),
                         ],

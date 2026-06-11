@@ -3,6 +3,7 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/primary_button.dart';
 import 'login_page.dart';
 import '../../services/auth_service.dart';
+import 'terms_conditions.dart';
 
 class UserSignupPage extends StatefulWidget {
   const UserSignupPage({super.key});
@@ -17,7 +18,7 @@ class _UserSignupPageState extends State<UserSignupPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
-  bool _agreedToTerms = true;
+  bool _agreedToTerms = false;
 
   // ── Validators ────────────────────────────────────────────────────────────
   bool _isValidEmail(String email) {
@@ -213,15 +214,28 @@ class _UserSignupPageState extends State<UserSignupPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: RichText(
-                      text: const TextSpan(
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                      text: TextSpan(
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
                         children: [
-                          TextSpan(text: 'I agreed to the all '),
-                          TextSpan(
-                            text: 'Terms and Conditions',
-                            style: TextStyle(
-                              color: Color(0xFF3293B3),
-                              fontWeight: FontWeight.bold,
+                          const TextSpan(text: 'I agree to the '),
+                          WidgetSpan(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const TermsConditionsPage(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Terms and Conditions',
+                                style: TextStyle(
+                                  color: Color(0xFF3293B3),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ),
                           ),
                         ],

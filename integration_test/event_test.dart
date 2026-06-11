@@ -5,6 +5,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:pet_town/main.dart' as app;
 import 'package:pet_town/widgets/primary_button.dart';
 import 'package:pet_town/widgets/rolling_text_button.dart';
+import 'package:pet_town/widgets/event_card.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test credentials – Account 1 creates/manages events; Account 2 receives
@@ -151,33 +152,39 @@ void main() {
       // Enter title
       final titleField = fieldByHint('e.g. Dog Park Meetup');
       await waitFor(t, titleField);
+      await t.ensureVisible(titleField);
       await t.enterText(titleField, 'Integration Test Meetup');
       await t.pump(const Duration(seconds: 2));
 
       // Select category chip "Meetup"
       final meetupChip = find.text('Meetup');
       await waitFor(t, meetupChip);
+      await t.ensureVisible(meetupChip.first);
       await t.tap(meetupChip.first);
       await t.pump(const Duration(seconds: 2));
 
       // Select pet type "Dog"
       final dogChip = find.text('Dog');
+      await t.ensureVisible(dogChip.first);
       await t.tap(dogChip.first);
       await t.pump(const Duration(seconds: 2));
 
       // Tap visibility – "Public 🌍"
       final publicVis = find.text('Public 🌍');
+      await t.ensureVisible(publicVis);
       await t.tap(publicVis);
       await t.pump(const Duration(seconds: 2));
 
       // Tap "Next"
       final nextBtn = find.widgetWithText(ElevatedButton, 'Next');
+      await t.ensureVisible(nextBtn.last);
       await t.tap(nextBtn.last);
       await t.pump(const Duration(seconds: 2));
 
       // Step 2: Date / Time
       final startTile = find.text('Select start date & time');
       await waitFor(t, startTile);
+      await t.ensureVisible(startTile);
       await t.tap(startTile);
       await t.pump(const Duration(seconds: 2));
 
@@ -196,30 +203,37 @@ void main() {
       // Enter location
       final locationField = fieldByHint('City, address or venue name');
       await waitFor(t, locationField);
+      await t.ensureVisible(locationField);
       await t.enterText(locationField, 'Dhaka Central Park');
       await t.pump(const Duration(seconds: 2));
 
       // Next → Step 3
-      await t.tap(find.widgetWithText(ElevatedButton, 'Next').last);
+      final nextBtn2 = find.widgetWithText(ElevatedButton, 'Next');
+      await t.ensureVisible(nextBtn2.last);
+      await t.tap(nextBtn2.last);
       await t.pump(const Duration(seconds: 2));
 
       // Step 3: Details
       final descField = fieldByHint('Tell people what this event is about…');
       await waitFor(t, descField);
+      await t.ensureVisible(descField);
       await t.enterText(descField, 'A fun meetup for dog owners in the city.');
       await t.pump(const Duration(seconds: 2));
 
       final maxField = fieldByHint('e.g. 50');
+      await t.ensureVisible(maxField);
       await t.enterText(maxField, '30');
       await t.pump(const Duration(seconds: 2));
 
       final contactField = fieldByHint('Phone number or email');
+      await t.ensureVisible(contactField);
       await t.enterText(contactField, '01811223344');
       await t.pump(const Duration(seconds: 2));
 
       // Enable "Require Registration" switch
       final regSwitch = find.byType(Switch).first;
       if (regSwitch.evaluate().isNotEmpty) {
+        await t.ensureVisible(regSwitch);
         await t.tap(regSwitch);
         await t.pump(const Duration(seconds: 2));
       }
@@ -227,6 +241,7 @@ void main() {
       // Submit
       final createBtn = find.widgetWithText(ElevatedButton, 'Create Event 🎉');
       await waitFor(t, createBtn);
+      await t.ensureVisible(createBtn);
       await t.tap(createBtn);
       await t.pump(const Duration(seconds: 2));
 
@@ -260,25 +275,32 @@ void main() {
 
       final editTitleField = fieldByHint('e.g. Dog Park Meetup');
       await waitFor(t, editTitleField);
+      await t.ensureVisible(editTitleField);
       await t.tap(editTitleField);
       await t.pump(const Duration(seconds: 2));
       await t.enterText(editTitleField, 'Updated Meetup for Dogs');
       await t.pump(const Duration(seconds: 2));
 
-      await t.tap(find.widgetWithText(ElevatedButton, 'Next').last);
+      final nextEditBtn = find.widgetWithText(ElevatedButton, 'Next');
+      await t.ensureVisible(nextEditBtn.last);
+      await t.tap(nextEditBtn.last);
       await t.pump(const Duration(seconds: 2));
 
       await waitFor(t, find.widgetWithText(ElevatedButton, 'Next'));
-      await t.tap(find.widgetWithText(ElevatedButton, 'Next').last);
+      final nextEditBtn2 = find.widgetWithText(ElevatedButton, 'Next');
+      await t.ensureVisible(nextEditBtn2.last);
+      await t.tap(nextEditBtn2.last);
       await t.pump(const Duration(seconds: 2));
 
       await waitFor(t, fieldByHint('Tell people what this event is about…'));
-      await t.enterText(fieldByHint('Tell people what this event is about…'),
-          'Updated: Fun meetup for dog owners – revised description.');
+      final editDescField = fieldByHint('Tell people what this event is about…');
+      await t.ensureVisible(editDescField);
+      await t.enterText(editDescField, 'Updated: Fun meetup for dog owners – revised description.');
       await t.pump(const Duration(seconds: 2));
 
       final saveBtn = find.widgetWithText(ElevatedButton, 'Save Changes ✅');
       await waitFor(t, saveBtn);
+      await t.ensureVisible(saveBtn);
       await t.tap(saveBtn);
       await t.pump(const Duration(seconds: 2));
 
@@ -299,6 +321,7 @@ void main() {
           await t.pump(const Duration(seconds: 2));
         }
       } else {
+        await t.ensureVisible(eventCard.first);
         await t.tap(eventCard.first);
         await t.pump(const Duration(seconds: 2));
 
@@ -335,8 +358,9 @@ void main() {
       await waitFor(t, find.text('Hosting'), maxTries: 80);
       await t.pump(const Duration(seconds: 2));
 
-      final firstEventCard = find.byType(InkWell).first;
+      final firstEventCard = find.byType(EventCard).first;
       await waitFor(t, firstEventCard);
+      await t.ensureVisible(firstEventCard);
       await t.tap(firstEventCard);
       await t.pump(const Duration(seconds: 2));
 
@@ -529,9 +553,10 @@ void main() {
       await t.tap(discoverTab);
       await t.pump(const Duration(seconds: 2));
 
-      final eventCards = find.byWidgetPredicate((w) => w is InkWell);
+      final eventCards = find.byType(EventCard);
       await waitFor(t, eventCards, maxTries: 80);
       if (eventCards.evaluate().isNotEmpty) {
+        await t.ensureVisible(eventCards.first);
         await t.tap(eventCards.first);
         await t.pump(const Duration(seconds: 2));
 
@@ -550,9 +575,9 @@ void main() {
 
       // ── T15: Account 2 checks Notifications for announcement ───────────
       await tapNavTab(t, 3);
-      await waitFor(t, find.text('Notifications'));
+      await waitFor(t, find.text('Notifications').first);
       await t.pump(const Duration(seconds: 2));
-      expect(find.text('Notifications'), findsOneWidget);
+      expect(find.text('Notifications'), findsWidgets);
 
       // Go back to Events page
       await openEventsPage(t);
@@ -563,9 +588,10 @@ void main() {
       await t.tap(discoverTab2);
       await t.pump(const Duration(seconds: 2));
 
-      final eventCards2 = find.byWidgetPredicate((w) => w is InkWell);
+      final eventCards2 = find.byType(EventCard);
       await waitFor(t, eventCards2, maxTries: 80);
       if (eventCards2.evaluate().isNotEmpty) {
+        await t.ensureVisible(eventCards2.first);
         await t.tap(eventCards2.first);
         await t.pump(const Duration(seconds: 2));
 
@@ -653,18 +679,26 @@ void main() {
       await t.pump(const Duration(seconds: 2));
 
       // Step 1 – Basics
-      await t.enterText(fieldByHint('e.g. Dog Park Meetup'), 'E2E Cross-Account Test Event');
+      final e2eTitleField = fieldByHint('e.g. Dog Park Meetup');
+      await waitFor(t, e2eTitleField);
+      await t.ensureVisible(e2eTitleField);
+      await t.enterText(e2eTitleField, 'E2E Cross-Account Test Event');
       await t.pump(const Duration(seconds: 2));
 
-      await t.tap(find.text('Meetup').first);
+      final e2eMeetupChip = find.text('Meetup');
+      await t.ensureVisible(e2eMeetupChip.first);
+      await t.tap(e2eMeetupChip.first);
       await t.pump(const Duration(seconds: 2));
 
-      await t.tap(find.widgetWithText(ElevatedButton, 'Next').last);
+      final e2eNextBtn = find.widgetWithText(ElevatedButton, 'Next');
+      await t.ensureVisible(e2eNextBtn.last);
+      await t.tap(e2eNextBtn.last);
       await t.pump(const Duration(seconds: 2));
 
       // Step 2 – When & Where
       final startTile = find.text('Select start date & time');
       await waitFor(t, startTile);
+      await t.ensureVisible(startTile);
       await t.tap(startTile);
       await t.pump(const Duration(seconds: 2));
 
@@ -679,18 +713,27 @@ void main() {
         }
       }
 
-      await t.enterText(fieldByHint('City, address or venue name'), 'Test Venue, Dhaka');
+      final e2eLocationField = fieldByHint('City, address or venue name');
+      await waitFor(t, e2eLocationField);
+      await t.ensureVisible(e2eLocationField);
+      await t.enterText(e2eLocationField, 'Test Venue, Dhaka');
       await t.pump(const Duration(seconds: 2));
 
-      await t.tap(find.widgetWithText(ElevatedButton, 'Next').last);
+      final e2eNextBtn2 = find.widgetWithText(ElevatedButton, 'Next');
+      await t.ensureVisible(e2eNextBtn2.last);
+      await t.tap(e2eNextBtn2.last);
       await t.pump(const Duration(seconds: 2));
 
       // Step 3 – Description
-      await t.enterText(fieldByHint('Tell people what this event is about…'),
-          'E2E automated cross-account test event description.');
+      final e2eDescField = fieldByHint('Tell people what this event is about…');
+      await waitFor(t, e2eDescField);
+      await t.ensureVisible(e2eDescField);
+      await t.enterText(e2eDescField, 'E2E automated cross-account test event description.');
       await t.pump(const Duration(seconds: 2));
 
-      await t.tap(find.widgetWithText(ElevatedButton, 'Create Event 🎉'));
+      final e2eCreateBtn = find.widgetWithText(ElevatedButton, 'Create Event 🎉');
+      await t.ensureVisible(e2eCreateBtn);
+      await t.tap(e2eCreateBtn);
       await t.pump(const Duration(seconds: 2));
 
       // Verify creation
@@ -773,9 +816,9 @@ void main() {
 
       // ──── Step 8: Checks notifications → wait ➔ verify announcement ────
       await tapNavTab(t, 3);
-      await waitFor(t, find.text('Notifications'));
+      await waitFor(t, find.text('Notifications').first);
       await t.pump(const Duration(seconds: 2));
-      expect(find.text('Notifications'), findsOneWidget);
+      expect(find.text('Notifications'), findsWidgets);
 
       // ──── Step 9: Logs out ➔ wait 2s ──────────────────────────────────
       await logout(t);

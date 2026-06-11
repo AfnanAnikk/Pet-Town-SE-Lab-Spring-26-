@@ -1631,7 +1631,7 @@ export default function App() {
               <Route path="/salons" element={<PetSalons />} />
               <Route path="/adoption" element={<AdoptionCenter />} />
               <Route path="/events" element={<CommunityEvents />} />
-              <Route path="/messages" element={<div className="page"><h1>Messaging</h1></div>} />
+              <Route path="/messages" element={<MessagingSafety />} />
               <Route path="/password-reset" element={<PasswordResetPanel />} />
             </Routes>
           </main>

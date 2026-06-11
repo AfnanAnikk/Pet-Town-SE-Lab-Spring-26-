@@ -9,12 +9,17 @@ from sklearn.preprocessing import MultiLabelBinarizer, LabelEncoder
 from sklearn.model_selection import cross_val_score
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
-DATA_DIR      = "DataSet of Animals"
-MODEL_PATH    = "model.joblib"
-ENCODERS_PATH = "encoders.json"
-INFO_OUT_PATH = "data/disease_info.json"
+# Use absolute paths so the script works from any working directory
+# (locally or when Render sets cwd to /opt/render/project/src/backend-ai/)
+_HERE         = os.path.dirname(os.path.abspath(__file__))
+_ROOT         = os.path.dirname(_HERE)          # one level up = project root
 
-os.makedirs("data", exist_ok=True)
+DATA_DIR      = os.path.join(_ROOT, "DataSet of Animals")
+MODEL_PATH    = os.path.join(_HERE, "model.joblib")
+ENCODERS_PATH = os.path.join(_HERE, "encoders.json")
+INFO_OUT_PATH = os.path.join(_HERE, "data", "disease_info.json")
+
+os.makedirs(os.path.join(_HERE, "data"), exist_ok=True)
 
 # ─── Lookup maps ──────────────────────────────────────────────────────────────
 SYMPTOM_MAP = {

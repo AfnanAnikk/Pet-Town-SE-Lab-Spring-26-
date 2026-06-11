@@ -19,9 +19,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL_PATH    = "model.joblib"
-ENCODERS_PATH = "encoders.json"
-INFO_PATH     = "data/disease_info.json"
+# ── Absolute paths (works regardless of cwd on Render) ───────────────────────
+_HERE         = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH    = os.path.join(_HERE, "model.joblib")
+ENCODERS_PATH = os.path.join(_HERE, "encoders.json")
+INFO_PATH     = os.path.join(_HERE, "data", "disease_info.json")
 
 # Auto-train on first deploy if model files are missing
 if not os.path.exists(MODEL_PATH):

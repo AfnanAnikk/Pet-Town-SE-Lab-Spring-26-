@@ -1,7 +1,7 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const crypto = require('crypto');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key';
@@ -23,7 +23,6 @@ exports.register = async (req, res) => {
     const userRole = role === 'service_provider' ? 'service_provider' : 'user';
     const userServiceType = userRole === 'service_provider' ? (service_type || '') : null;
 
-    // Insert user with service_type stored directly
     const [userResult] = await db.execute(
       'INSERT INTO users (username, email, password_hash, phone_number, role, service_type) VALUES (?, ?, ?, ?, ?, ?)',
       [username || null, email, hashedPassword, phone_number || null, userRole, userServiceType]
@@ -31,7 +30,6 @@ exports.register = async (req, res) => {
 
     const userId = userResult.insertId;
 
-    // If service provider, insert into vets or stores table based on service_type
     if (userRole === 'service_provider') {
       if (service_type === 'Marketplace Owner') {
         await db.execute(
@@ -62,6 +60,7 @@ exports.login = async (req, res) => {
 
   try {
     const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
+
     if (users.length === 0) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -69,9 +68,7 @@ exports.login = async (req, res) => {
     const user = users[0];
 
     if (user.is_banned) {
-      return res.status(403).json({
-        message: 'Your account has been banned.'
-      });
+      return res.status(403).json({ message: 'Your account has been banned.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -89,6 +86,7 @@ exports.login = async (req, res) => {
 
     jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
       if (err) throw err;
+
       res.json({
         token,
         user: {
@@ -108,27 +106,30 @@ exports.login = async (req, res) => {
   }
 };
 
-// GET /api/auth/profile/:id
 exports.getProfile = async (req, res) => {
   const { id } = req.params;
+
   try {
     const [users] = await db.execute(
       'SELECT id, username, display_name, email, phone_number, role, service_type, profile_picture_url, is_banned FROM users WHERE id = ?',
       [id]
     );
-    if (users.length === 0) return res.status(404).json({ message: 'User not found' });
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     const user = users[0];
 
-    // Count posts
     const [postCountRows] = await db.execute(
       'SELECT COUNT(*) as count FROM posts WHERE user_id = ?',
       [id]
     );
+
     const postCount = parseInt(postCountRows[0]?.count ?? 0);
 
-    // Get user posts with tags
     const [posts] = await db.execute(
-    `
+      `
       SELECT 
         p.*,
         u.profile_picture_url,
@@ -140,8 +141,12 @@ exports.getProfile = async (req, res) => {
       `,
       [id]
     );
+
     for (let post of posts) {
-      const [tags] = await db.execute('SELECT tag_name FROM post_tags WHERE post_id = ?', [post.id]);
+      const [tags] = await db.execute(
+        'SELECT tag_name FROM post_tags WHERE post_id = ?',
+        [post.id]
+      );
       post.tags = tags.map(t => t.tag_name);
     }
 
@@ -152,10 +157,10 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// PUT /api/auth/profile/:id
 exports.updateProfile = async (req, res) => {
   const { id } = req.params;
   const { displayName, profilePictureUrl } = req.body;
+
   try {
     let query = 'UPDATE users SET display_name = ?';
     let params = [displayName];
@@ -169,6 +174,7 @@ exports.updateProfile = async (req, res) => {
     params.push(id);
 
     await db.execute(query, params);
+
     res.json({ message: 'Profile updated successfully' });
   } catch (error) {
     console.error(error);
@@ -181,6 +187,7 @@ exports.getAllUsers = async (req, res) => {
     const [users] = await db.execute(
       'SELECT id, username, display_name, email, role, profile_picture_url FROM users ORDER BY username ASC'
     );
+
     res.json(users);
   } catch (error) {
     console.error(error);
@@ -214,27 +221,17 @@ exports.forgotPassword = async (req, res) => {
     );
 
     await db.execute(
-      `INSERT INTO password_reset_codes (email, code, expires_at)
-       VALUES ($1, $2, $3)`,
+      `
+      INSERT INTO password_reset_codes (email, code, expires_at)
+      VALUES ($1, $2, $3)
+      `,
       [email, code, expiresAt]
     );
 
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-    });
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-    await transporter.sendMail({
-      from: `"PetTown" <${process.env.EMAIL_USER}>`,
+    const emailResult = await resend.emails.send({
+      from: 'PetTown <onboarding@resend.dev>',
       to: email,
       subject: 'PetTown Password Reset Code',
       html: `
@@ -247,6 +244,11 @@ exports.forgotPassword = async (req, res) => {
         </div>
       `,
     });
+
+    if (emailResult.error) {
+      console.error('Resend email error:', emailResult.error);
+      return res.status(500).json({ message: 'Failed to send verification code' });
+    }
 
     return res.json({ message: 'Verification code sent to your email' });
   } catch (error) {
@@ -268,13 +270,15 @@ exports.resetPassword = async (req, res) => {
     }
 
     const codes = await db.execute(
-      `SELECT id FROM password_reset_codes
-       WHERE email = $1
-       AND code = $2
-       AND used = false
-       AND expires_at > NOW()
-       ORDER BY created_at DESC
-       LIMIT 1`,
+      `
+      SELECT id FROM password_reset_codes
+      WHERE email = $1
+      AND code = $2
+      AND used = false
+      AND expires_at > NOW()
+      ORDER BY created_at DESC
+      LIMIT 1
+      `,
       [email, code]
     );
 

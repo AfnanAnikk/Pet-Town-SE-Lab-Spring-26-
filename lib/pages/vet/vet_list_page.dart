@@ -3,6 +3,7 @@ import '../../models/vet_model.dart';
 import '../../services/api_service.dart';
 import '../../widgets/vet_filter_sheet.dart';
 import 'vet_profile_page.dart';
+import 'pet_health_ai_page.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
 
 class VetListPage extends StatefulWidget {
@@ -120,28 +121,126 @@ class _VetListPageState extends State<VetListPage> {
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Stack(
-          children: [
-            if (filteredVets.isEmpty)
-              const Center(child: Text("No vets found. Be the first to register!"))
-            else
-              ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                itemCount: filteredVets.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 24),
-                itemBuilder: (context, index) {
-                  return VetCard(vet: filteredVets[index]);
-                },
+            : Column(
+                children: [
+                  // ── AI Health Checker Banner ──────────────────────────
+                  _AiHealthBanner(),
+                  // ── Vet List ──────────────────────────────────────────
+                  Expanded(
+                    child: filteredVets.isEmpty
+                        ? const Center(
+                            child: Text('No vets found. Be the first to register!'),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 16),
+                            itemCount: filteredVets.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 24),
+                            itemBuilder: (_, index) =>
+                                VetCard(vet: filteredVets[index]),
+                          ),
+                  ),
+                ],
               ),
-          ],
-        ),
       ),
       bottomNavigationBar: AppBottomNavBar(currentIndex: 2),
     );
   }
 }
 
+// ── AI Health Checker Banner ───────────────────────────────────────────────────
+class _AiHealthBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const PetHealthAiPage()),
+      ),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1A6B8A), Color(0xFF3293B3), Color(0xFF4DB8D4)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF3293B3).withOpacity(0.38),
+              blurRadius: 16,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Paw icon container
+            Container(
+              padding: const EdgeInsets.all(11),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Text('🐾', style: TextStyle(fontSize: 26)),
+            ),
+            const SizedBox(width: 14),
+            // Text column
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'AI Pet Health Checker',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      fontFamily: 'Outfit',
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Check symptoms instantly · AI-powered',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.85),
+                      fontSize: 12,
+                      fontFamily: 'Outfit',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // CTA pill
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'Check Now',
+                style: TextStyle(
+                  color: Color(0xFF3293B3),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  fontFamily: 'Outfit',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class VetCard extends StatelessWidget {
+
   final VetModel vet;
 
   const VetCard({super.key, required this.vet});

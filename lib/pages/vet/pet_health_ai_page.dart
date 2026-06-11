@@ -12,6 +12,7 @@ const _kPrimaryLt = Color(0xFF4DB8D4);
 const _kEmergency = Color(0xFFEF4444);
 const _kMonitor   = Color(0xFF10B981);
 const _kSchedule  = Color(0xFFF59E0B);
+const _kBg        = Color(0xFFF0F9FF);
 
 const _kGradientColors = [_kPrimaryDk, _kPrimary, _kPrimaryLt];
 
@@ -163,7 +164,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: _kBg,
       body: Column(
         children: [
           _buildHeader(),

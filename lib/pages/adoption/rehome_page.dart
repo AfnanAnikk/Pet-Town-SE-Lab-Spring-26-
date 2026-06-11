@@ -15,10 +15,10 @@ class RehomePage extends StatefulWidget {
   });
 
   @override
-  State<RehomePage> createState() => _RehomePageState();
+  State<RehomePage> createState() => RehomePageState();
 }
 
-class _RehomePageState extends State<RehomePage> {
+class RehomePageState extends State<RehomePage> {
   final _formKey = GlobalKey<FormState>();
   
   String? petType;
@@ -31,7 +31,7 @@ class _RehomePageState extends State<RehomePage> {
   String? ownerContact;
   String? description;
 
-  File? _imageFile;
+  File? imageFile;
   bool _isSubmitting = false;
 
   Future<void> _pickImage() async {
@@ -39,7 +39,7 @@ class _RehomePageState extends State<RehomePage> {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
       setState(() {
-        _imageFile = File(picked.path);
+        imageFile = File(picked.path);
       });
     }
   }
@@ -47,7 +47,7 @@ class _RehomePageState extends State<RehomePage> {
   Future<void> _submitAdoption() async {
     if (!_formKey.currentState!.validate()) return;
     
-    if (_imageFile == null) {
+    if (imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please upload an image of the pet.')),
       );
@@ -79,7 +79,7 @@ class _RehomePageState extends State<RehomePage> {
 
     // 1. Upload image to Cloudinary via backend
     String imageUrl = '';
-    final uploadRes = await ApiService.uploadImage(_imageFile!.path);
+    final uploadRes = await ApiService.uploadImage(imageFile!.path);
     
     if (uploadRes['success']) {
       imageUrl = uploadRes['data']['url'];
@@ -114,7 +114,7 @@ class _RehomePageState extends State<RehomePage> {
         _formKey.currentState!.reset();
 
         setState(() {
-          _imageFile = null;
+          imageFile = null;
         });
 
         widget.onSubmitted();
@@ -148,14 +148,14 @@ class _RehomePageState extends State<RehomePage> {
                     border: Border.all(
                       color: const Color(0xFF3293B3).withValues(alpha: 0.35),
                     ),
-                    image: _imageFile != null
+                    image: imageFile != null
                         ? DecorationImage(
-                            image: FileImage(_imageFile!),
+                            image: FileImage(imageFile!),
                             fit: BoxFit.cover,
                           )
                         : null,
                   ),
-                  child: _imageFile == null
+                  child: imageFile == null
                       ? Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [

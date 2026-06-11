@@ -214,6 +214,7 @@ function CommunityEvents() {
 // 3. Pet Salon
 function PetSalons() {
   const [salons, setSalons] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const [selectedSalon, setSelectedSalon] = useState(null);
 
   useEffect(() => {
@@ -223,6 +224,10 @@ function PetSalons() {
         const pending = (d.verifications || []).filter(s => s.status === 'pending');
         setSalons(pending);
       });
+      
+    fetch(`${API_BASE}/salons/appointments`)
+      .then(r => r.json())
+      .then(d => setAppointments(d.appointments || []));
   }, []);
 
   const handleApprove = (id) => {
@@ -268,6 +273,36 @@ function PetSalons() {
           </div>
         </div>
       )}
+
+      <div className="card">
+        <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '24px', color: '#0F172A' }}>Appointments Revenue</h3>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead>
+            <tr>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Booking ID</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Salon</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Customer</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Service Fee</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>App Commission (10%)</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Salon Earns (90%)</th>
+              <th style={{ padding: '16px 0', color: '#64748B', fontWeight: 600, borderBottom: '1px solid #E2E8F0' }}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {appointments.map((a, i) => (
+              <tr key={i}>
+                <td style={{ padding: '16px 0', fontWeight: 'bold', color: '#0F172A', borderBottom: '1px solid #F1F5F9' }}>#{a.booking_id}</td>
+                <td style={{ padding: '16px 0', color: '#475569', borderBottom: '1px solid #F1F5F9' }}>{a.salon_name}</td>
+                <td style={{ padding: '16px 0', color: '#475569', borderBottom: '1px solid #F1F5F9' }}>{a.patient_name}</td>
+                <td style={{ padding: '16px 0', fontWeight: 'bold', color: '#0F172A', borderBottom: '1px solid #F1F5F9' }}>${Number(a.consultation_fee).toFixed(2)}</td>
+                <td style={{ padding: '16px 0', fontWeight: 'bold', color: '#10B981', borderBottom: '1px solid #F1F5F9' }}>${Number(a.platform_share).toFixed(2)}</td>
+                <td style={{ padding: '16px 0', fontWeight: 'bold', color: '#0F172A', borderBottom: '1px solid #F1F5F9' }}>${Number(a.doctor_share).toFixed(2)}</td>
+                <td style={{ padding: '16px 0', color: '#475569', borderBottom: '1px solid #F1F5F9' }}>{a.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {selectedSalon && (
         <div className="modal-overlay" style={{ backdropFilter: 'blur(6px)', background: 'rgba(15, 23, 42, 0.45)' }}>

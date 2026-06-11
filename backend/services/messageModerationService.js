@@ -1,34 +1,39 @@
 const axios = require('axios');
 
 exports.checkMessageSafety = async (text) => {
-  if (!process.env.HUGGINGFACE_API_KEY) {
-    throw new Error('HUGGINGFACE_API_KEY is missing');
-  }
-
-  const response = await axios.post(
-    'https://router.huggingface.co/hf-inference/models/unitary/toxic-bert',
-    {
-      inputs: text
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000
-    }
-  );
-
   let results = [];
-  if (Array.isArray(response.data)) {
-    results = Array.isArray(response.data[0]) ? response.data[0] : response.data;
+  
+  if (!process.env.HUGGINGFACE_API_KEY) {
+    console.warn('HUGGINGFACE_API_KEY is missing. ML moderation will be skipped, but local regex will run.');
+  } else {
+    try {
+      const response = await axios.post(
+        'https://router.huggingface.co/hf-inference/models/unitary/toxic-bert',
+        {
+          inputs: text
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 30000
+        }
+      );
+
+      if (Array.isArray(response.data)) {
+        results = Array.isArray(response.data[0]) ? response.data[0] : response.data;
+      }
+    } catch (apiError) {
+      console.warn('Hugging Face API Error during moderation:', apiError.message);
+    }
   }
 
   const risky = results
     .filter(item =>
       ['toxic', 'threat', 'insult', 'obscene'].includes(
         String(item.label).toLowerCase()
-      )
+      ) && Number(item.score) > 0.6
     )
     .sort((a, b) => Number(b.score) - Number(a.score))[0];
 

@@ -304,6 +304,40 @@ exports.getSalonVerifications = async (req, res) => {
   }
 };
 
+exports.getSalonAppointments = async (req, res) => {
+  try {
+    const [appointments] = await db.execute(`
+      SELECT 
+        b.id as booking_id, 
+        s.name as salon_name, 
+        u.username as patient_name, 
+        s.price as consultation_fee, 
+        b.status 
+      FROM salon_bookings b
+      JOIN salons s ON b.salon_id = s.id
+      JOIN users u ON b.user_id = u.id
+      ORDER BY b.id DESC
+      LIMIT 50
+    `);
+    
+    const processed = appointments.map(a => {
+      const fee = Number(a.consultation_fee) || 0;
+      const platformShare = fee * 0.10;
+      const doctorShare = fee * 0.90;
+      return {
+        ...a,
+        platform_share: platformShare,
+        doctor_share: doctorShare
+      };
+    });
+    
+    res.json({ success: true, appointments: processed });
+  } catch (error) {
+    console.error('Error fetching salon appointments:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 exports.approveSalon = async (req, res) => {
   const { id } = req.params;
 

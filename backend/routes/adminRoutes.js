@@ -30,6 +30,7 @@ router.put('/adoptions/:id/status', adminController.updateAdoptionStatus);
 
 //salons
 router.get('/salons/verifications', adminController.getSalonVerifications);
+router.get('/salons/appointments', adminController.getSalonAppointments);
 router.post('/salons/verifications/:id/approve', adminController.approveSalon);
 router.post('/salons/verifications/:id/deny', adminController.denySalon);
 

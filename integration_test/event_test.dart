@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:pet_town/main.dart' as app;
 import 'package:pet_town/widgets/primary_button.dart';
+import 'package:pet_town/widgets/rolling_text_button.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test credentials – Account 1 creates/manages events; Account 2 receives
@@ -58,6 +59,19 @@ void main() {
   /// Login with [email] / [password] and wait for the home screen.
   Future<void> login(WidgetTester t,
       {required String email, required String password}) async {
+    // If the landing page button is present, we need to bypass onboarding
+    final landingButton = find.byType(RollingTextButton);
+    if (landingButton.evaluate().isNotEmpty) {
+      await t.tap(landingButton);
+      await t.pump(const Duration(seconds: 2));
+
+      // Tap Log In on the LoginMainPage
+      final logInMainBtn = find.widgetWithText(PrimaryButton, 'Log In');
+      await waitFor(t, logInMainBtn);
+      await t.tap(logInMainBtn);
+      await t.pump(const Duration(seconds: 2));
+    }
+
     final emailField = fieldByHint('demo@gmail.com');
     await waitFor(t, emailField);
     await t.enterText(emailField, email);

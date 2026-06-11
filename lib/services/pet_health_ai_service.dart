@@ -10,7 +10,7 @@ import '../models/pet_health_model.dart';
 /// 2. Falls back automatically to the local Naive Bayes model bundled as JSON.
 class PetHealthAIService {
   // ── Replace with your actual Render URL after deploy ──────────────────────
-  static const String _serverUrl = 'https://pet-vet-ai-backend.onrender.com';
+  static const String _serverUrl = 'https://pet-town-se-lab-spring-26-pet-vet-ai.onrender.com';
   static const Duration _timeout = Duration(seconds: 15);
 
   static Map<String, dynamic>? _localModel;

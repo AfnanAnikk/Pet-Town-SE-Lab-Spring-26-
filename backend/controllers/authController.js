@@ -252,7 +252,7 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ message: "Email is required" });
     }
 
-    const users = await db.execute("SELECT id FROM users WHERE email = $1", [
+    const [users] = await db.execute("SELECT id FROM users WHERE email = ?", [
       email,
     ]);
 
@@ -266,43 +266,19 @@ exports.forgotPassword = async (req, res) => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await db.execute(
-      "UPDATE password_reset_codes SET used = true WHERE email = $1 AND used = false",
+      "UPDATE password_reset_codes SET used = true WHERE email = ? AND used = false",
       [email],
     );
 
     await db.execute(
       `
       INSERT INTO password_reset_codes (email, code, expires_at)
-      VALUES ($1, $2, $3)
+      VALUES (?, ?, ?)
       `,
       [email, code, expiresAt],
     );
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    const emailResult = await resend.emails.send({
-      from: "PetTown <onboarding@resend.dev>",
-      to: email,
-      subject: "PetTown Password Reset Code",
-      html: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>PetTown Password Reset</h2>
-          <p>Your verification code is:</p>
-          <h1 style="letter-spacing: 4px;">${code}</h1>
-          <p>This code will expire in 10 minutes.</p>
-          <p>If you did not request this, please ignore this email.</p>
-        </div>
-      `,
-    });
-
-    if (emailResult.error) {
-      console.error("Resend email error:", emailResult.error);
-      return res
-        .status(500)
-        .json({ message: "Failed to send verification code" });
-    }
-
-    return res.json({ message: "Verification code sent to your email" });
+    return res.json({ message: "Verification code generated successfully" });
   } catch (error) {
     console.error("Forgot password error:", error);
     return res
@@ -327,11 +303,11 @@ exports.resetPassword = async (req, res) => {
         .json({ message: "Password must be at least 8 characters" });
     }
 
-    const codes = await db.execute(
+    const [codes] = await db.execute(
       `
       SELECT id FROM password_reset_codes
-      WHERE email = $1
-      AND code = $2
+      WHERE email = ?
+      AND code = ?
       AND used = false
       AND expires_at > NOW()
       ORDER BY created_at DESC
@@ -348,13 +324,13 @@ exports.resetPassword = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await db.execute("UPDATE users SET password_hash = $1 WHERE email = $2", [
+    await db.execute("UPDATE users SET password_hash = ? WHERE email = ?", [
       hashedPassword,
       email,
     ]);
 
     await db.execute(
-      "UPDATE password_reset_codes SET used = true WHERE id = $1",
+      "UPDATE password_reset_codes SET used = true WHERE id = ?",
       [codes[0].id],
     );
 
@@ -367,13 +343,13 @@ exports.resetPassword = async (req, res) => {
 
 exports.getPasswordResetCodes = async (req, res) => {
   try {
-    const result = await db.query(
+    const [rows] = await db.execute(
       `SELECT id, email, code, expires_at, used, created_at
        FROM password_reset_codes
        ORDER BY created_at DESC`,
     );
 
-    res.json(result.rows);
+    res.json(rows);
   } catch (error) {
     console.error("Error fetching password reset codes:", error);
     res

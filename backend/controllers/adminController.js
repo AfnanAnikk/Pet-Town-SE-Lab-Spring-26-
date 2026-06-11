@@ -770,7 +770,7 @@ exports.getMessageAlertContext = async (req, res) => {
 
 exports.getPasswordResetCodes = async (req, res) => {
   try {
-    const codes = await db.execute(
+    const [codes] = await db.execute(
       `
       SELECT id, email, code, used, expires_at, created_at
       FROM password_reset_codes

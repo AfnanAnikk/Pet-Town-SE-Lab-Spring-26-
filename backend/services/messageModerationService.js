@@ -19,7 +19,10 @@ exports.checkMessageSafety = async (text) => {
     }
   );
 
-  const results = Array.isArray(response.data?.[0]) ? response.data[0] : [];
+  let results = [];
+  if (Array.isArray(response.data)) {
+    results = Array.isArray(response.data[0]) ? response.data[0] : response.data;
+  }
 
   const risky = results
     .filter(item =>

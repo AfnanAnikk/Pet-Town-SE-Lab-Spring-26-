@@ -9,12 +9,12 @@ import 'package:pet_town/widgets/primary_button.dart';
 // Test credentials – Account 1 creates/manages events; Account 2 receives
 // invitations & announcements.
 // ─────────────────────────────────────────────────────────────────────────────
-const String _account1Email    = 'eventtest_user1@example.com';
-const String _account1Password = 'Password123';
+const String _account1Email    = 'shafibari@gmail.com';
+const String _account1Password = '6196Bari';
 
-const String _account2Email    = 'eventtest_user2@example.com';
-const String _account2Password = 'Password123';
-const String _account2Username = 'eventtest_user2';
+const String _account2Email    = 'test@gmail.com';
+const String _account2Password = '6196Bari';
+const String _account2Username = 'test@gmail.com';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

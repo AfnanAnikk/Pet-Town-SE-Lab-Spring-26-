@@ -75,6 +75,14 @@ class _LoginPageState extends State<LoginPage> {
     if (!mounted) return;
 
     if (result['success']) {
+      final isBanned = result['data']['user']['is_banned'] == true ||
+          result['data']['user']['is_banned'] == 1;
+
+      if (isBanned) {
+        _showError('Your account has been banned.');
+        return;
+      }
+
       final role = result['data']['user']['role'];
       final serviceType = result['data']['user']['service_type'] ?? '';
 

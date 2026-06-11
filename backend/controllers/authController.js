@@ -65,6 +65,13 @@ exports.login = async (req, res) => {
     }
 
     const user = users[0];
+
+    if (user.is_banned) {
+      return res.status(403).json({
+        message: 'Your account has been banned.'
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
@@ -88,7 +95,8 @@ exports.login = async (req, res) => {
           display_name: user.display_name || null,
           email: user.email,
           role: user.role,
-          service_type: user.service_type || ''
+          service_type: user.service_type || '',
+          is_banned: user.is_banned
         }
       });
     });
@@ -103,7 +111,7 @@ exports.getProfile = async (req, res) => {
   const { id } = req.params;
   try {
     const [users] = await db.execute(
-      'SELECT id, username, display_name, email, phone_number, role, service_type, profile_picture_url FROM users WHERE id = ?',
+      'SELECT id, username, display_name, email, phone_number, role, service_type, profile_picture_url, is_banned FROM users WHERE id = ?',
       [id]
     );
     if (users.length === 0) return res.status(404).json({ message: 'User not found' });

@@ -730,7 +730,7 @@ function ContentSafety() {
                       </button>
 
                       <button onClick={() => handleAction(alertId, 'ban-user')} disabled={alert.is_banned} style={{ padding: '12px 16px', background: '#0F172A', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(15, 23, 42, 0.22)' }}>
-                        {alert.user_warned ? 'User Banned' : 'Ban User'}
+                        {alert.is_banned ? 'User Banned' : 'Ban User'}
                       </button>
 
                       <button onClick={() => handleAction(alertId, 'dismiss')} style={{ padding: '12px 16px', background: '#FFFFFF', color: '#334155', border: '1px solid #CBD5E1', borderRadius: 14, fontWeight: 900, cursor: 'pointer' }}>

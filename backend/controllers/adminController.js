@@ -407,7 +407,6 @@ exports.deleteFlaggedPost = async (req, res) => {
     if (alerts.length === 0) return res.status(404).json({ success: false, message: 'Alert not found' });
 
     await db.execute('DELETE FROM posts WHERE id = ?', [alerts[0].post_id]);
-    await db.execute('UPDATE moderation_alerts SET status = ? WHERE id = ?', ['post_deleted', id]);
 
     res.json({ success: true, message: 'Post deleted' });
   } catch (error) {
@@ -420,7 +419,12 @@ exports.warnFlaggedUser = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const [alerts] = await db.execute('SELECT user_id, post_id FROM moderation_alerts WHERE id = ?', [id]);
+    const [alerts] = await db.execute(`
+      SELECT ma.user_id, ma.post_id, p.title
+      FROM moderation_alerts ma
+      JOIN posts p ON ma.post_id = p.id
+      WHERE ma.id = ?
+    `, [id]);
     if (alerts.length === 0) return res.status(404).json({ success: false, message: 'Alert not found' });
 
     const { user_id, post_id } = alerts[0];
@@ -429,10 +433,14 @@ exports.warnFlaggedUser = async (req, res) => {
 
     await db.execute(
       'INSERT INTO notifications (user_id, type, reference_id, message) VALUES (?, ?, ?, ?)',
-      [user_id, 'warning', post_id, 'Your post may not contain pet-related content. Please keep posts relevant to pets.']
+      [
+        user_id,
+        'warning',
+        post_id,
+        `Your post "${alerts[0].title || 'Untitled post'}" may not contain pet-related content. Please keep posts relevant to pets.`
+      ]
     );
 
-    await db.execute('UPDATE moderation_alerts SET status = ? WHERE id = ?', ['user_warned', id]);
 
     res.json({ success: true, message: 'User warned' });
   } catch (error) {
@@ -449,7 +457,6 @@ exports.banFlaggedUser = async (req, res) => {
     if (alerts.length === 0) return res.status(404).json({ success: false, message: 'Alert not found' });
 
     await db.execute('UPDATE users SET is_banned = true WHERE id = ?', [alerts[0].user_id]);
-    await db.execute('UPDATE moderation_alerts SET status = ? WHERE id = ?', ['user_banned', id]);
 
     res.json({ success: true, message: 'User banned' });
   } catch (error) {

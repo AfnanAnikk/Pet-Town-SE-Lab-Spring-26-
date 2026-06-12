@@ -174,10 +174,12 @@ def load_data():
     df_preg = pd.read_excel(
         os.path.join(DATA_DIR, "Animal_Vet_Pregnancy.xlsx")
     )
+    df_preg_pos = df_preg[df_preg['Pregnancy_Status'].astype(str).str.strip().str.lower() == 'yes']
+    # Sample 25 records to prevent class imbalance skewing the model
+    df_preg_pos = df_preg_pos.sample(n=min(25, len(df_preg_pos)), random_state=42)
+
     preg_count = 0
-    for _, row in df_preg.iterrows():
-        if str(row['Pregnancy_Status']).strip().lower() != 'yes':
-            continue
+    for _, row in df_preg_pos.iterrows():
         species = row['Species'].strip()
         active = []
 

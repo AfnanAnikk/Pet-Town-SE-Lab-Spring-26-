@@ -101,6 +101,25 @@ def predict(req: PredictRequest):
         )
 
         probs = model.predict_proba(features)[0]
+
+        # Prevent false-positive pregnancy predictions if no pregnancy indicators are present
+        pregnancy_indicators = {
+            "Nesting Behavior",
+            "Clear Vaginal Discharge",
+            "Bloody Vaginal Discharge",
+            "Fetal Heart Sound Detected",
+            "Increased Appetite"
+        }
+        has_pregnancy_indicator = any(s in req.symptoms for s in pregnancy_indicators)
+        if not has_pregnancy_indicator:
+            try:
+                preg_idx = encoders["disease"].index("Pregnancy")
+                probs[preg_idx] = 0.0
+                if probs.sum() > 0:
+                    probs = probs / probs.sum()
+            except ValueError:
+                pass
+
         top3  = np.argsort(probs)[::-1][:3]
 
         results = []

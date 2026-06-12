@@ -72,7 +72,20 @@ class PetHealthAIService {
 
     final Map<String, double> scores = {};
 
+    // Prevent false-positive pregnancy predictions locally if no pregnancy indicators are present
+    const pregnancyIndicators = {
+      'Nesting Behavior',
+      'Clear Vaginal Discharge',
+      'Bloody Vaginal Discharge',
+      'Fetal Heart Sound Detected',
+      'Increased Appetite'
+    };
+    final hasPregnancyIndicator = profile.symptoms.any((s) => pregnancyIndicators.contains(s));
+
     for (final disease in priors.keys) {
+      if (disease == 'Pregnancy' && !hasPregnancyIndicator) {
+        continue;
+      }
       double s = math.log((priors[disease] as num).toDouble());
 
       // P(species | disease)

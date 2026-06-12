@@ -52,9 +52,6 @@ const _kSymptomGroups = {
   '🐄 Livestock': ['Decreased Milk Yield', 'Reduced Wool Production'],
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// PAGE
-// ══════════════════════════════════════════════════════════════════════════════
 class PetHealthAiPage extends StatefulWidget {
   const PetHealthAiPage({super.key});
 
@@ -68,7 +65,6 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
   final PageController _pc      = PageController();
   final _tempCtrl               = TextEditingController();
   final _hrCtrl                 = TextEditingController();
-  final _freestyleCtrl          = TextEditingController(); // Controller for NLP mapping Input
 
   late AnimationController _pulseCtrl;
   late AnimationController _fadeCtrl;
@@ -79,13 +75,11 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
   String            _selectedSpecies = 'Dog';
   final Set<String> _selectedSymptoms = {};
 
-  List<ClassifierResult> _results      = [];
-  bool                   _isOffline    = false;
-  bool                   _isLoading    = false;
-  bool                   _isExtracting = false; // NLP loader variable
+  List<ClassifierResult> _results   = [];
+  bool                   _isOffline = false;
+  bool                   _isLoading = false;
   String?                _error;
 
-  // ── Init / Dispose ───────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
@@ -101,8 +95,6 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     );
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOutCubic);
     _fadeCtrl.forward();
-
-    PetHealthAIService.initialize();
   }
 
   @override
@@ -111,12 +103,10 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     _fadeCtrl.dispose();
     _tempCtrl.dispose();
     _hrCtrl.dispose();
-    _freestyleCtrl.dispose();
     _pc.dispose();
     super.dispose();
   }
 
-  // ── Navigation ───────────────────────────────────────────────────────────
   void _goTo(int step) {
     _fadeCtrl.reset();
     setState(() => _step = step);
@@ -126,46 +116,6 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
       curve: Curves.easeInOutCubic,
     );
     _fadeCtrl.forward();
-  }
-
-  // ── NLP Vector Integration Trigger ────────────────────────────────────────
-  Future<void> _extractTextSymptoms() async {
-    final text = _freestyleCtrl.text.trim();
-    if (text.isEmpty) return;
-
-    setState(() => _isExtracting = true);
-    final extracted = await PetHealthAIService.extractSymptoms(text);
-    
-    if (mounted) {
-      setState(() {
-        _isExtracting = false;
-        if (extracted.isNotEmpty) {
-          _selectedSymptoms.addAll(extracted);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'AI auto-selected ${extracted.length} symptom tags!',
-                style: const TextStyle(fontFamily: 'Outfit', fontSize: 13, fontWeight: FontWeight.w500),
-              ),
-              backgroundColor: _kPrimaryDk,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'No structural markers identified. Please utilize selections manually.',
-                style: TextStyle(fontFamily: 'Outfit', fontSize: 13),
-              ),
-              backgroundColor: _kSchedule,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      });
-    }
   }
 
   Future<void> _runAnalysis() async {
@@ -183,7 +133,6 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
       heartRate:   double.tryParse(_hrCtrl.text),
     );
 
-    // Keep scan animation visible for at least 1.5 s
     await Future.delayed(const Duration(milliseconds: 1500));
 
     try {
@@ -195,15 +144,16 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
-    } finally {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceAll('Exception: ', '');
+        });
+      }
+    } final {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // BUILD
-  // ══════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -228,9 +178,6 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // HEADER
-  // ══════════════════════════════════════════════════════════════════════════
   Widget _buildHeader() {
     const steps = ['Species & Vitals', 'Select Symptoms', 'AI Analysis'];
     return Container(
@@ -255,8 +202,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                     Navigator.pop(context);
                   }
                 },
-                icon: const Icon(Icons.arrow_back_ios_new,
-                    color: Colors.white, size: 20),
+                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
               ),
               Container(
                 padding: const EdgeInsets.all(9),
@@ -296,9 +242,6 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // STEP INDICATOR
-  // ══════════════════════════════════════════════════════════════════════════
   Widget _buildStepIndicator() {
     return Container(
       decoration: const BoxDecoration(
@@ -321,9 +264,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                   width: active ? 34 : 26,
                   height: 26,
                   decoration: BoxDecoration(
-                    color: (done || active)
-                        ? Colors.white
-                        : Colors.white.withOpacity(0.28),
+                    color: (done || active) ? Colors.white : Colors.white.withOpacity(0.28),
                     borderRadius: BorderRadius.circular(13),
                   ),
                   child: Center(
@@ -334,9 +275,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: active
-                                  ? _kPrimary
-                                  : Colors.white.withOpacity(0.55),
+                              color: active ? _kPrimary : Colors.white.withOpacity(0.55),
                             ),
                           ),
                   ),
@@ -347,9 +286,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                       height: 2,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
-                        color: i < _step
-                            ? Colors.white
-                            : Colors.white.withOpacity(0.28),
+                        color: i < _step ? Colors.white : Colors.white.withOpacity(0.28),
                         borderRadius: BorderRadius.circular(1),
                       ),
                     ),
@@ -362,9 +299,6 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // STEP 1 — Species & Vitals
-  // ══════════════════════════════════════════════════════════════════════════
   Widget _buildStep1() {
     return FadeTransition(
       opacity: _fadeAnim,
@@ -389,7 +323,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
             _sectionLabel('🌡️ Vitals (Optional)'),
             const SizedBox(height: 4),
             Text(
-              'Leave blank if unknown — AI will use species-average values.',
+              'Leave blank if unknown — server AI models will apply baseline averages.',
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontSize: 12,
@@ -400,15 +334,11 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
             Row(
               children: [
                 Expanded(
-                  child: _vitalField(
-                    _tempCtrl, 'Temperature', '38.5', '°C', Icons.thermostat,
-                  ),
+                  child: _vitalField(_tempCtrl, 'Temperature', '38.5', '°C', Icons.thermostat),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _vitalField(
-                    _hrCtrl, 'Heart Rate', '90', 'bpm', Icons.favorite_border,
-                  ),
+                  child: _vitalField(_hrCtrl, 'Heart Rate', '90', 'bpm', Icons.favorite_border),
                 ),
               ],
             ),
@@ -437,13 +367,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
             width: selected ? 2.2 : 1,
           ),
           boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: _kPrimary.withOpacity(0.25),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  )
-                ]
+              ? [BoxShadow(color: _kPrimary.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 3))]
               : [],
         ),
         child: Column(
@@ -466,18 +390,12 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     );
   }
 
-  Widget _vitalField(
-    TextEditingController ctrl,
-    String label,
-    String hint,
-    String unit,
-    IconData icon,
-  ) {
+  Widget _vitalField(TextEditingController ctrl, String label, String hint, String unit, IconData icon) {
     return TextField(
       controller: ctrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')), // Strict floating points parsing block
       ],
       style: const TextStyle(fontFamily: 'Outfit', fontSize: 14),
       decoration: InputDecoration(
@@ -486,9 +404,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
         hintText: hint,
         suffixText: unit,
         prefixIcon: Icon(icon, color: _kPrimary, size: 18),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: Colors.grey.shade300),
@@ -504,207 +420,73 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // STEP 2 — Symptom Picker (With AI Free-Text Integration)
-  // ══════════════════════════════════════════════════════════════════════════
   Widget _buildStep2() {
     return FadeTransition(
       opacity: _fadeAnim,
       child: Column(
         children: [
-          // Header row
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
             child: Row(
               children: [
-                _sectionLabel('Determine Present Symptoms'),
+                _sectionLabel('Check all symptoms present'),
                 const Spacer(),
                 if (_selectedSymptoms.isNotEmpty)
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _kPrimary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: _kPrimary, borderRadius: BorderRadius.circular(20)),
                     child: Text(
                       '${_selectedSymptoms.length} selected',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontFamily: 'Outfit',
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'Outfit', fontWeight: FontWeight.w600),
                     ),
                   ),
               ],
             ),
           ),
-          
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                // ── AI Freestyle Observation Box ──
-                Container(
-                  margin: const EdgeInsets.only(top: 8, bottom: 12, left: 4, right: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200, width: 1.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text('⚡', style: TextStyle(fontSize: 15)),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Natural Case Observation (Optional)',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12.5,
-                              color: Colors.grey.shade800,
-                              fontFamily: 'Outfit',
-                            ),
-                          ),
-                        ],
+              children: _kSymptomGroups.entries.map((entry) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 14, bottom: 8),
+                      child: Text(
+                        entry.key,
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: _kPrimaryDk, fontSize: 13, fontFamily: 'Outfit'),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Describe symptoms or behavioral deviations in plain text. The system maps statements instantly to corresponding checkboxes.',
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5, fontFamily: 'Outfit', height: 1.35),
-                      ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _freestyleCtrl,
-                        maxLines: 3,
-                        style: const TextStyle(fontSize: 13.5, fontFamily: 'Outfit'),
-                        decoration: InputDecoration(
-                          hintText: "Example: My horse is breathing hard, coughing frequently, and showing slight nasal discharge since yesterday...",
-                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontFamily: 'Outfit'),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade200)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade200)),
-                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
-                          contentPadding: const EdgeInsets.all(12),
-                          filled: true,
-                          fillColor: _kBg.withOpacity(0.2),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton.icon(
-                          onPressed: _isExtracting ? null : _extractTextSymptoms,
-                          icon: _isExtracting 
-                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: _kPrimary))
-                            : const Icon(Icons.bolt, size: 15),
-                          label: Text(
-                            _isExtracting ? 'Mapping Core Models...' : 'Auto-Toggle Tags',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, fontFamily: 'Outfit'),
-                          ),
-                          style: TextButton.styleFrom(
-                            foregroundColor: _kPrimary,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                  child: Text(
-                    'Categorized Sign Parameters',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13.5,
-                      color: _kPrimaryDk.withOpacity(0.8),
-                      fontFamily: 'Outfit',
                     ),
-                  ),
-                ),
-
-                // Symptom chips grouped by category
-                ..._kSymptomGroups.entries.map((entry) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12, bottom: 8, left: 4),
-                        child: Text(
-                          entry.key,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: _kPrimaryDk,
-                            fontSize: 13,
-                            fontFamily: 'Outfit',
-                          ),
-                        ),
-                      ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: entry.value.map((sym) {
-                          final on = _selectedSymptoms.contains(sym);
-                          return GestureDetector(
-                            onTap: () => setState(() {
-                              on
-                                  ? _selectedSymptoms.remove(sym)
-                                  : _selectedSymptoms.add(sym);
-                            }),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: on ? _kPrimary : Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: on ? _kPrimary : Colors.grey.shade300,
-                                  width: on ? 0 : 1,
-                                ),
-                                boxShadow: on
-                                    ? [
-                                        BoxShadow(
-                                          color: _kPrimary.withOpacity(0.28),
-                                          blurRadius: 6,
-                                          offset: const Offset(0, 2),
-                                        )
-                                      ]
-                                    : [],
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: entry.value.map((sym) {
+                        final on = _selectedSymptoms.contains(sym);
+                        return GestureDetector(
+                          onTap: () => setState(() {
+                            on ? _selectedSymptoms.remove(sym) : _selectedSymptoms.add(sym);
+                          }),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: on ? _kPrimary : Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: on ? _kPrimary : Colors.grey.shade300, width: on ? 0 : 1),
+                              boxShadow: on ? [BoxShadow(color: _kPrimary.withOpacity(0.28), blurRadius: 6, offset: const Offset(0, 2))] : [],
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                if (on)
-                                  const Padding(
-                                    padding: EdgeInsets.only(right: 5),
-                                    child: Icon(Icons.check,
-                                        size: 13, color: Colors.white),
-                                  ),
+                                if (on) const Padding(padding: EdgeInsets.only(right: 5), child: Icon(Icons.check, size: 13, color: Colors.white)),
                                 Text(
                                   sym,
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontFamily: 'Outfit',
-                                    fontWeight: on
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                    color: on
-                                        ? Colors.white
-                                        : Colors.grey.shade700,
+                                    fontWeight: on ? FontWeight.w600 : FontWeight.normal,
+                                    color: on ? Colors.white : Colors.grey.shade700,
                                   ),
                                 ),
                               ],
@@ -716,33 +498,19 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                   ],
                 );
               }).toList(),
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
-          
-          // Bottom navigation actions bar
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             decoration: BoxDecoration(
               color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, -3),
-                )
-              ],
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, -3))],
             ),
             child: Row(
               children: [
-                Expanded(
-                  child: _outlineButton('← Back', () => _goTo(0)),
-                ),
+                Expanded(child: _outlineButton('← Back', () => _goTo(0))),
                 const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: _primaryButton('🔍 Analyze Now', _runAnalysis),
-                ),
+                Expanded(flex: 2, child: _primaryButton('🔍 Analyze Now', _runAnalysis)),
               ],
             ),
           ),
@@ -751,9 +519,6 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // STEP 3 — Results View
-  // ══════════════════════════════════════════════════════════════════════════
   Widget _buildStep3() {
     if (_isLoading) return _buildScanAnimation();
     if (_error != null) return _buildErrorState();
@@ -761,7 +526,6 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     return _buildResultsList();
   }
 
-  // ── Scan animation ────────────────────────────────────────────────────────
   Widget _buildScanAnimation() {
     return Center(
       child: Column(
@@ -777,37 +541,21 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _kPrimary.withOpacity(0.07 + 0.06 * _pulseCtrl.value),
-                  border: Border.all(
-                    color:
-                        _kPrimary.withOpacity(0.35 + 0.3 * _pulseCtrl.value),
-                    width: 2.5,
-                  ),
+                  border: Border.all(color: _kPrimary.withOpacity(0.35 + 0.3 * _pulseCtrl.value), width: 2.5),
                 ),
-                child: const Center(
-                  child: Text('🐾', style: TextStyle(fontSize: 50)),
-                ),
+                child: const Center(child: Text('🐾', style: TextStyle(fontSize: 50))),
               );
             },
           ),
           const SizedBox(height: 30),
           const Text(
             'Analyzing symptoms…',
-            style: TextStyle(
-              fontSize: 19,
-              fontWeight: FontWeight.bold,
-              color: _kPrimaryDk,
-              fontFamily: 'Outfit',
-            ),
+            style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: _kPrimaryDk, fontFamily: 'Outfit'),
           ),
           const SizedBox(height: 8),
           Text(
-            'Checking ${_selectedSymptoms.length} symptom'
-            '${_selectedSymptoms.length == 1 ? '' : 's'} for $_selectedSpecies',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontFamily: 'Outfit',
-              fontSize: 13,
-            ),
+            'Checking ${_selectedSymptoms.length} symptom${_selectedSymptoms.length == 1 ? '' : 's'} for $_selectedSpecies',
+            style: TextStyle(color: Colors.grey.shade600, fontFamily: 'Outfit', fontSize: 13),
           ),
           const SizedBox(height: 24),
           SizedBox(
@@ -824,42 +572,29 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     );
   }
 
-  // ── Results list ──────────────────────────────────────────────────────────
   Widget _buildResultsList() {
     return FadeTransition(
       opacity: _fadeAnim,
       child: Column(
         children: [
-          // Offline banner
           if (_isOffline)
             Container(
               margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border:
-                    Border.all(color: Colors.orange.shade200),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.orange.shade200)),
               child: Row(
                 children: [
                   const Text('📴', style: TextStyle(fontSize: 16)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Offline Mode — Local AI model active (server unreachable)',
-                      style: TextStyle(
-                        color: Colors.orange.shade800,
-                        fontSize: 12,
-                        fontFamily: 'Outfit',
-                      ),
+                      'Offline Mode Active',
+                      style: TextStyle(color: Colors.orange.shade800, fontSize: 12, fontFamily: 'Outfit'),
                     ),
                   ),
                 ],
               ),
             ),
-          // Result cards
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -867,30 +602,21 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
               itemBuilder: (_, i) => _resultCard(_results[i], i),
             ),
           ),
-          // Bottom CTAs
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             decoration: BoxDecoration(
               color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, -3),
-                )
-              ],
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, -3))],
             ),
             child: Column(
               children: [
-                _primaryButton(
-                  '🏥 Find a Vet Near You',
-                  () => Navigator.pop(context),
-                ),
+                _primaryButton('🏥 Find a Vet Near You', () => Navigator.pop(context)),
                 const SizedBox(height: 10),
                 _outlineButton('← Check Again', () {
                   setState(() {
                     _selectedSymptoms.clear();
-                    _freestyleCtrl.clear();
+                    _tempCtrl.clear(); // Pristine environment purge execution
+                    _hrCtrl.clear();
                     _results   = [];
                     _isOffline = false;
                   });
@@ -905,16 +631,8 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
   }
 
   Widget _resultCard(ClassifierResult r, int index) {
-    final urgencyColor = r.urgency == 'Emergency'
-        ? _kEmergency
-        : r.urgency == 'Monitor'
-            ? _kMonitor
-            : _kSchedule;
-    final urgencyEmoji = r.urgency == 'Emergency'
-        ? '🔴'
-        : r.urgency == 'Monitor'
-            ? '🟢'
-            : '🟡';
+    final urgencyColor = r.urgency == 'Emergency' ? _kEmergency : r.urgency == 'Monitor' ? _kMonitor : _kSchedule;
+    final urgencyEmoji = r.urgency == 'Emergency' ? '🔴' : r.urgency == 'Monitor' ? '🟢' : '🟡';
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -929,56 +647,27 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.07),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            )
-          ],
-          border: index == 0
-              ? Border.all(color: _kPrimary.withOpacity(0.35), width: 1.5)
-              : null,
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 16, offset: const Offset(0, 4))],
+          border: index == 0 ? Border.all(color: _kPrimary.withOpacity(0.35), width: 1.5) : null,
         ),
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
             tilePadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            childrenPadding:
-                const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             expandedCrossAxisAlignment: CrossAxisAlignment.start,
             title: Row(
               children: [
                 if (index == 0) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: _kPrimary,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      'Top Match',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Outfit',
-                      ),
-                    ),
+                    decoration: BoxDecoration(color: _kPrimary, borderRadius: BorderRadius.circular(8)),
+                    child: const Text('Top Match', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, fontFamily: 'Outfit')),
                   ),
                 ],
                 Expanded(
-                  child: Text(
-                    r.disease,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: _kPrimaryDk,
-                      fontFamily: 'Outfit',
-                    ),
-                  ),
+                  child: Text(r.disease, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: _kPrimaryDk, fontFamily: 'Outfit')),
                 ),
               ],
             ),
@@ -989,54 +678,31 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                 children: [
                   Row(
                     children: [
-                      // Urgency badge
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: urgencyColor.withOpacity(0.10),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: urgencyColor.withOpacity(0.45)),
+                          border: Border.all(color: urgencyColor.withOpacity(0.45)),
                         ),
-                        child: Text(
-                          '$urgencyEmoji ${r.urgency}',
-                          style: TextStyle(
-                            color: urgencyColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Outfit',
-                          ),
-                        ),
+                        child: Text('$urgencyEmoji ${r.urgency}', style: TextStyle(color: urgencyColor, fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'Outfit')),
                       ),
                       const Spacer(),
-                      // Confidence %
-                      Text(
-                        '${r.confidence.toStringAsFixed(1)}%',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: _kPrimary,
-                          fontSize: 14,
-                          fontFamily: 'Outfit',
-                        ),
-                      ),
+                      Text('${r.confidence.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold, color: _kPrimary, fontSize: 14, fontFamily: 'Outfit')),
                     ],
                   ),
                   const SizedBox(height: 9),
-                  // Animated confidence bar
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0.0, end: r.confidence / 100),
-                      duration: Duration(
-                          milliseconds: 900 + index * 200),
+                      duration: Duration(milliseconds: 900 + index * 200),
                       curve: Curves.easeOutCubic,
                       builder: (_, v, __) => LinearProgressIndicator(
                         value: v,
                         minHeight: 6,
                         backgroundColor: Colors.grey.shade100,
-                        valueColor:
-                            AlwaysStoppedAnimation(urgencyColor),
+                        valueColor: AlwaysStoppedAnimation(urgencyColor),
                       ),
                     ),
                   ),
@@ -1044,14 +710,11 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
               ),
             ),
             children: [
-              _infoRow(Icons.info_outline, 'Description',
-                  r.description, _kPrimaryDk),
+              _infoRow(Icons.info_outline, 'Description', r.description, _kPrimaryDk),
               const Divider(height: 20, thickness: 0.7),
-              _infoRow(Icons.healing_outlined, 'Treatment',
-                  r.treatment, _kMonitor),
+              _infoRow(Icons.healing_outlined, 'Treatment', r.treatment, _kMonitor),
               const Divider(height: 20, thickness: 0.7),
-              _infoRow(Icons.shield_outlined, 'Prevention',
-                  r.prevention, _kPrimary),
+              _infoRow(Icons.shield_outlined, 'Prevention', r.prevention, _kPrimary),
             ],
           ),
         ),
@@ -1059,12 +722,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     );
   }
 
-  Widget _infoRow(
-    IconData icon,
-    String label,
-    String text,
-    Color color,
-  ) {
+  Widget _infoRow(IconData icon, String label, String text, Color color) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1074,24 +732,9 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  color: color,
-                  fontFamily: 'Outfit',
-                ),
-              ),
+              Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: color, fontFamily: 'Outfit')),
               const SizedBox(height: 2),
-              Text(
-                text.isEmpty ? '—' : text,
-                style: const TextStyle(
-                  fontSize: 13,
-                  height: 1.45,
-                  fontFamily: 'Outfit',
-                ),
-              ),
+              Text(text.isEmpty ? '—' : text, style: const TextStyle(fontSize: 13, height: 1.45, fontFamily: 'Outfit')),
             ],
           ),
         ),
@@ -1099,7 +742,6 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     );
   }
 
-  // ── Empty & Error states ──────────────────────────────────────────────────
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -1109,24 +751,12 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
           children: [
             const Text('✅', style: TextStyle(fontSize: 64)),
             const SizedBox(height: 16),
-            const Text(
-              'No Conditions Detected',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: _kPrimaryDk,
-                fontFamily: 'Outfit',
-              ),
-            ),
+            const Text('No Conditions Detected', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _kPrimaryDk, fontFamily: 'Outfit')),
             const SizedBox(height: 10),
             Text(
-              'The AI found no symptom patterns that match known conditions. Your pet may be perfectly healthy!',
+              'The AI found no symptom patterns that match known conditions.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontFamily: 'Outfit',
-                height: 1.5,
-              ),
+              style: TextStyle(color: Colors.grey.shade600, fontFamily: 'Outfit', height: 1.5),
             ),
             const SizedBox(height: 28),
             _primaryButton('← Try Again', () => _goTo(0)),
@@ -1145,45 +775,23 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
           children: [
             const Text('⚠️', style: TextStyle(fontSize: 64)),
             const SizedBox(height: 16),
-            const Text(
-              'Something went wrong',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Outfit',
-              ),
-            ),
+            const Text('Analysis Failed', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Outfit')),
             const SizedBox(height: 8),
             Text(
-              _error ?? '',
+              _error ?? 'An unexpected error occurred.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.red,
-                fontFamily: 'Outfit',
-              ),
+              style: const TextStyle(fontSize: 13, color: Colors.red, fontFamily: 'Outfit'),
             ),
             const SizedBox(height: 28),
-            _primaryButton('Try Again', _runAnalysis),
+            _primaryButton('🔄 Retry Analysis', _runAnalysis),
           ],
         ),
       ),
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // SHARED WIDGETS
-  // ══════════════════════════════════════════════════════════════════════════
   Widget _sectionLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 15,
-        color: _kPrimaryDk,
-        fontFamily: 'Outfit',
-      ),
-    );
+    return Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: _kPrimaryDk, fontFamily: 'Outfit'));
   }
 
   Widget _primaryButton(String label, VoidCallback onTap) {
@@ -1195,19 +803,11 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
         style: ElevatedButton.styleFrom(
           backgroundColor: _kPrimary,
           foregroundColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 4,
           shadowColor: _kPrimary.withOpacity(0.38),
         ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Outfit',
-          ),
-        ),
+        child: Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, fontFamily: 'Outfit')),
       ),
     );
   }
@@ -1220,18 +820,9 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: _kPrimary, width: 1.6),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: _kPrimary,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Outfit',
-          ),
-        ),
+        child: Text(label, style: const TextStyle(color: _kPrimary, fontSize: 14, fontWeight: FontWeight.w600, fontFamily: 'Outfit')),
       ),
     );
   }

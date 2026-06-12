@@ -182,14 +182,33 @@ def predict(req: PredictRequest):
             if conf < 5.0: continue
             name = encoders["disease"][idx]
             info = disease_info.get(name, {})
+            
+            desc = str(info.get("description", "")).strip()
+            treat = str(info.get("treatment", "")).strip()
+            prev = str(info.get("prevention", "")).strip()
+            
+            urg = get_urgency(name)
+            
+            if not desc or desc.lower() in ("nan", "none", "null"):
+                desc = "Clinical medical condition."
+            
+            if not treat or treat.lower() in ("nan", "none", "null"):
+                if urg == "Emergency":
+                    treat = "Seek emergency veterinary care immediately. Do not delay."
+                else:
+                    treat = "Consult a veterinarian for detailed treatment and diagnosis."
+            
+            if not prev or prev.lower() in ("nan", "none", "null"):
+                prev = "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
+                
             results.append(
                 PredictResult(
                     disease=name,
                     confidence=conf,
-                    urgency=get_urgency(name),
-                    description=info.get("description", "No details available."),
-                    treatment=info.get("treatment", "Consult a vet."),
-                    prevention=info.get("prevention", "Maintain general hygiene care."),
+                    urgency=urg,
+                    description=desc,
+                    treatment=treat,
+                    prevention=prev,
                 )
             )
         return results

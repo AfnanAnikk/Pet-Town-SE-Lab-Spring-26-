@@ -1119,6 +1119,82 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
   }
 
   Widget _infoRow(IconData icon, String label, String text, Color color) {
+    final cleanText = text.trim();
+    final isNan = cleanText.toLowerCase() == 'nan' || cleanText.toLowerCase() == 'null' || cleanText.isEmpty;
+
+    Widget contentWidget;
+    if (isNan) {
+      String fallback = '—';
+      if (label == 'Description') {
+        fallback = 'Clinical medical condition.';
+      } else if (label == 'Treatment') {
+        fallback = 'Consult a veterinarian for detailed treatment and diagnosis.';
+      } else if (label == 'Prevention') {
+        fallback = 'Maintain general hygiene and follow regular veterinary guidelines.';
+      }
+      contentWidget = Text(
+        fallback,
+        style: const TextStyle(
+          fontSize: 13,
+          height: 1.45,
+          fontFamily: 'Outfit',
+        ),
+      );
+    } else {
+      final points = cleanText
+          .split(';')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+
+      if (points.length <= 1) {
+        contentWidget = Text(
+          points.isEmpty ? '—' : points.first,
+          style: const TextStyle(
+            fontSize: 13,
+            height: 1.45,
+            fontFamily: 'Outfit',
+          ),
+        );
+      } else {
+        contentWidget = Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: points.map((pt) => Padding(
+              padding: const EdgeInsets.only(bottom: 5),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, right: 8),
+                    child: Container(
+                      width: 5,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      pt,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.45,
+                        fontFamily: 'Outfit',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )).toList(),
+          ),
+        );
+      }
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1138,14 +1214,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                text.isEmpty ? '—' : text,
-                style: const TextStyle(
-                  fontSize: 13,
-                  height: 1.45,
-                  fontFamily: 'Outfit',
-                ),
-              ),
+              contentWidget,
             ],
           ),
         ),

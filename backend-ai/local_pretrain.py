@@ -442,19 +442,50 @@ def build_and_train():
         for _, row in df_info.iterrows():
             name = row.get('Unnamed: 0')
             if pd.isna(name): continue
+            
+            desc = str(row.get('Description', '')).strip()
+            treat = str(row.get('Treatment', '')).strip()
+            prev = str(row.get('Advice/ Prevention', '')).strip()
+            
+            # Clean values
+            if desc.lower() in ('nan', 'none', 'null', ''):
+                desc = 'Clinical medical condition.'
+            if treat.lower() in ('nan', 'none', 'null', ''):
+                treat = 'Consult a veterinarian for detailed treatment and diagnosis.'
+            if prev.lower() in ('nan', 'none', 'null', ''):
+                prev = 'Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups.'
+                
             info_map[clean_disease_name(name)] = {
-                'description': str(row.get('Description', '')).strip(),
-                'treatment': str(row.get('Treatment', '')).strip(),
-                'prevention': str(row.get('Advice/ Prevention', '')).strip(),
+                'description': desc,
+                'treatment': treat,
+                'prevention': prev,
             }
             
-    # Add safety fallbacks for any disease not in encyclopedia
+    # Add safety fallbacks for any disease not in encyclopedia, and clean any existing values
     for d in encoders_json["disease"]:
         if d not in info_map:
             info_map[d] = {
                 'description': 'Clinical medical condition.',
                 'treatment': 'Consult a veterinarian for detailed systemic tracking.',
                 'prevention': 'Maintain diagnostic tracking and clear habitat management protocols.'
+            }
+        else:
+            entry = info_map[d]
+            desc = str(entry.get('description', '')).strip()
+            treat = str(entry.get('treatment', '')).strip()
+            prev = str(entry.get('prevention', '')).strip()
+            
+            if desc.lower() in ('nan', 'none', 'null', ''):
+                desc = 'Clinical medical condition.'
+            if treat.lower() in ('nan', 'none', 'null', ''):
+                treat = 'Consult a veterinarian for detailed treatment and diagnosis.'
+            if prev.lower() in ('nan', 'none', 'null', ''):
+                prev = 'Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups.'
+                
+            info_map[d] = {
+                'description': desc,
+                'treatment': treat,
+                'prevention': prev,
             }
             
     with open(os.path.join(OUTPUT_DIR, "disease_info.json"), "w") as f:

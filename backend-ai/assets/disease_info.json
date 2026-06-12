@@ -32,7 +32,7 @@
   "Eye Inflammation (cats and Dogs)": {
     "description": "Anterior uveitis, also known as the red eye syndrome, occurs when the uvea which is the part of the eye which consists of blood vessels becomes inflamed. It could threaten the animals\u2019 vision since it also affects the iris and the surrounding pupil tissue. There are various causes including autoimmune disease, tumours, metabolic disease, trauma or injury and infections.",
     "treatment": ";Take care to ensure that the living environment is well kept to avoid contracting a rare eye disease. ;Take time everyday to inspect your pets\u2019 eye for any changes. ;It is very challenging to instil the drops or ointment in your dog\u2019s or cat\u2019s eye, however do not give up since the sake of going blind is in your hands.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Gastrointestinal and Digestive Disorders (cats and Dogs)": {
     "description": "A gastrointestinal disorder or disease - when the pet is suffering from a stomach, intestinal or any other related problem. A digestive disorder -when the passage of food through the digestive tract is altered or there is a reduction in absorption or digestion. A normal digestive process is paramount in a pet as essential nutrients and minerals are absorbed from the food that a dog or cat is fed. These are required primarily for energy and to support the repair and growth of body tissues. Any change in the gastrointestinal system can result in; malnutrition, electrolyte imbalance, dehydration and changes in acid base concentrations of the blood. Different types of Gastrointestinal and digestive disorders: ;Acute gastroenteritis; inflammation or infection or both of the stomach and intestines. This can be caused by eating high fat people food, rancid food, foreign objects or toxic plants. It can also be due to stress, food allergies or internal parasites. ;Colitis; inflammation of the colon which manifests as pain upon defecating. It is most frequently associated with tumours, change in food, swallowed foreign objects or allergies. ;Diarrhoea; results from infection, internal parasites, stress, rancid food or a change in diet. ;Constipation; mainly due to dehydration, increasing age, indigestion of hair or other foreign material and can also be due to tumours. ;Small intestinal malabsorption",
@@ -52,7 +52,7 @@
   "Black Quarter (black Leg)": {
     "description": "It is an acute infectious and highly fatal, bacterial disease of cattle. Buffaloes, sheep and goats are also affected. Young cattle between 6-24 months of age, in good body condition are mostly affected. It is soil-borne infection which generally occurs during rainy season. In India, the disease is sporadic (1-2 animal) in nature. Causal organism: it is a bacterial disease caused by Clostridium chauvoei. Common\r\ndisease for cattle\r\nand sheep but\r\noccasionally\r\ngoats and pigs\r\nalso suffer from\r\nthe disease.",
     "treatment": "\u2022 Early treatment can be possible to complete cure of the animal. \u2022 Consult with veterinarian immediately. Affected animals may be\r\ntreated with suitable\r\nantibiotics. Vaccination to be\r\ndone in consultation with the\r\nveterinarians and as decided\r\nby state animal husbandry\r\nauthorities. Strict biosecurity\r\nmeasures may be followed.\r\nGrazing area may be\r\nrestricted. Carcass may be\r\ndisposed hygienically.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Kidney Disease (cats and Dogs)": {
     "description": "The kidneys are responsible to remove waste substances from the blood and maintain a healthy fluid balance within the body. They are also known as life sustaining organs, meaning if the kidneys are not functioning well, life-threatening situations may arise. Kidney disease can be either acute or chronic. Acute kidney disease can be a result of; certain drugs, poisons, trauma, surgical stress, infection, obstructed urine flow, shock, blood loss and severe dehydration. Chronic kidney disease is irreversible and progressive. The same factors as for acute disease play a role however hereditary and breed tendencies, immune system defects and nutritional factors are responsible.",
@@ -76,7 +76,7 @@
   },
   "Rabies (mad Dog Disease)": {
     "description": "Rabies is a disease of dogs, foxes, wolves, hyaenas and in some places, it is a disease of bats which feed on blood. The disease is passed to other animals or to people if they are bitten by an animal with rabies. The germs which cause rabies live in the saliva of the sick (rabid) animal. This is a killer disease but not every dog which bites is infected with rabies. When the rabid animal bites another animal or human, the germs which live in its saliva pass into the body through the wound caused by the bite. The germs travel along the nerves to the brain. The time between the bite and the first appearance of signs that the bitten animal or human has been infected can take from 2 to 10 weeks or more. The time taken depends on the distance of the bite from the brain. If the bite is on the face or head, the bitten animal or human will quickly show signs, but if the bite is on the leg it will take much longer for signs to develop.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "Dogs in your community can be vaccinated against rabies. You should ask your veterinary service about vaccination against rabies. If there is an outbreak of rabies, the livestock in your community can be vaccinated too."
   },
   "Weight Management (cats and Digs)": {
@@ -92,7 +92,7 @@
   "Bluetongue": {
     "description": "Bluetongue, a disease which is transmitted by midges, infects domestic and wild ruminants and also camelids, however sheep are particularly badly affected. Cattle, although infected more frequently than sheep, do not always show signs of disease. Virus spreads between animals occurs via the midges of Cullicoides species. The likelihood of mechanical transmission between herds and flocks, or indeed within a herd or flock, by unhygienic practices (the use of contaminated surgical equipment or hypodermic needles) may be a possibility. Sheep are more\rsusceptible than\rgoats.",
     "treatment": "Vector control using insecticides and good water management. Vaccination of susceptible animals preferably in the month of May. Do not shear sheep during winter months. Restriction in animal movement, segregation of affected animals and symptomatic treatment. Strict biosecurity measures.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Dental Disease (rabbit)": {
     "description": "The teeth are really important for a rabbit. Without the front teeth known as the incisors, the rabbit cannot strip, cut and snip. The tongue is used to push the collected food back to the grinding teeth where these break the harsh fibre down into small pieces that can be swallowed. Chewing all day is a lot of work on the teeth and eventually teeth wears down. However to allow chewing all day, the teeth grow faster than normal teeth would, therefore if the rabbit eats a low fibre diet the teeth won\u2019t wear down at a fast rate and result in overgrown teeth.",
@@ -106,23 +106,23 @@
   },
   "Listeriosis": {
     "description": "Listeriosis is a bacterial infection most commonly caused by Listeria monocytogenes,[1] although L. ivanovii and L. grayi have been reported in certain cases. Listeriosis can cause severe illness, including severe sepsis, meningitis, or encephalitis, sometimes resulting in lifelong harm and even death",
-    "treatment": "nan",
-    "prevention": "nan"
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Heat Stroke (rabbit)": {
     "description": "Heatstroke occurs when a rabbit gets too hot and is unable to regulate their body temperature. Heatstroke is a serious illness for rabbits and can prove fatal. A rabbit\u2019s enclosure should ideally be between 10-20 degrees celsius. In the wild, the temperature of their underground warrens stays at around 10 degrees celsius between winter and summer. However, there\u2019s a fine line as rabbits can start to show signs of heatstroke at 25 degrees celsius. Keep a watchful eye on your rabbit on warmer days, there are some really easy things that you can do to keep your rabbit cool and happy when the sun is out.",
     "treatment": ";Cool water should be available at all times. ;Bathing with cold water during warm weather is ideal, but never attempt to put a rabbit suspected of having a heat stroke under cold running water. ;Provide shady areas and out of direct sunlight. ;Take great care when air conditioning your rabbit because temperature elevation may occur more rapidly after predisposing to heat. ;Grooming your rabbit helps to remove all that excess hair. ;Do not forget to keep your rabbit well hydrated by providing fresh vegetables since they are a good source of water.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Mastitis": {
     "description": "Mastitis, or inflammation of the mammary gland, is the most common and the most expensive disease of dairy cattle throughout most of the world. Although stress and physical injuries may cause inflammation of the gland, infection by invading bacteria or other microorganisms (fungi, yeasts and possibly viruses) is the primary cause of mastitis. Infections begin when microorganisms penetrate the teat canal and multiply in the mammary gland.",
     "treatment": "\u2022 success depends on the nature of the aetiological agent involved, the severity of the disease and the extent of fibrosis. \u2022 complete recovery with freedom from bacterial infection can be obtained in cases of recent infection and in those where fibrosis has taken place only to a small extent. \u2022 such drugs as acriflavine, gramicidin and tyrothricin have now ceased to be in use, and have given place to the more effective drugs, such as sulphonamides, penicillin and streptomycin.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Footrot": {
     "description": "Foot rot is a common cause of lameness in cattle and occurs most frequently when cattle on pasture are forced to walk through mud to obtain water and feed. However, it may occur among cattle in paddocks as well, under apparently excellent conditions. Foot rot is caused when a cut or scratch in the skin allows infection to penetrate between the claws or around the top of the hoof. Individual cases should be kept in a dry place and treated promptly with medication as directed by a veterinarian. If the disease becomes a herd problem a foot bath containing a 5% solution of copper sulphate placed where cattle are forced to walk though it once or twice a day will help to reduce the number of new infections. In addition, drain mud holes and cement areas around the water troughs where cattle are likely to pick up the infection. Keep pens and areas where cattle gather as clean as possible. Proper nutrition regarding protein, minerals and vitamins will maximize hoof health.",
-    "treatment": "nan",
-    "prevention": "nan"
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Bovine Rhinotracheitis": {
     "description": "Infectious bovine rhinotracheitis (IBR) is a highly contagious, infectious respiratory disease that is caused by bovine herpesvirus-1 (bhv-1). It can affect young and older cattle. In addition to causing respiratory disease, this virus can cause conjunctivitis, abortions, encephalitis, and generalised systemic infections. Ibr is characterized by acute inflammation of the upper respiratory tract.",
@@ -136,7 +136,7 @@
   },
   "Piglet Diarrhea or Scour": {
     "description": "of all the diseases in the sucking piglet, diarrhea is the most common and probably the most important. In some outbreaks, it is responsible for high morbidity and mortality. The main bacterial causes are E. Coli and Clostridia and the main parasite is Coccidia.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "\u2022 adopt procedures to prevent the spread of the scour - disinfect boots between pens, use a disposable plastic apron when dosing piglets to prevent heavy contamination of clothing, wash hands after handling a scoured litter, disinfect brushes and shovels between pen. \u2022 ensure that farrowing houses are only used on an all-in all-out basis with a pressure wash and disinfection between each batch. \u2022 farrowing pens must be dry before the house is repopulated. Remember that moisture, warmth, waste food and faeces are ideal for bacterial multiplication. \u2022 pen floors should be well maintained. Poor pen hygiene associated with bad drainage predisposes to scour. \u2022 look carefully at the part of the pen floor where there are piglet faeces. Is this poorly drained? Do large wet patches develop? If so cover them with extra bedding daily and remove. This is a most important aspect of control. \u2022 check nipple drinkers and feeding troughs for leakages. \u2022 ensure that faeces are removed daily from behind the sow from the day she enters the farrowing crates until at least 7 days post-farrowing if the floors are slatted. Also remove faeces daily throughout lactation if they are solid concrete. \u2022 maintain creep environments that are always warm and comfortable. Fluctuating temperatures are a major trigger factor to scour particularly from 7 to 14 days of age. \u2022 assess the environment of all the farrowing house. Poor environments allow heavy bacterial multiplication and a much higher bacterial challenge is likely to break down the colostral immunity. \u2022 check the sow's health. Animals affected with enteric or respiratory disease, lameness or mastitis predispose the litter to scour. \u2022 where farrowing house floors are very poor, pitted and difficult to clean, brush them over with lime wash containing a phenolic disinfectant. \u2022 Colostrum management : it is vital that the piglet receives the maximum amount of colostrum within the first 12 hours of birth. High levels of antibody are only absorbed during this period. Factors such as poor teat access, poor crate design, and particularly the development of agalactia in the sow, associated with udder oedema, reduce intake."
   },
   "Myxomatosis (rabbit)": {
@@ -162,7 +162,7 @@
   "Ppr (goat Plague)": {
     "description": "PPR (Peste des petits ruminants) is a most important viral disease of goat capable of heavy mortality and commonly called as goat plague.",
     "treatment": "No specific treatment is recommended for PPR being viral disease. However, mortality rates can be reduced by the use of drugs that control the bacterial and parasitic complications. Lesions around the eyes, nostrils and mouth should be cleaned twice daily with sterile cotton swab. Immediate isolation of affected goats from clinically healthy goats is most importance measure in controlling the spread of infection. Nutritious soft, moist, palatable diet should be given to the affected goats. Provide parenteral energy infusion in anorectic goats along with appetizers. Immediately measures should be taken for notification of disease to nearest government veterinary hospital.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Ulcerative Pododermatitis (rabbit)": {
     "description": "Ulcerative pododermatitis is commonly referred to as sore hocks where the footpad appears to be crusted, swollen and even bleeding. This can even spread to a bone infection known as osteomyelitis and lead to death. Sore hocks can result from excessive weight due to pressure of the skin on wired floor cages or from trauma. other factors can play a role in predisposing the rabbit such as, nervousness, genetics, heavy breed, urine soaked faeces, type of wire used and posterior paralysis after a spinal cord injury.",
@@ -171,7 +171,7 @@
   },
   "Bovine Babesiosis (tick Fever)": {
     "description": "Bovine babesiosis, also known as \"Red Water\", is a disease caused by the protozoan parasite Babesia. It's found in areas where ticks are common, and is transmitted when ticks feed on infected cattle. Ticks can then pass the parasite on to the larvae they produce. Cattle. Cross\r\nbreeds are more\r\nsusceptible.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "Effective control of tick fevers has been achieved by a combination of measures directed at both the disease and the tick vector. Tick control by acaracide dipping is widely used in endemic areas. Dipping may be done as frequently as every 4-6 weeks in heavily infested areas. The occurrence of resistance of ticks, chemical residues in cattle and environmental concerns over the continued use of insecticides has led to use of integrated strategies for tick control. Babesiosis vaccines are readily available and are highly effective. Anti-tick vaccines are also available in some countries and can be used as part of an integrated program for the control of ticks. Babesiosis can be eradicated by eliminating the host tick(s). In the us, this was accomplished by treating all cattle every two to three weeks with acaricides. In countries where eradication is not feasible, tick control can reduce the incidence of disease. Periodical application of\r\nacaricides in and around the\r\nanimal shed and on the\r\nanimals. For therapeutic\r\napplication, Diaminazine or\r\nImidocarb can be useful."
   },
   "Coccidiosis (pigeons)": {
@@ -196,8 +196,8 @@
   },
   "Calf Scour": {
     "description": "Calves may develop scours due to bacterial or virus infections. Scours is known as \"calf scours\" or neonatal calf diarrhea. The primary causes of scours include: Rota virus, Corona virus, Cryptosporidium parvum, Salmonella and Escherichia coli.",
-    "treatment": "nan",
-    "prevention": "nan"
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Infectious Catarrh": {
     "description": "Infectious catarrh is a disease of the respiratory tract which often results because of mixed infections (mycoplasma, viruses, fungi and trichomonads). The birds\u2019 resistance to infection is reduced due to the pathogenic bacteria developed (pasteurella, cocci and coli bacteria) and also due to factors within the loft environment.",
@@ -236,12 +236,12 @@
   },
   "Canine Coronavirus": {
     "description": "This is an intestinal infection that is highly contagious and affects both wild and domesticated dogs. The virus is limited to the upper two thirds of the small intestines. A lot of the time there may be no symptoms and the infection will clear up by itself. However this infection can be problematic for puppies and dogs that have other infections such as parvovirus.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "If you suspect your puppy may have contracted Coronavirus it is important to get him to the vets as it can be fatal for a puppy."
   },
   "Canine Distemper": {
     "description": "Canine distemper is a very serious viral disease. It can be transmitted through the air from dog to dog. It is highly contagious and there is no known cure, which is why it is very important that you get your dog vaccinated against it.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "If you suspect that your dog has contracted canine distemper, contact your vet immediately. Do not take your dog into the vets until you have notified the receptionist, otherwise you may infect other dogs."
   },
   "Trichomoniasis (pigeon)": {
@@ -251,43 +251,43 @@
   },
   "Canine Hepatitis": {
     "description": "Canine Hepatitis, commonly known as Rubarth Disease is a viral disease that is often mistaken for canine distemper. It can be transmitted via faeces, urine, blood and saliva.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "If you suspect that your dog has contracted canine hepatitis, contact your vet immediately. Don\u2019t let him come into contact with any other dog and clear up his faeces."
   },
   "Canine Influenza": {
     "description": "Canine Influenza is a highly contagious respiratory viral infection that can cause kennel cough. It is easily transmitted between dogs in close proximity to each other.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "If you think your dog may have influenza contact your vet immediately as failure to treat the virus could lead to secondary complications such as pneumonia."
   },
   "Canine Parainfluenza": {
     "description": "Canine parainfluenza is a contagious respiratory virus that can be transmitted via contact with infected dogs, shared bowls, and beddings. The virus can spread quickly between dogs that are kept in close contact such as dogs in kennels. Your vet will give you antibiotics for you to treat your dog.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "If you suspect your dog has contracted Canine Parainfluenza contact your vets immediately."
   },
   "Kennel Cough": {
     "description": "Also known as canine tracheobronchitis, kennel cough is a highly contagious and infectious disease. It is transmitted through the air, usually in areas where there is a dense population of dogs such as a kennel or a show. The treatment for kennel cough is usually administered as a nasal spray, although there is an injection available for dogs who find it extremely uncomfortable.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "If your dog shows these symptoms contact your vet immediately. Do not take your dog into the vets until you have notified the receptionist, otherwise you may infect other dogs."
   },
   "Wet Droppings (pigeons)": {
     "description": "The pigeons\u2019 state of health can be analysed through the appearance, composition and smell of the faeces. Normal gut contents leave the intestinal tract in the form of a paste (like toothpaste) as contents thicken during their way out and urine is thickened and excreted as uric acid crystals with faeces appearing as white constituents. Changes in faeces can be due to many possible causes such as; ;Change of weather; low temperature, humidity, drafts. ;Psychological stress; racing season, agitation of individual pigeon, vaccinations, exhibitions, changes in the loft layout and feeding times. ;Disturbance in the fluid balance leading to loss of water, minerals and trace elements; changes in type of feed, intolerance to certain feed.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": ";Eliminate any of the possible causes which can result in wet droppings. o Avoid temperature changes, especially in the very hot and very cold months; use air-extractors. o Avoid changes in the loft layout and feeding times. o Provide supplements for stress which pigeons develop before a race. o Take care when changing type of food; inspect faeces produced by pigeons for any intolerance to any ingredient in the feed. ;Diarrhoea results in loss of water, minerals and trace elements. It is important to replace this loss to stabilise the flora of the gut; use electrolytes. ;Do not provide bath water."
   },
   "Milk Fever": {
     "description": "Milk fever, also known as Parturient hypocalcaemia and parturient paresis, is a disease which has assumed considerable importance with the development of heavy milking cows. Decrease in the levels of ionized calcium in tissue fluids is basically the cause of the disease. In all adult cows, there is a fall in serum-calcium level with the onset of lactation at calving. The disease usually occurs in 5 to 10 year-old cows, and is chiefly caused by a sudden decrease in blood-calcium level, generally within 48 hours after calving.",
-    "treatment": "nan",
-    "prevention": "nan"
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Leptospirosis": {
     "description": "Leptospirosis is caused by a bacteria and is usually contracted from contaminated water, so try and prevent your dog from drinking out of any puddles, ponds, lakes, reservoirs or canals. The bacteria mainly comes from the urine of rats, pigs and cattle, which makes farms the most likely place for the disease to be transmitted.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "If you suspect that your dog has contracted leptospirosis, contact your vet immediately."
   },
   "Parvovirus": {
     "description": "Canine parvovirus is a life-threatening and highly contagious viral disease. It can be contracted from infected dog faeces, food and water bowls, clothes and carpets. It is very important that you have your dog vaccinated against parvovirus as it is highly contagious and can live on objects for months.",
-    "treatment": "nan",
-    "prevention": "nan"
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Young Bird Sickness (pigeons)": {
     "description": "This infectious disease is responsible for several deaths amongst young pigeons. The pathogens involved are both bacteria and viruses and are transmitted by air, direct contact between birds and through contaminated water and feed.",
@@ -296,7 +296,7 @@
   },
   "Ranikhet Disease": {
     "description": "Ranikhet disease, also known in the West as Newcastle disease is a contagious and highly fatal daises of flows. In spite of the notable work done towards its control, this disease still ranks as one of the most serious virus diseases of poultry. The disease occurs in almost all countries and usually assumes a server form affecting birds of all ages. Mortality in flows varies from 50 to 100 per cent. Ranikhet disease is largely a disease of flows, but it also effects turkeys, pigenosn, grows, ducks, geese, koel pheasants, guinea-flows, partridges and doves. hedgehogs have been suspected as reservoirs of the disease. The disease is also suspected to cause conjunctivitis among laboratory workers and persons handling infected birds.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "Control of Ranikhet diseases can be effect with judicious application of sanitary and vaccination measures."
   },
   "Ibd Infectious Bursal Disease": {
@@ -312,42 +312,42 @@
   "Fowl Pox": {
     "description": "Avian pox, caused by a poxvirus, is one of the oldest known infectious disease of birds. There are many different strains of the avian pox virus but most are species specific. However, some strains have the ability to infect birds across different families. While avian pox infections in wild birds are often mild and self-limiting, some \r\noutbreaks cause high mortality rates. Birds native to isolated islands are \r\nparticularly susceptible to this disease. In Hawaii, avian pox has negatively \r\nimpacted many species of native birds. Avian pox can lead to significant losses \r\nwhen many captive birds are housed in close quarters. The virus can also spread \r\nbetween wild and captive birds (see Transmission).",
     "treatment": "There is no known treatment for avian pox in wild birds. In captive birds, a variety of treatments have been used along with supportive cate to treat the pox lesions and prevent secondary infections. These methods will not eliminate the virus, and the disease will run its course with or without treatment.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Enterotoxaemia": {
     "description": "Common disease of sheep and goats especially among the young animals",
     "treatment": "Affected animals May be treated with suitable antibiotics. Vaccination to be done in consultation with the veterinarians and as decided by State Animal Husbandry Authorities. Strict biosecurity measures may be followed. Carcass may be disposed hygienically. Grazing area to be restricted, stall fed, vitamins and probiotics May be provided.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Fascioliasis": {
     "description": "Cattle, buffalo, sheep and goats.",
     "treatment": "The animal should not be allowed to graze in water stagnant fields or submerged fodder should not be given directly to the animals. The submerged fodder can be processed through hay/silage preparation, where metacercaria will die through this process. The affected animals can be treated by Carbon tetrachloride/ Rafoxanide/Nitroxynil/ Niclofolan /Closantel/oxyclozanide, under Veterinarian and under strict supervision.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Haemorrhagic Septicaemia (hs)": {
     "description": "Common disease for cattle and buffaloes but also occur among other species such as pigs, sheep, goats and many wild animals.",
     "treatment": "Affected animals may be treated with suitable antibiotics. Vaccination to be done in consultation with the veterinarians and as decided by state animal husbandry authorities. Strict biosecurity measures may be followed. Carcass may be disposed hygienically and stress factors may be reduced by good animal husbandrypractices",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Peste Despetits Ruminants": {
     "description": "Goats and sheep are most affected domestic animals.",
     "treatment": "Vaccination of susceptible animals of above 3 months old age. Restriction on animal movement, strict biosecurity measures and proper disposal of carcass.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Sheep and Goat Pox (sgp)": {
     "description": "Sheep and Goats",
     "treatment": "Vaccination of susceptible animals of above 3 months old age. Symptomatic treatment of affected animals. Restriction on animal movement, strict biosecurity measures and proper disposal of carcass.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Theileriosis": {
     "description": "Large Ruminants. Cross bred cattle are more vulnerable.",
     "treatment": "Periodical application of acaricides in and around the animal shed and on the animals. Therapeutic treatment of Buparvaquone can be useful in both early and advanced stages of the infection.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Trypanosomiasis": {
     "description": "Domestic and wild carnivores and herbivores including cattle, buffalo, horse, donkey, camel, dog and cats. Buffaloes are known as carriers",
     "treatment": "The affected animal should be treated with Diaminazine compounds or chloride and sulphate salts of Quinapyramine. Periodical spray of insecticide in and around animal shed to remove the flies",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Bloating (cattle)": {
     "description": "Distention of the abdomen from excess gas in the rumen, which can compress the respiratory system causing asphyxiation or heart failure. Frothy bloat is caused by rapid intake of high protein foods (legume pastures, fine ground grains), where the gas can\u2019t be eructated (burping) as it is trapped in layer of foam. Free gas bloat is caused by an obstruction or functional problem preventing normal eructation of rumen gas.",
@@ -357,57 +357,57 @@
   "Heat Stroke (cattle)": {
     "description": "The condition involves the increase of body temperature to an extreme point. Unreasonably high temperatures in an animal that seemed completely healthy a few hours ago would be above 106\u00baF-107\u00b0F. Therefore, on a very hot and humid summer day, it would be wise\u2014indeed, necessary\u2014to check an animal that is down or otherwise depressed to see what her temperature is. Most times, a typical heat stroke will be 106\u00b0F-108\u00b0F. If the temperature is above 108\u00b0F, like 109\u00b0F-110\u00b0F, the cow (or horse) will either not recover fully or recover at all since that level of temperature causes brain damage. Check the temperature of the worst-affected animal to know where she is on the temperature spectrum. on the worst days, normal cows will have elevated temperatures in the range of 103\u00b0F or so when they are coming in from pasture or when in the barnyard congregated together. Simple heat stress can deteriorate into heat stroke in animals that have had pneumonia at some point in the past (look in the health record) or in just-fresh older cows with low blood calcium levels.",
     "treatment": "- Keep the cattle in cool and windy place; continuously irrigate cool water into the rectum. - Spray cool water on the body and use fan. - If the cow is convulsive or nervous, we have to take the blood out from the jugular vein to prevent congestion and lung edema. - Medical treatment: + Infuse NaHCo3 500ml + Give drinking water mixing with NaHCo3 in hot season + Anagin 1ml/20kg weight + Caffeine 1ml/20kg weight + B-complex, Vitamin C - Give 5 liter of green tea water (100 gram dried green tea or 500 gram fresh tea with one liter of hot water, add 500 gram of sugar + 4 liter of clean water). This method can help the animal to recover faster.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Poisoned Diseases (cattle)": {
-    "description": "nan",
+    "description": "Clinical medical condition.",
     "treatment": "Find out the cause so that we can stop poisoning. - Keep the cattle in windy and cool place in summer time, warm place in winter time - Inject caffeine or camphor. - Inject antianxiety - Inject Vitamin K, Vitamin C - Antitoxic: infuse salty serum solution or isotonic glucose 2l/100kg weight. - Give orezon solution for drinking: 20gr in 10 litters of water. Let the cattle drink as much as possible. other treatments: - Treating bloating if have - Treating diarrhea with antibiotics, \u2026",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Traumatic Pericarditis": {
     "description": "Pericarditis is inflammation of the pericardium with accumulation of serous or fibrinous inflammatory products (Gr\u00fcnder, 2002). It is associated with progressive disturbances in heart function and almost always results in death.\nIn cattle, pericarditis is usually caused by long, thin sharp foreign bodies (wire, needles, nails) that penetrate the reticulum, diaphragm and pericardial sac (Fig. 1) resulting in traumatic pericarditis (Fig. 2). Pericarditis attributable to haematogenous spread of infectious diseases (such as colibacillosis, pasteurellosis, salmonellosis and anaerobic infections) is much less common (Gr\u00fcnder, 2002) and is usually masked by signs of septicaemia (Gr\u00fcnder, 2002). Idiopathic pericarditis, which is seen in humans, dogs and horses, is rare in cattle (Jesty et al., 2005).",
     "treatment": "Give magnet to fix foreign body, to stop injuring omasum and periotonaeum - Antibiotics: Penicilin 15.000 UI/1kg weight + Streptomycin 5-10mg/kg weight continuous in 7 days",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Trypanosoma Theileri (blood Parasite)": {
     "description": "Trypanosoma theileri or markedly similar trypanosomes have been detected in peripheral blood from cattle on every continent. Infection with similar trypanosomes also has been detected in domestic and wild buffalo and various other wild ungulates. In the few areas studied, transmission is by contamination after a cycle of development in species of tabanid flies. Although most parasitemias are subpatent, the trypanosomes may be seen in a blood smear being examined for pathogenic protozoa or in a hemocytometer chamber. Pathogenicity has never been proved experimentally.",
     "treatment": "Muscle injection: Azidin 1,18g mixed in distilled water (one tube in 5-7ml distilled water), 1tube for 150-200kg body weight, once per day, continue treatment in 2 -3 days.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Anaplasmosis (bllod Parasite)": {
     "description": "Anaplasmosis is a blood cell parasite of cattle with a worldwide distribution, but the disease is most common in tropical and subtropical areas. Anaplasma marginale is the most common organism involved in cattle, and it is transmitted through the bite of Dermacentor spp. ticks or tabanid flies, as well as through the use of blood-contaminated instruments. As a result, transmission is highest during heavy tick and fly seasons. Severe outbreaks of the disease can occur when na\u00efve animals are moved into an endemic area or carrier animals are moved into a herd in a nonendemic area. Death losses in such herds can approach 50%. Mature cattle are the most susceptible to severe clinical signs of the disease while cattle under six months of age generally show no signs.",
     "treatment": "- Mix Rivanol 0,2 - 0,4g in 150ml water, after that steam and purify by filter paper. Cool the solution down to 40 -450C and mix again with 60-70ml of 90o surgical spirit, infuse in to the vein when the solution temperature is 36-37oC - Blood transfusion: 1-2 liter of blood, once every 2 days, transfuse 3-4 times",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Babesiolosis and Theleriosis (bllod Parasite)": {
     "description": "\"Babesiosis and theileriosis are blood parasitic diseases in animals caused by protozoa transmitted by ticks: \nBabesiosis\nCaused by the protozoa of the genus Babesia, which infect red blood cells (RBCs). Babesiosis is transmitted by ixodid ticks and can affect a variety of mammals, including cattle, horses, sheep, goats, swine, cats, and dogs. It can be fatal and is characterized by fever, anemia, hemoglobinuria, and jaundice. \nTheileriosis\nCaused by the protozoa of the genus Theileria, which infect both RBCs and white blood cells (WBCs). Theileriosis is mainly transmitted by ticks of the genus Rhipicephalus and can affect ruminants. It can cause anemia, fever, decreased appetite, weight loss, lethargy, and respiratory signs.\"",
     "treatment": "Medication: - Berenil: 1tube in 15ml of distilled water, muscle injection, 1tube/500kg weight - Sangavet: 1 pack in 15ml distilled water, muscle injection, 1 pack/300kg weight - Azidin: same dose as treatment of Trypanosis, treat in 2 -3 days - Blood transfusion: 1-2 liter of blood, once every 2 days, transfuse 3-4 times",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Lumpy Skin Disease(lsd)": {
     "description": "A viral disease of cattle and water buffalo that causes relatively few deaths, however, the disease can result in animal welfare issues and significant production losses. LSD does not pose a risk to human health.",
-    "treatment": "nan",
+    "treatment": "Consult a veterinarian for detailed treatment and diagnosis.",
     "prevention": "\u2022 Transmission \u2014 LSD virus is spread by biting insects including certain species of flies, mosquitoes and possibly ticks. It can also be spread by movement of infected animals or contaminated products and equipment."
   },
   "Faciolosis": {
     "description": "Fascioliasis is infection with the liver fluke Fasciola hepatica, which is acquired by eating contaminated watercress or other water plants. Clinical manifestations include abdominal pain and hepatomegaly. Diagnosis is by serology or detection of eggs in stool, duodenal aspirates, or bile specimens. Treatment is with triclabendazole or possibly nitazoxanide",
     "treatment": "Medication: - Han-deptil B, oral drinking 1tablet/50kg weight - Tolzan F, oral drinking 1 tablet/100kg weight Give special care to the diseased cattle",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Diarrhea (cattle)": {
     "description": "Diarrhea, also known as scours, is a common condition in cattle that occurs when the intestines are unable to absorb fluids",
     "treatment": "ive less feed of stop feeding the calf, reduce rich protein feed. - Give orezon, isotonic glucose as much as possible. - Infuse NaCl 0,9% 1.000ml + If the cause is bacteria: Antibiotic: Kanamycin,Tetracylin, Neomycin, Sulphamides, Ampicilin, Colistin\u2026 or other specific remedy for diarrhea available in market. + If the cause is parasite: - Deworming: Levamysol 7,5%, 1 ml/10kg weight Hanmectin 25, 2ml/25kg weight",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Ascaris": {
     "description": "Ascaris can affect cattle in a number of ways, including:\nAscaris lumbricoides\nThis swine ascarid can cause pneumonia in cattle. Symptoms include elevated temperature, respiratory and heart rate, coughing, and dyspnea. These symptoms usually appear 7-14 days after exposure to ascarid ova. Toxocara vitulorum\nThis white worm is found in the small intestine of calves under 6 months old. Eggs appear in the feces of calves as early as 3 weeks old. Heavy infections can cause diarrhea, weight loss, and death. Ascaris suum\nThis parasite can cause clinical disease and death in cattle, especially in young stock. Symptoms include dyspnea, coughing, forced expiration, mouth breathing, and emphysema.",
     "treatment": "Medication: - Tayzu: oral drinking, a 4g pack /20kg weight - Han mectin 25: injection, 4ml/50kg weight - Levamisol 10% injection, 1ml/10kg weight - Han-Deptil B: oral drinking, 1tablet/50kg weight",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Lung Worm (cattle)": {
     "description": "Lungworm infection, also known as verminous bronchitis or verminous pneumonia, is an inflammatory disease of the lower respiratory tract caused by a variety of nematodes. Coughing and dyspnea are the most common clinical signs, which can be exacerbated by concomitant bacterial or viral infections. The Baermann technique is used to detect first-stage larvae in fecal samples. In some countries, an ELISA test is available to detect antibodies against Dictyocaulus viviparus; however, interpretation is hampered by persistent titers. Treatment and control of bovine lungworm is achieved primarily via strategic use of anthelmintics, although an orally administered vaccine is available in some countries.\n\nAn infection of the lower respiratory tract, usually resulting in bronchitis or pneumonia, can be caused by any of several parasitic nematodes, including:\n\nDictyocaulus viviparus in cattle, llamas, and alpacas\n\nD filaria in goats, sheep, llamas, and alpacas\n\nD eckerti and D cervi in deer\n\nD arnfieldi in donkeys and horses\n\nProtostrongylus rufescens and Muellerius capillaris in sheep and goats\n\nMetastrongylus apri, M pudendotectus, and M salmi in pigs\n\noslerus osleri, Crenosoma vulpis, and Eucoleus aerophilus in dogs\n\nAelurostrongylus abstrusus and E aerophilus in cats\n\nother lungworm infections occur but are less common.\n\nSpecies of Dictyocaulus belong to the superfamily Trichostrongyloidea and have direct life cycles. E aerophilus belongs to the Trichuroidea and is thought to have a direct life cycle. other species belong to the Metastrongyloidea superfamily and, except for o osleri, have indirect life cycles. Some nematodes that inhabit the right ventricle and pulmonary circulation, eg, Angiostrongylus vasorum and Dirofilaria immitis, which affect both dogs and cats in certain areas of the world, may be associated with pulmonary disease. Clinical signs relate to a cardiac or pulmonary disease, or a combination of both may occur.",
     "treatment": "njection, 4ml/50kg weight - Mevenbet or Levamisol, injection, 2ml/10kg weight",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Abscess": {
     "description": "Damaged and infected body tissue from abrasions or skin penetrations (thorns, sharp objects during feeding or rubbing, improper injection technique) causing a swelling response and pus accumulation surrounded by thick fibrous capsule. This can occur in all areas of the body",
@@ -417,7 +417,7 @@
   "Pnuemonia (cattle)": {
     "description": "Pneumonia refers to inflammation of the lungs. It may be accompanied by inflammation of the larger airways (bronchioles) and referred to as bronchopneumonia, or by inflammation of the pleura (outer surface of the lung, adjacent to the chest wall) and referred to as pleuropneumonia. \n\nPneumonia in cattle is often caused by infectious agents, particularly by a combination of bacteria and viruses. Pneumonia in cattle, also known as bovine respiratory disease (BRD), is influenced by a complex causal web involving a range of animal, management, and agent factors. The presence of infectious agents alone may not be sufficient to cause disease. Many potential stressors associated with the export process can predispose cattle to pneumonia including transportation, mixing of cattle from different sources, dietary changes and reduction in feed and/or water intake, changes in weather, dust and other respiratory irritants such as ammonia, and alterations in ventilation. The rapid, deep, open mouth breathing associated with heat stress is believed to facilitate the inhalation of organisms deep into the airways. \n\nA number of viral, bacterial, and Mycoplasma pathogens may be involved. Many are normal inhabitants of the upper respiratory tract of cattle that can become serious opportunistic pathogens. \n\nInfectious agents associated with BRD include:\nViruses: bovine herpesvirus 1 (BHV-1 or IBR), parainfluenza virus type-3 (PI-3), bovine respiratory syncytial virus (BRSV), bovine coronavirus (BCV), bovine viral diarrhoea virus (BVD), and adenoviruses.\nBacteria: Mannheimia haemolytica, Pasteurella multocida, Histophilus somni, Arcanobacterium pyogenes, Salmonella sp., and Mycoplasma sp.\nThe most common form of severe BRD is a bacterial bronchopneumonia involving one or more of the bacterial agents identified above. The viruses (and perhaps Mycoplasma) are thought to be initial infective agents that act to compromise respiratory defence mechanisms and allow the bacteria to penetrate into the lower airways and alveoli causing more severe disease. \n\nSerious outbreaks of pneumonia occur sometimes in the export process, especially on long sea voyages. The full extent of disease is usually only appreciated when the lungs of slaughtered animals are examined at necropsy or processing.",
     "treatment": "ecause this is a bacteria disease, we use antibiotics for treatment: - Penicilin 15.000 UI/1kg weight + Streptomycin 5-10mg/kg weight - Kanamycin 1ml/10kg weight - Ampi-kana 10mg/kg weight - Tylosin 1ml/10kg weight - Gentamycin 6-8ml/100kg weight Muscle injection, continue in 3-5 days, twice a day. Besides, we can additionally treat with anti-fever, caffeine, etc.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Acidosis": {
     "description": "A sudden change in diet to high concentrate (rapidly fermentable) grains builds lactic acid in the gut, which can cause organ damage. Severely affected cattle die within 24 hours, others recover slowly but are often chronically lame.",
@@ -427,12 +427,12 @@
   "Navel Infection (cattle)": {
     "description": "Navel infection, also known as navel ill or omphalitis, is a bacterial infection that occurs in the umbilicus (navel) of newborn calves. It can be caused by bacteria from the environment or skin entering the calf through the navel shortly after birth",
     "treatment": "Disinfection the navel part - Antibiotic: - Gentamycin 6-8ml/100kg weight - Tetramycin LA 1ml/10kg weight",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Pasteurellosis (cattle)": {
     "description": "Pasteurellosis is a bacterial infection caused by Pasteurella bacteria. Pasteurella multocida is the species which most commonly infects humans. Pasteurella multocida can also infect cattle, rabbits, cats and dogs. Pasteurella infection in cattle is an opportunistic infection. The bacteria are normally found in the upper respiratory tract, but disease occurs when the animals normal defenses are compromised.",
     "treatment": "se is Gram (-) bateria, we can use following antibiotics: - Penicinin mixing with Streptomycin - Kanamycin - Gentamycin - Tylosin..... Continue in 3-5 days, dose is the same as it for treatment of pneumonia We can additionally treat with anti-fever, vitamins, caffeine and special care.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Acetonaemia (ketosis, Fatty Liver)": {
     "description": "Insufficient energy from feed deprivation or inadequate feed (especially in pregnant animals) or inappetence from stress or disease (displaced abomasum, metritis or lameness) causes low blood sugar that results in fat breakdown by the liver creating ketones. Can result in death. Cattle that are old, fat, pregnant or lactating are at a higher risk.",
@@ -442,12 +442,12 @@
   "Mastitis (cattle)": {
     "description": "This is one of the biggest problems causing big economic loss in dairy farming",
     "treatment": "Depending on type of bacteria, the cause we select suitable medicine: - Cloxacilin 200g + Ampicillin 75mg, pump into the teat once per day, in 3 -5 days continuously - Penicillin 100.000UI + Streptomycin 1g, pump into the teat once per day, in 3 -5 days continuously - Mastijet Fort, Cloxaman, pump into the teat, 1 tube/teat, once per day, in 3 -5 days continuously - Hanocilin: Muscle injection or under skin injection 1ml/10kg weight, in 3 -5 days continuously - Hancoli: Muscle injection 1ml/10kg weight, in 3 -5 days continuously - Tetramycin *LA: Muscle injection 1ml/10kg weight, in 3 -5 days, continuously Notice: Before pumping antibiotics, we have to remove all milk out. For dry cow, beside above drugs, we can use following medicine: - Penicillin 100.000UI + Kanamycin 1g: pump into the teat once per day, in 3 -5 days continuously - Procacium penicillin 10.000UI + Furaltadone 500mg: pump into the teat once per day, in 3 -5 days continuously - Beside antibiotics we can use vitamins and other tonic medicines and keep the cow in clean place. Especially, if the cause is fungi or Mycoplasma, antibiotics will not be effective. For treatment of these cases, have to keep the cattle in hygiene environment and do milking 5 -6 times a day continuously until it recovers.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Tuberculosis (cattle)": {
     "description": "Chronic disease caused by Mycobacterium tuberculosis. It is dangerous for people who drink milk of cow with TB for they may be infected with TB.",
     "treatment": "ntibiotics treatment: - Kanamycin: muscle injection, 2ml/15kg weight, once/day, continue in 5-7days - Streptomycin: muscle injection, 1g/50kg weight, once/day, continue in 5-7days - Ampicillin: muscle injection, 1ml/10kg weight, once/day, continue in 5-7days We can additionally inject vitamins, tonics, caffeine, \u2026 When we find TB cow, we should kill immediately to prevent from infecting to human, other cattle and animal.",
-    "prevention": "nan"
+    "prevention": "Maintain general hygiene, follow regular vaccination schedules, and schedule routine veterinary checkups."
   },
   "Actinobacillosis (wooden Tongue)": {
     "description": "open cuts become infected by the bacteria Actinobacillus ligniersii resulting in inflammation of the tongue. The tongue becomes hard and stiff, causing issues with consuming food and water.",

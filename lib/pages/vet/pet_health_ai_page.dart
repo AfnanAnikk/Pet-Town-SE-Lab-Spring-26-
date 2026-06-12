@@ -36,6 +36,7 @@ const _kSymptomGroups = {
     'Sneezing',
     'Labored Breathing',
     'Nasal Discharge',
+    'Eye Discharge',
   ],
   '🧬 Digestive': [
     'Vomiting',
@@ -43,6 +44,8 @@ const _kSymptomGroups = {
     'Appetite Loss',
     'Increased Appetite',
     'Dehydration',
+    'Digestive Issues',
+    'Excessive Drooling',
   ],
   '🩺 Systemic': [
     'Fever',
@@ -52,17 +55,24 @@ const _kSymptomGroups = {
     'Swollen Joints',
     'Swollen Legs',
     'Skin Lesions',
+    'Itching / Scratching',
+    'Hair Loss',
+    'Parasites',
+    'Weakness / Stiffness',
   ],
-  '👁️ Eye / Ear': ['Eye Discharge'],
+  '👁️ Eye / Ear': [
+    'Ear Infections',
+  ],
   '🐾 Behavioral': [
     'Nesting Behavior',
     'Restless Behavior',
     'Aggressive Behavior',
     'Lameness',
   ],
-  '🤰 Pregnancy Signs': [
+  '🤰 Pregnancy & Urgent Signs': [
     'Clear Vaginal Discharge',
     'Bloody Vaginal Discharge',
+    'Purulent Vaginal Discharge',
     'Fetal Heart Sound Detected',
   ],
   '🐄 Livestock': ['Decreased Milk Yield', 'Reduced Wool Production'],
@@ -509,40 +519,75 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
                 // ── NEW: FREESTYLE NLP TEXT FIELD WORKSPACE CARD ─────────────────────
+                // ── PREMIUM AI SYMPTOM PARSER CARD ──────────────────────────────
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: _kPrimary.withOpacity(0.2)),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white,
+                        _kBg.withOpacity(0.4),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: _kPrimary.withOpacity(0.18), width: 1.2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                        color: _kPrimaryDk.withOpacity(0.04),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _sectionLabel('🔮 Freestyle AI Input'),
-                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _kPrimary.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.auto_awesome,
+                              color: _kPrimary,
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'AI Smart Assistant',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: _kPrimaryDk,
+                              fontFamily: 'Outfit',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
                       Text(
-                        'Type your pet\'s symptoms in plain English, our backend will extract them.',
+                        'Type your pet\'s symptoms in plain English, and our AI will extract them automatically.',
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 12,
+                          height: 1.4,
                           fontFamily: 'Outfit',
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       TextField(
                         controller: _nlpCtrl,
                         maxLines: 3,
                         style: const TextStyle(
                           fontSize: 13,
                           fontFamily: 'Outfit',
+                          height: 1.4,
                         ),
                         decoration: InputDecoration(
                           hintText:
@@ -552,57 +597,94 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                             fontSize: 13,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: _kPrimary),
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(color: _kPrimary, width: 2),
                           ),
                           filled: true,
-                          fillColor: _kBg.withOpacity(0.3),
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.all(14),
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: ElevatedButton.icon(
-                          onPressed: _isParsingNlp
-                              ? null
-                              : _processFreestyleNLP,
-                          icon: _isParsingNlp
-                              ? const SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.auto_awesome, size: 14),
-                          label: Text(
-                            _isParsingNlp
-                                ? 'Parsing Text...'
-                                : '✨ Parse with AI',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Outfit',
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Quick Examples:',
+                        style: TextStyle(
+                          color: _kPrimaryDk,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Outfit',
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          _suggestionChip('🐕 Coughing & runny nose'),
+                          _suggestionChip('🐈 Vomiting & off food'),
+                          _suggestionChip('🐴 Limping and fever'),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: _kGradientColors,
                             ),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _kPrimary.withOpacity(0.24),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _kPrimaryDk,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                          child: ElevatedButton(
+                            onPressed: _isParsingNlp ? null : _processFreestyleNLP,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
+                            child: _isParsingNlp
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(Icons.auto_awesome, size: 14, color: Colors.white),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Extract Symptoms with AI',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Outfit',
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                           ),
                         ),
                       ),
@@ -1136,6 +1218,56 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
             ),
             const SizedBox(height: 28),
             _primaryButton('🔄 Retry Connection', _runAnalysis),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Tappable suggestion chip — autofills the NLP text box and fires
+  /// the AI extraction immediately so the user gets one-tap symptom detection.
+  Widget _suggestionChip(String text) {
+    // Strip any leading emoji + space (e.g. '🐕 Coughing & runny nose' → 'Coughing & runny nose')
+    final rawText = text.replaceFirst(RegExp(r'^\S+\s+'), '');
+    return GestureDetector(
+      onTap: () {
+        _nlpCtrl.text = rawText;
+        _processFreestyleNLP();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: _kPrimary.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: _kPrimary.withOpacity(0.35),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              text.split(' ').first, // Emoji
+              style: const TextStyle(fontSize: 13),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              rawText,
+              style: const TextStyle(
+                fontSize: 11,
+                color: _kPrimaryDk,
+                fontFamily: 'Outfit',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 9,
+              color: _kPrimary,
+            ),
           ],
         ),
       ),

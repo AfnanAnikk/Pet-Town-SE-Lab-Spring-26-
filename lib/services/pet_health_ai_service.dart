@@ -52,7 +52,7 @@ class PetHealthAIService {
       final res = await http
           .post(
             Uri.parse(
-              '$_serverUrl/extract_symptoms',
+              '$_serverUrl/extract-symptoms',
             ), // Calls your backend symptom parser matching endpoint
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'text': text}),

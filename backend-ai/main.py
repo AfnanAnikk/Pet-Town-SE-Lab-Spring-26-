@@ -7,10 +7,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
+from sklearn.metrics.pairwise import cosine_similarity
 
-app = FastAPI(title="Pet Vet AI API", version="2.0.0")
+app = FastAPI(title="Ultra-Lightweight Pet Vet AI Gateway", version="3.0.0")
 
-# ── CORS — allow_credentials MUST be False when allow_origins=["*"] ──────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,48 +19,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Absolute paths (works regardless of cwd on Render) ───────────────────────
-_HERE         = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH    = os.path.join(_HERE, "model.joblib")
-ENCODERS_PATH = os.path.join(_HERE, "encoders.json")
-INFO_PATH     = os.path.join(_HERE, "data", "disease_info.json")
+_HERE = os.path.dirname(os.path.abspath(__file__))
+ASSETS_DIR = os.path.join(_HERE, "assets")
 
-# Auto-train on first deploy if model files are missing
-if not os.path.exists(MODEL_PATH):
-    print("Model not found — running train.py …")
-    from train import train
-    train()
+# Instantaneous asset registration
+model = joblib.load(os.path.join(ASSETS_DIR, "model.joblib"))
+vectorizer = joblib.load(os.path.join(ASSETS_DIR, "tfidf_vectorizer.joblib"))
+tfidf_matrix = joblib.load(os.path.join(ASSETS_DIR, "tfidf_matrix.joblib"))
 
-model = joblib.load(MODEL_PATH)
-with open(ENCODERS_PATH) as f:
-    encoders = json.load(f)
-with open(INFO_PATH) as f:
-    disease_info = json.load(f)
+with open(os.path.join(ASSETS_DIR, "encoders.json")) as f: encoders = json.load(f)
+with open(os.path.join(ASSETS_DIR, "disease_info.json")) as f: disease_info = json.load(f)
+with open(os.path.join(ASSETS_DIR, "text_labels.json")) as f: text_labels = json.load(f)
 
-# ── Urgency classification ────────────────────────────────────────────────────
-EMERGENCY_KW = [
-    'parvovirus', 'distemper', 'bloat', 'tuberculosis',
-    'rabies', 'septicemia', 'pneumonia', 'hemorrhagic',
-]
-MONITOR_KW = ['healthy', 'pregnancy']
+master_symptoms = encoders["symptoms"]
 
+class TextRequest(BaseModel):
+    text: str
 
-def get_urgency(name: str) -> str:
-    n = name.lower()
-    if any(k in n for k in EMERGENCY_KW):
-        return "Emergency"
-    if any(k in n for k in MONITOR_KW):
-        return "Monitor"
-    return "Schedule Vet Visit"
-
-
-# ── Request / Response schemas ────────────────────────────────────────────────
 class PredictRequest(BaseModel):
     animal_type: str
     symptoms: List[str]
     temperature: Optional[float] = None
     heart_rate: Optional[float] = None
-
 
 class PredictResult(BaseModel):
     disease: str
@@ -70,27 +50,47 @@ class PredictResult(BaseModel):
     treatment: str
     prevention: str
 
+def get_urgency(disease_name: str) -> str:
+    name_lower = disease_name.lower()
+    if any(c in name_lower for c in ["parvovirus", "rabies", "bloat", "anthrax", "foot and mouth"]): return "Emergency"
+    if any(m in name_lower for m in ["healthy", "pregnancy"]): return "Monitor"
+    return "Schedule Vet Visit"
 
-# ── Endpoints ─────────────────────────────────────────────────────────────────
-@app.get("/health")
-def health():
-    return {"status": "ok", "version": "2.0.0"}
-
+@app.post("/extract-symptoms")
+def extract_symptoms(req: TextRequest):
+    """Translates free text into matching checkboxes instantly using zero deep learning frameworks."""
+    if not req.text.strip(): return {"matched_symptoms": []}
+    
+    user_query = req.text.lower()
+    detected = []
+    
+    # Layer 1: Check for explicit substring inclusions
+    for sym in master_symptoms:
+        if sym.lower() in user_query and sym not in detected:
+            detected.append(sym)
+            
+    # Layer 2: Sparse Vector Math Cosine Matching
+    query_vector = vectorizer.transform([user_query])
+    similarities = cosine_similarity(query_vector, tfidf_matrix)[0]
+    
+    # Isolate top vocab matches
+    top_indices = np.argsort(similarities)[::-1][:5]
+    for idx in top_indices:
+        if similarities[idx] > 0.28:  # Optimized relevance baseline matching threshold
+            matched_label = text_labels[idx]
+            if matched_label in master_symptoms and matched_label not in detected:
+                detected.append(matched_label)
+                
+    return {"matched_symptoms": detected}
 
 @app.post("/predict", response_model=List[PredictResult])
 def predict(req: PredictRequest):
     try:
         species_list = encoders["species"]
-        if req.animal_type not in species_list:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Species '{req.animal_type}' is not supported. Supported species: {species_list}"
-            )
-        sp_enc = species_list.index(req.animal_type)
+        sp_enc = species_list.index(req.animal_type) if req.animal_type in species_list else 0
 
-        species_vitals = encoders.get("healthy_vitals", {}).get(req.animal_type, {"temp": 38.5, "hr": 85.0})
-        temp = req.temperature if req.temperature is not None else species_vitals["temp"]
-        hr   = req.heart_rate  if req.heart_rate is not None else species_vitals["hr"]
+        temp = req.temperature or 38.5
+        hr   = req.heart_rate  or 85.0
 
         sym_list = encoders["symptoms"]
         sym_vec  = [1 if s in req.symptoms else 0 for s in sym_list]
@@ -101,47 +101,22 @@ def predict(req: PredictRequest):
         )
 
         probs = model.predict_proba(features)[0]
-
-        # Prevent false-positive pregnancy predictions if no pregnancy indicators are present
-        pregnancy_indicators = {
-            "Nesting Behavior",
-            "Clear Vaginal Discharge",
-            "Bloody Vaginal Discharge",
-            "Fetal Heart Sound Detected",
-            "Increased Appetite"
-        }
-        has_pregnancy_indicator = any(s in req.symptoms for s in pregnancy_indicators)
-        if not has_pregnancy_indicator:
-            try:
-                preg_idx = encoders["disease"].index("Pregnancy")
-                probs[preg_idx] = 0.0
-                if probs.sum() > 0:
-                    probs = probs / probs.sum()
-            except ValueError:
-                pass
-
         top3  = np.argsort(probs)[::-1][:3]
 
         results = []
         for idx in top3:
             conf = round(float(probs[idx]) * 100, 1)
-            if conf < 5.0:
-                continue
+            if conf < 5.0: continue
             name = encoders["disease"][idx]
             info = disease_info.get(name, {})
             results.append(
                 PredictResult(
-                    disease=name,
-                    confidence=conf,
-                    urgency=get_urgency(name),
+                    disease=name, confidence=conf, urgency=get_urgency(name),
                     description=info.get("description", "No details available."),
                     treatment=info.get("treatment", "Consult a vet."),
-                    prevention=info.get("prevention", "Regular checkups recommended."),
+                    prevention=info.get("prevention", "Maintain general hygiene care.")
                 )
             )
         return results
-
-    except HTTPException as he:
-        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -19,7 +19,6 @@ class ClassifierResult {
   final String description;
   final String treatment;
   final String prevention;
-  final bool isOffline;
 
   const ClassifierResult({
     required this.disease,
@@ -28,13 +27,9 @@ class ClassifierResult {
     required this.description,
     required this.treatment,
     required this.prevention,
-    required this.isOffline,
   });
 
-  factory ClassifierResult.fromJson(
-      Map<String, dynamic> json, {
-      bool isOffline = false,
-    }) {
+  factory ClassifierResult.fromJson(Map<String, dynamic> json) {
     return ClassifierResult(
       disease: json['disease'] ?? 'Unknown',
       confidence: (json['confidence'] as num).toDouble(),
@@ -42,7 +37,6 @@ class ClassifierResult {
       description: json['description'] ?? '',
       treatment: json['treatment'] ?? '',
       prevention: json['prevention'] ?? '',
-      isOffline: isOffline,
     );
   }
 }

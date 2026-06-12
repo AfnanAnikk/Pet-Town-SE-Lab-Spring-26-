@@ -471,7 +471,7 @@ exports.warnFlaggedUser = async (req, res) => {
         user_id,
         'warning',
         post_id,
-        `Your post "${alerts[0].title || 'Untitled post'}" may not contain pet-related content. Please keep posts relevant to pets.`
+        `Your post "${alerts[0].title || 'Untitled post'}" does not contain pet-related content. Please keep posts relevant to pets.`
       ]
     );
 
@@ -603,7 +603,7 @@ exports.warnMessageRecipient = async (req, res) => {
       'message_safety',
       id,
 
-      `⚠ Safety Alert: @${alert.sender_username} may be attempting to scam or manipulate users through private messages. Please avoid sending money or sharing sensitive information.`
+      `⚠ Safety Alert: @${alert.sender_username} is attempting to scam or manipulate users through private messages. Please avoid sending money or sharing sensitive information.`
     ]);
 
     res.json({

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShieldAlert, ShoppingBag, TrendingUp, Users, Scissors, Heart, Calendar, MessageSquare, Settings, Search, Bell, Activity, FileText, CheckCircle2, XCircle, X, Download, KeyRound } from 'lucide-react';
+import { LayoutDashboard, ShieldAlert, ShoppingBag, TrendingUp, Users, Scissors, Heart, Calendar, MessageSquare, Settings, Search, Bell, Activity, FileText, CheckCircle2, XCircle, X, Download, KeyRound, Italic } from 'lucide-react';
 import './index.css';
 import logo from "./assets/logo.png";
 
@@ -11,15 +11,15 @@ function Sidebar() {
 
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
-    { name: 'Content & Feed', path: '/content', icon: <ShieldAlert size={20} /> },
-    { name: 'Marketplace', path: '/marketplace', icon: <ShoppingBag size={20} /> },
     { name: 'Finance', path: '/finance', icon: <TrendingUp size={20} /> },
+    { name: 'Marketplace', path: '/marketplace', icon: <ShoppingBag size={20} /> },
     { name: 'Vet Services', path: '/vets', icon: <Users size={20} /> },
     { name: 'Pet Salon', path: '/salons', icon: <Scissors size={20} /> },
     { name: 'Adoption', path: '/adoption', icon: <Heart size={20} /> },
     { name: 'Events', path: '/events', icon: <Calendar size={20} /> },
-    { name: 'Messaging', path: '/messages', icon: <MessageSquare size={20} /> },
-    { name: 'Password Reset', path: '/password-reset', icon: <KeyRound size={20} /> },
+    { name: 'Content Safety', path: '/content', icon: <ShieldAlert size={20} /> },
+    { name: 'Messaging Safety', path: '/messages', icon: <MessageSquare size={20} /> },
+    { name: 'Reset Password', path: '/password-reset', icon: <KeyRound size={20} /> },
   ];
 
   return (
@@ -160,7 +160,7 @@ function Dashboard() {
   );
 }
 
-// 2. Events (Mocked as no backend table exists yet for events)
+// 2. Events
 function CommunityEvents() {
   const [selectedEvent, setSelectedEvent] = useState(null);
 
@@ -259,7 +259,7 @@ function PetSalons() {
                   <div style={{ width: 48, height: 48, background: '#EC4899', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Scissors size={24} color="white" />
                   </div>
-                  <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px', background: '#FEF3C7', color: '#F59E0B' }}>
+                  <span style={{ fontSize: '10px', fontWeight: '700px', padding: '4px 8px', borderRadius: '4px', background: '#f19999', color: '#ffffff' }}>
                     PENDING
                   </span>
                 </div>
@@ -312,7 +312,7 @@ function PetSalons() {
               zIndex: 101,
               width: '92%',
               maxWidth: '900px',
-              maxHeight: '88vh',
+              maxHeight: '100vh',
               overflow: 'hidden',
               borderRadius: '24px',
               padding: 0,
@@ -355,12 +355,12 @@ function PetSalons() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                 <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Owner Name</div>
-                  <div style={{ fontSize: 16, color: '#0F172A', fontWeight: 800 }}>{selectedSalon.owner_name || 'Not provided'}</div>
+                  <div style={{ fontSize: 18, color: '#0F172A', fontWeight: 600 }}>{selectedSalon.owner_name || 'Not provided'}</div>
                 </div>
 
                 <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Application Status</div>
-                  <span style={{ display: 'inline-flex', padding: '6px 10px', borderRadius: 999, background: '#FEF3C7', color: '#92400E', fontSize: 12, fontWeight: 800 }}>
+                  <span style={{ display: 'inline-flex', padding: '6px 10px', borderRadius: 6, background: '#f19999', color: '#ffffff', fontSize: 12, fontWeight: 700 }}>
                     {selectedSalon.status?.toUpperCase() || 'PENDING'}
                   </span>
                 </div>
@@ -399,8 +399,8 @@ function PetSalons() {
                 onClick={() => handleApprove(selectedSalon.id)}
                 style={{
                   padding: '12px 20px',
-                  background: '#10B981',
-                  border: 'none',
+                  background: '#31b63c',
+                  border: '1px solid #02860d',
                   borderRadius: 12,
                   color: 'white',
                   fontWeight: 800,
@@ -408,7 +408,7 @@ function PetSalons() {
                   boxShadow: '0 8px 20px rgba(16, 185, 129, 0.25)',
                 }}
               >
-                Approve Salon
+                Approve
               </button>
             </div>
           </div>
@@ -493,14 +493,14 @@ function MarketplaceOversight() {
       </div>
 
       {selectedStore && (
-        <div className="modal-overlay" style={{ backdropFilter: 'blur(6px)', background: 'rgba(15, 23, 42, 0.45)' }}>
+        <div className="modal-overlay" style={{ backdropFilter: 'blur(6px)', background: 'rgba(15, 23, 42, 0.45)'}}>
           <div
             className="modal-content"
             style={{
               zIndex: 101,
               width: '92%',
               maxWidth: '760px',
-              maxHeight: '86vh',
+              maxHeight: '100vh',
               overflow: 'hidden',
               borderRadius: '24px',
               padding: 0,
@@ -543,18 +543,18 @@ function MarketplaceOversight() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                 <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Owner Name</div>
-                  <div style={{ fontSize: 16, color: '#0F172A', fontWeight: 800 }}>{selectedStore.owner_name || 'Not provided'}</div>
+                  <div style={{ fontSize: 18, color: '#0F172A', fontWeight: 600 }}>{selectedStore.owner_name || 'Not provided'}</div>
                 </div>
 
                 <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Application Status</div>
-                  <span style={{ display: 'inline-flex', padding: '6px 10px', borderRadius: 999, background: '#FEF3C7', color: '#92400E', fontSize: 12, fontWeight: 800 }}>
+                  <span style={{ display: 'inline-flex', padding: '6px 10px', borderRadius: 6, background: '#f19999', color: '#ffffff', fontSize: 12, fontWeight: 700 }}>
                     {selectedStore.status?.toUpperCase() || 'PENDING'}
                   </span>
                 </div>
               </div>
 
-              <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 14 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', marginBottom: 14 }}>
                 Submitted Documents
               </h3>
 
@@ -584,8 +584,8 @@ function MarketplaceOversight() {
                 onClick={() => handleApprove(selectedStore.id)}
                 style={{
                   padding: '12px 20px',
-                  background: '#10B981',
-                  border: 'none',
+                  background: '#31b63c',
+                  border: '1px solid #02860d',
                   borderRadius: 12,
                   color: 'white',
                   fontWeight: 800,
@@ -593,7 +593,7 @@ function MarketplaceOversight() {
                   boxShadow: '0 8px 20px rgba(16, 185, 129, 0.25)',
                 }}
               >
-                Approve Store
+                Approve
               </button>
             </div>
           </div>
@@ -677,9 +677,10 @@ function ContentSafety() {
           <p>Review AI-flagged posts and take moderation action.</p>
         </div>
 
-        <div style={{ padding: '10px 14px', borderRadius: 999, background: alerts.length ? '#FEF3C7' : '#DCFCE7', color: alerts.length ? '#92400E' : '#166534', fontSize: 13, fontWeight: 900 }}>
+        <div style={{ padding: '10px 14px', marginTop: 20, border: alerts.length ? '1px solid #f87171' : '1px solid #4ade80', borderRadius: 12, background: alerts.length ? '#f19999' : '#DCFCE7', color: alerts.length ? '#92400E' : '#166534', fontSize: 13, fontWeight: 600 }}>
           {alerts.length} Pending
         </div>
+      
       </div>
 
       <div style={{ marginTop: 24 }}>
@@ -703,7 +704,7 @@ function ContentSafety() {
 
               return (
                 <div key={alertId} style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24, padding: 18, borderRadius: 26, background: '#FFFFFF', border: '1px solid #CBD5E1', boxShadow: '0 16px 40px rgba(15, 23, 42, 0.08)' }}>
-                  <a href={postImage} target="_blank" rel="noreferrer" style={{ display: 'block', borderRadius: 20, overflow: 'hidden', background: '#E2E8F0' }}>
+                  <a href={postImage} target="_blank" rel="noreferrer" style={{ display: 'block', borderRadius: 20, overflow: 'hidden', background: '#E2E8F0', border: '1px solid #E2E8F0' }}>
                     <img src={postImage} alt="Flagged post" style={{ width: '100%', height: 320, objectFit: 'cover', display: 'block' }} />
                   </a>
 
@@ -713,12 +714,12 @@ function ContentSafety() {
                         <img src={alert.profile_picture_url || 'https://via.placeholder.com/48'} alt={userName} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', background: '#E2E8F0', border: '2px solid #FFFFFF', boxShadow: '0 6px 16px rgba(15,23,42,0.16)' }} />
 
                         <div style={{ minWidth: 0 }}>
-                          <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</h3>
+                          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</h3>
                           <p style={{ fontSize: 13, color: '#64748B', margin: '3px 0 0' }}>{alert.email || 'No email'}</p>
                         </div>
                       </div>
 
-                      <span style={{ height: 'fit-content', background: '#FEE2E2', color: '#991B1B', padding: '8px 12px', borderRadius: 999, fontSize: 12, fontWeight: 900, border: '1px solid #FCA5A5' }}>
+                      <span style={{ height: 'fit-content', background: '#FEE2E2', color: '#991B1B', padding: '15px 12px', borderRadius: 10, fontSize: 12, fontWeight: 900, border: '1px solid #FCA5A5' }}>
                         {confidence}% confidence
                       </span>
                     </div>
@@ -731,7 +732,7 @@ function ContentSafety() {
                         </span>
                       </div>
 
-                      <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0F172A', margin: '0 0 8px' }}>
+                      <h2 style={{ fontSize: 22, fontWeight: 700, fontFamily: 'Arial', color: '#0F172A', margin: '0 0 0px' }}>
                         {alert.title || 'Untitled post'}
                       </h2>
 
@@ -756,20 +757,21 @@ function ContentSafety() {
                       ))}
                     </div>
 
+
                     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 'auto' }}>
-                      <button onClick={() => handleAction(alertId, 'delete-post')} disabled={alert.post_deleted} style={{ padding: '12px 16px', background: '#DC2626', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(220, 38, 38, 0.24)' }}>
+                      <button onClick={() => handleAction(alertId, 'delete-post')} disabled={alert.post_deleted} style={{ padding: '12px 16px', cursor: 'pointer', border: '1.2px solid #b5adad', borderRadius: 12, fontWeight: 700, color: '#ffffff', background: '#000000' }}>
                         {alert.post_deleted ? 'Post Deleted' : 'Delete Post'}
                       </button>
 
-                      <button onClick={() => handleAction(alertId, 'warn-user')} disabled={alert.user_warned} style={{ padding: '12px 16px', background: '#F97316', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(249, 115, 22, 0.24)' }}>
+                      <button onClick={() => handleAction(alertId, 'warn-user')} disabled={alert.user_warned} style={{ padding: '12px 16px', cursor: 'pointer', border: '1.2px solid #fd7513', borderRadius: 12, fontWeight: 700, color: '#fffdfd', background: '#ff8c39' }}>
                         {alert.user_warned ? 'User Warned' : 'Warn User'}
                       </button>
 
-                      <button onClick={() => handleAction(alertId, 'ban-user')} disabled={alert.is_banned} style={{ padding: '12px 16px', background: '#0F172A', color: 'white', border: 'none', borderRadius: 14, fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(15, 23, 42, 0.22)' }}>
+                      <button onClick={() => handleAction(alertId, 'ban-user')} disabled={alert.is_banned} style={{ padding: '12px 16px', background: '#dd1515', color: '#ffffff', border: '1.2px solid #db0101', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>
                         {alert.is_banned ? 'User Banned' : 'Ban User'}
                       </button>
 
-                      <button onClick={() => handleAction(alertId, 'dismiss')} style={{ padding: '12px 16px', background: '#FFFFFF', color: '#334155', border: '1px solid #CBD5E1', borderRadius: 14, fontWeight: 900, cursor: 'pointer' }}>
+                      <button onClick={() => handleAction(alertId, 'dismiss')} style={{ padding: '12px 16px', background: '#FFFFFF', color: '#334155', border: '1px solid #CBD5E1', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>
                         Dismiss
                       </button>
                     </div>
@@ -877,7 +879,7 @@ function VetServices() {
                   <div style={{ width: 48, height: 48, background: '#14B8A6', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Users size={24} color="white" />
                   </div>
-                  <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px', background: '#FEF3C7', color: '#F59E0B' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px', background: '#f19999', color: '#ffffff' }}>
                     PENDING
                   </span>
                 </div>
@@ -930,7 +932,7 @@ function VetServices() {
               zIndex: 101,
               width: '92%',
               maxWidth: '900px',
-              maxHeight: '88vh',
+              maxHeight: '100vh',
               overflow: 'hidden',
               borderRadius: '24px',
               padding: 0,
@@ -973,12 +975,12 @@ function VetServices() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                 <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Degree</div>
-                  <div style={{ fontSize: 16, color: '#0F172A', fontWeight: 800 }}>{selectedVet.degree || 'Not provided'}</div>
+                  <div style={{ fontSize: 18, color: '#0F172A', fontWeight: 600 }}>{selectedVet.degree || 'Not provided'}</div>
                 </div>
 
                 <div style={{ padding: 16, borderRadius: 16, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                   <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 6 }}>Application Status</div>
-                  <span style={{ display: 'inline-flex', padding: '6px 10px', borderRadius: 999, background: '#FEF3C7', color: '#92400E', fontSize: 12, fontWeight: 800 }}>
+                  <span style={{ display: 'inline-flex', padding: '6px 10px', borderRadius: 6, background: '#f19999', color: '#ffffff', fontSize: 12, fontWeight: 700 }}>
                     {selectedVet.status?.toUpperCase() || 'PENDING'}
                   </span>
                 </div>
@@ -1017,8 +1019,8 @@ function VetServices() {
                 onClick={() => handleApprove(selectedVet.id)}
                 style={{
                   padding: '12px 20px',
-                  background: '#10B981',
-                  border: 'none',
+                  background: '#31b63c',
+                  border: '1px solid #02860d',
                   borderRadius: 12,
                   color: 'white',
                   fontWeight: 800,
@@ -1026,7 +1028,7 @@ function VetServices() {
                   boxShadow: '0 8px 20px rgba(16, 185, 129, 0.25)',
                 }}
               >
-                Approve Vet
+                Approve
               </button>
             </div>
           </div>
@@ -1054,14 +1056,6 @@ function AdoptionCenter() {
           <h1>Adoption Center</h1>
           <p>Manage shelter listings and adoption workflows.</p>
         </div>
-        <button style={{ background: '#219EBC', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
-          + Add New Listing
-        </button>
-      </div>
-
-      <div className="search-bar" style={{ marginTop: 24, padding: '12px 16px', width: '100%' }}>
-        <Search size={18} color="#94A3B8" />
-        <input type="text" placeholder="Search pets or shelters..." style={{ fontSize: 14 }} />
       </div>
 
       <div className="adoption-board">
@@ -1222,12 +1216,14 @@ function MessagingSafety() {
         </div>
 
         <div style={{
+          marginTop: 20,
           padding: '10px 14px',
-          borderRadius: 999,
-          background: alerts.length ? '#FEF3C7' : '#DCFCE7',
-          color: alerts.length ? '#92400E' : '#166534',
+          borderRadius: 12,
+          background: alerts.length ? '#f19999' : '#DCFCE7',
+          color: alerts.length ? '#000000' : '#166534',
           fontSize: 13,
-          fontWeight: 900,
+          fontWeight: 600,
+          border: alerts.length ? '1px solid #f87171' : '1px solid #4ade80',
         }}>
           {alerts.length} Pending
         </div>
@@ -1271,8 +1267,8 @@ function MessagingSafety() {
         }}>
           <div className="card">
             <h3 style={{
-              fontSize: 18,
-              fontWeight: 900,
+              fontSize: 16,
+              fontWeight: 600,
               marginBottom: 20,
             }}>
               Flagged Conversations
@@ -1330,7 +1326,8 @@ function MessagingSafety() {
                     </div>
 
                     <div style={{
-                      fontWeight: 800,
+                      fontWeight: 600,
+                      fontSize: 14,
                       color: '#0F172A',
                       marginBottom: 6,
                     }}>
@@ -1357,7 +1354,7 @@ function MessagingSafety() {
                 }}>
                   <h2 style={{
                     margin: 0,
-                    fontWeight: 900,
+                    fontWeight: 600,
                   }}>
                     Conversation Review
                   </h2>
@@ -1398,30 +1395,35 @@ function MessagingSafety() {
 
                           padding: '12px 16px',
 
-                          borderRadius: 18,
+                          borderRadius: 14,
 
                           background: msg.is_flagged
                             ? '#FEF2F2'
                             : msg.sender_id === selectedAlert.sender_id
                               ? '#DBEAFE'
                               : '#FFFFFF',
+                          
+                          
 
                           border: msg.is_flagged
                             ? '2px solid #EF4444'
-                            : '1px solid #E2E8F0',
+                            : '1px solid #89bcff',
                         }}
                       >
                         <div style={{
                           fontSize: 12,
                           fontWeight: 800,
                           marginBottom: 6,
-                          color: '#64748B',
+                          color: '#72adff',
                         }}>
                           @{msg.username}
                         </div>
 
                         <div style={{
                           color: '#0F172A',
+                          fontStyle: msg.is_flagged ? 'italic' : 'normal', 
+                          fontWeight: msg.is_flagged ? 600 : 300,
+                          fontSize: 14,
                         }}>
                           {msg.text}
                         </div>
@@ -1444,19 +1446,11 @@ function MessagingSafety() {
                       )
                     }
                     disabled={selectedAlert.recipient_warned}
-                    style={{
-                      padding: '12px 16px',
-                      background: '#F97316',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: 14,
-                      fontWeight: 900,
-                      cursor: 'pointer',
-                    }}
+                    style={{ padding: '12px 16px', cursor: 'pointer', border: '1.2px solid #fd7513', borderRadius: 12, fontWeight: 700, color: '#fffdfd', background: '#ff8c39' }}
                   >
                     {selectedAlert.recipient_warned
-                      ? 'Recipient Warned'
-                      : 'Warn Recipient'}
+                      ? `Alert @${selectedAlert.receiver_username}`
+                      : `Alert @${selectedAlert.receiver_username}`}
                   </button>
 
                   <button
@@ -1467,19 +1461,11 @@ function MessagingSafety() {
                       )
                     }
                     disabled={selectedAlert.is_banned}
-                    style={{
-                      padding: '12px 16px',
-                      background: '#0F172A',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: 14,
-                      fontWeight: 900,
-                      cursor: 'pointer',
-                    }}
+                    style={{ padding: '12px 16px', background: '#dd1515', color: '#ffffff', border: '1.2px solid #db0101', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}
                   >
                     {selectedAlert.is_banned
-                      ? 'Sender Banned'
-                      : 'Ban Sender'}
+                      ? `Banned @${selectedAlert.sender_username}`
+                      : `Ban @${selectedAlert.sender_username}`}
                   </button>
 
                   <button
@@ -1493,9 +1479,9 @@ function MessagingSafety() {
                       padding: '12px 16px',
                       background: '#FFFFFF',
                       color: '#334155',
-                      border: '1px solid #CBD5E1',
-                      borderRadius: 14,
-                      fontWeight: 900,
+                      border: '1.2px solid #CBD5E1',
+                      borderRadius: 12,
+                      fontWeight: 700,
                       cursor: 'pointer',
                     }}
                   >
@@ -1535,24 +1521,9 @@ function PasswordResetPanel() {
     <div className="page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
-          <h1>Password Reset</h1>
+          <h1>Reset Password</h1>
           <p>View latest verification codes generated from the forgot password screen.</p>
         </div>
-
-        <button
-          onClick={fetchCodes}
-          style={{
-            padding: '10px 18px',
-            background: '#219EBC',
-            color: 'white',
-            border: 'none',
-            borderRadius: 10,
-            fontWeight: 800,
-            cursor: 'pointer',
-          }}
-        >
-          Refresh
-        </button>
       </div>
 
       {loading ? (
@@ -1575,25 +1546,28 @@ function PasswordResetPanel() {
             <tbody>
               {codes.map(item => (
                 <tr key={item.id}>
-                  <td style={{ padding: '16px 0', borderBottom: '1px solid #F1F5F9', color: '#0F172A', fontWeight: 700 }}>
+                  <td style={{ padding: '16px 0', borderBottom: '1px solid #F1F5F9', color: '#0F172A', fontWeight: 500 }}>
                     {item.email}
                   </td>
 
                   <td style={{ padding: '16px 0', borderBottom: '1px solid #F1F5F9' }}>
                     <span style={{
+                      display: 'inline-block',
                       padding: '8px 14px',
+                      border: '0.5px solid #1D4ED8',
                       borderRadius: 10,
                       background: '#EFF6FF',
                       color: '#1D4ED8',
                       fontWeight: 900,
-                      fontSize: 18,
+                      fontSize: 16,
                       letterSpacing: 2,
+                      transform: 'translateX(-30px)',
                     }}>
                       {item.code}
                     </span>
                   </td>
 
-                  <td style={{ padding: '16px 0', borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ display: 'inline-block',  padding: '16px 0', marginRight: '50px', borderBottom: '1px solid #F1F5F9', transform: 'translate(12px, 8px)', }}>
                     {item.used ? 'Yes' : 'No'}
                   </td>
 

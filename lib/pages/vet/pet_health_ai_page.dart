@@ -5,7 +5,7 @@ import '../../services/pet_health_ai_service.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // DESIGN TOKENS
-// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
 const _kPrimary   = Color(0xFF3293B3);
 const _kPrimaryDk = Color(0xFF1A6B8A);
 const _kPrimaryLt = Color(0xFF4DB8D4);
@@ -68,6 +68,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
   final PageController _pc      = PageController();
   final _tempCtrl               = TextEditingController();
   final _hrCtrl                 = TextEditingController();
+  final _freestyleCtrl          = TextEditingController(); // Controller for NLP mapping Input
 
   late AnimationController _pulseCtrl;
   late AnimationController _fadeCtrl;
@@ -78,9 +79,10 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
   String            _selectedSpecies = 'Dog';
   final Set<String> _selectedSymptoms = {};
 
-  List<ClassifierResult> _results   = [];
-  bool                   _isOffline = false;
-  bool                   _isLoading = false;
+  List<ClassifierResult> _results      = [];
+  bool                   _isOffline    = false;
+  bool                   _isLoading    = false;
+  bool                   _isExtracting = false; // NLP loader variable
   String?                _error;
 
   // ── Init / Dispose ───────────────────────────────────────────────────────
@@ -109,6 +111,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     _fadeCtrl.dispose();
     _tempCtrl.dispose();
     _hrCtrl.dispose();
+    _freestyleCtrl.dispose();
     _pc.dispose();
     super.dispose();
   }
@@ -123,6 +126,46 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
       curve: Curves.easeInOutCubic,
     );
     _fadeCtrl.forward();
+  }
+
+  // ── NLP Vector Integration Trigger ────────────────────────────────────────
+  Future<void> _extractTextSymptoms() async {
+    final text = _freestyleCtrl.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() => _isExtracting = true);
+    final extracted = await PetHealthAIService.extractSymptoms(text);
+    
+    if (mounted) {
+      setState(() {
+        _isExtracting = false;
+        if (extracted.isNotEmpty) {
+          _selectedSymptoms.addAll(extracted);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'AI auto-selected ${extracted.length} symptom tags!',
+                style: const TextStyle(fontFamily: 'Outfit', fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+              backgroundColor: _kPrimaryDk,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No structural markers identified. Please utilize selections manually.',
+                style: TextStyle(fontFamily: 'Outfit', fontSize: 13),
+              ),
+              backgroundColor: _kSchedule,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      });
+    }
   }
 
   Future<void> _runAnalysis() async {
@@ -462,7 +505,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // STEP 2 — Symptom Picker
+  // STEP 2 — Symptom Picker (With AI Free-Text Integration)
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildStep2() {
     return FadeTransition(
@@ -474,7 +517,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
             child: Row(
               children: [
-                _sectionLabel('Check all symptoms present'),
+                _sectionLabel('Determine Present Symptoms'),
                 const Spacer(),
                 if (_selectedSymptoms.isNotEmpty)
                   AnimatedContainer(
@@ -498,57 +541,149 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
               ],
             ),
           ),
-          // Symptom chips grouped by category
+          
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: _kSymptomGroups.entries.map((entry) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 14, bottom: 8),
-                      child: Text(
-                        entry.key,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: _kPrimaryDk,
-                          fontSize: 13,
-                          fontFamily: 'Outfit',
+              children: [
+                // ── AI Freestyle Observation Box ──
+                Container(
+                  margin: const EdgeInsets.only(top: 8, bottom: 12, left: 4, right: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade200, width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text('⚡', style: TextStyle(fontSize: 15)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Natural Case Observation (Optional)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12.5,
+                              color: Colors.grey.shade800,
+                              fontFamily: 'Outfit',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Describe symptoms or behavioral deviations in plain text. The system maps statements instantly to corresponding checkboxes.',
+                        style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5, fontFamily: 'Outfit', height: 1.35),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _freestyleCtrl,
+                        maxLines: 3,
+                        style: const TextStyle(fontSize: 13.5, fontFamily: 'Outfit'),
+                        decoration: InputDecoration(
+                          hintText: "Example: My horse is breathing hard, coughing frequently, and showing slight nasal discharge since yesterday...",
+                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontFamily: 'Outfit'),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade200)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade200)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kPrimary, width: 1.5)),
+                          contentPadding: const EdgeInsets.all(12),
+                          filled: true,
+                          fillColor: _kBg.withOpacity(0.2),
                         ),
                       ),
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: _isExtracting ? null : _extractTextSymptoms,
+                          icon: _isExtracting 
+                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: _kPrimary))
+                            : const Icon(Icons.bolt, size: 15),
+                          label: Text(
+                            _isExtracting ? 'Mapping Core Models...' : 'Auto-Toggle Tags',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, fontFamily: 'Outfit'),
+                          ),
+                          style: TextButton.styleFrom(
+                            foregroundColor: _kPrimary,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  child: Text(
+                    'Categorized Sign Parameters',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13.5,
+                      color: _kPrimaryDk.withOpacity(0.8),
+                      fontFamily: 'Outfit',
                     ),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: entry.value.map((sym) {
-                        final on = _selectedSymptoms.contains(sym);
-                        return GestureDetector(
-                          onTap: () => setState(() {
-                            on
-                                ? _selectedSymptoms.remove(sym)
-                                : _selectedSymptoms.add(sym);
-                          }),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: on ? _kPrimary : Colors.white,
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: on ? _kPrimary : Colors.grey.shade300,
-                                width: on ? 0 : 1,
-                              ),
-                              boxShadow: on
-                                  ? [
-                                      BoxShadow(
-                                        color: _kPrimary.withOpacity(0.28),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
-                                      )
-                                    ]
-                                  : [],
+                  ),
+                ),
+
+                // Symptom chips grouped by category
+                ..._kSymptomGroups.entries.map((entry) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12, bottom: 8, left: 4),
+                        child: Text(
+                          entry.key,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _kPrimaryDk,
+                            fontSize: 13,
+                            fontFamily: 'Outfit',
+                          ),
+                        ),
+                      ),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: entry.value.map((sym) {
+                          final on = _selectedSymptoms.contains(sym);
+                          return GestureDetector(
+                            onTap: () => setState(() {
+                              on
+                                  ? _selectedSymptoms.remove(sym)
+                                  : _selectedSymptoms.add(sym);
+                            }),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: on ? _kPrimary : Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: on ? _kPrimary : Colors.grey.shade300,
+                                  width: on ? 0 : 1,
+                                ),
+                                boxShadow: on
+                                    ? [
+                                        BoxShadow(
+                                          color: _kPrimary.withOpacity(0.28),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        )
+                                      ]
+                                    : [],
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -581,9 +716,11 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                   ],
                 );
               }).toList(),
-            ),
+              const SizedBox(height: 20),
+            ],
           ),
-          // Bottom buttons
+          
+          // Bottom navigation actions bar
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             decoration: BoxDecoration(
@@ -615,7 +752,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // STEP 3 — Results
+  // STEP 3 — Results View
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildStep3() {
     if (_isLoading) return _buildScanAnimation();
@@ -753,6 +890,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                 _outlineButton('← Check Again', () {
                   setState(() {
                     _selectedSymptoms.clear();
+                    _freestyleCtrl.clear();
                     _results   = [];
                     _isOffline = false;
                   });
@@ -982,8 +1120,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
             ),
             const SizedBox(height: 10),
             Text(
-              'The AI found no symptom patterns that match known conditions. '
-              'Your pet may be perfectly healthy!',
+              'The AI found no symptom patterns that match known conditions. Your pet may be perfectly healthy!',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey.shade600,

@@ -10,7 +10,8 @@ import '../models/pet_health_model.dart';
 /// 2. Falls back automatically to the local Naive Bayes model bundled as JSON.
 class PetHealthAIService {
   // ── Replace with your actual Render URL after deploy ──────────────────────
-  static const String _serverUrl = 'https://pet-town-se-lab-spring-26-pet-vet-ai.onrender.com';
+  static const String _serverUrl =
+      'https://pet-town-se-lab-spring-26-pet-vet-ai.onrender.com';
   static const Duration _timeout = Duration(seconds: 15);
 
   static Map<String, dynamic>? _localModel;
@@ -18,10 +19,39 @@ class PetHealthAIService {
 
   // ── Pre-load local assets at app start ────────────────────────────────────
   static Future<void> initialize() async {
-    final m = await rootBundle.loadString('assets/data/pet_health_model.json');
-    final d = await rootBundle.loadString('assets/data/disease_info.json');
-    _localModel  = jsonDecode(m) as Map<String, dynamic>;
-    _diseaseInfo = jsonDecode(d) as Map<String, dynamic>;
+    try {
+      final m = await rootBundle.loadString(
+        'assets/data/pet_health_model.json',
+      );
+      final d = await rootBundle.loadString('assets/data/disease_info.json');
+      _localModel = jsonDecode(m) as Map<String, dynamic>;
+      _diseaseInfo = jsonDecode(d) as Map<String, dynamic>;
+    } catch (_) {
+      // Silent catch for safe bootstrap environment
+    }
+  }
+
+  // ── NLP Vector Symptom Extraction Layer ───────────────────────────────────
+  /// Maps a natural text case observation string directly to checkbox targets via the server matrix.
+  static Future<List<String>> extractSymptoms(String text) async {
+    try {
+      final res = await http
+          .post(
+            Uri.parse('$_serverUrl/extract-symptoms'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'text': text}),
+          )
+          .timeout(const Duration(seconds: 8));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final List<dynamic> matched = data['matched_symptoms'] ?? [];
+        return matched.map((e) => e.toString()).toList();
+      }
+    } catch (_) {
+      // Server sleeping or offline -> fail gracefully back to manual picker workflow
+    }
+    return [];
   }
 
   // ── Main prediction entry point ───────────────────────────────────────────
@@ -36,9 +66,9 @@ class PetHealthAIService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'animal_type': profile.animalType,
-              'symptoms':    profile.symptoms,
+              'symptoms': profile.symptoms,
               'temperature': profile.temperature,
-              'heart_rate':  profile.heartRate,
+              'heart_rate': profile.heartRate,
             }),
           )
           .timeout(_timeout);
@@ -63,12 +93,14 @@ class PetHealthAIService {
   static List<ClassifierResult> _runLocalModel(PetProfile profile) {
     if (_localModel == null) return [];
 
-    final priors    = _localModel!['prior_probabilities']       as Map<String, dynamic>;
-    final symProbs  = _localModel!['symptom_probabilities']     as Map<String, dynamic>;
-    final aniProbs  = _localModel!['animal_type_probabilities'] as Map<String, dynamic>;
-    final tempStats = _localModel!['temperature_stats']         as Map<String, dynamic>;
-    final hrStats   = _localModel!['heart_rate_stats']          as Map<String, dynamic>;
-    final vocab     = List<String>.from(_localModel!['symptom_vocabulary'] as List);
+    final priors = _localModel!['prior_probabilities'] as Map<String, dynamic>;
+    final symProbs =
+        _localModel!['symptom_probabilities'] as Map<String, dynamic>;
+    final aniProbs =
+        _localModel!['animal_type_probabilities'] as Map<String, dynamic>;
+    final tempStats = _localModel!['temperature_stats'] as Map<String, dynamic>;
+    final hrStats = _localModel!['heart_rate_stats'] as Map<String, dynamic>;
+    final vocab = List<String>.from(_localModel!['symptom_vocabulary'] as List);
 
     final Map<String, double> scores = {};
 
@@ -78,9 +110,11 @@ class PetHealthAIService {
       'Clear Vaginal Discharge',
       'Bloody Vaginal Discharge',
       'Fetal Heart Sound Detected',
-      'Increased Appetite'
+      'Increased Appetite',
     };
-    final hasPregnancyIndicator = profile.symptoms.any((s) => pregnancyIndicators.contains(s));
+    final hasPregnancyIndicator = profile.symptoms.any(
+      (s) => pregnancyIndicators.contains(s),
+    );
 
     for (final disease in priors.keys) {
       if (disease == 'Pregnancy' && !hasPregnancyIndicator) {
@@ -97,9 +131,7 @@ class PetHealthAIService {
       final dsym = symProbs[disease] as Map<String, dynamic>;
       for (final sym in vocab) {
         final py = (dsym[sym] as num?)?.toDouble() ?? 0.01;
-        s += profile.symptoms.contains(sym)
-            ? math.log(py)
-            : math.log(1.0 - py);
+        s += profile.symptoms.contains(sym) ? math.log(py) : math.log(1.0 - py);
       }
 
       // Gaussian P(temp | disease)
@@ -128,9 +160,11 @@ class PetHealthAIService {
     // Softmax over top-5 to get calibrated probabilities
     final sorted = scores.keys.toList()
       ..sort((a, b) => scores[b]!.compareTo(scores[a]!));
-    final maxS   = scores[sorted.first]!;
+    if (sorted.isEmpty) return [];
+
+    final maxS = scores[sorted.first]!;
     double sumExp = 0;
-    final relP   = <String, double>{};
+    final relP = <String, double>{};
     for (final d in sorted.take(5)) {
       relP[d] = math.exp(scores[d]! - maxS);
       sumExp += relP[d]!;
@@ -139,16 +173,22 @@ class PetHealthAIService {
     return sorted
         .take(3)
         .map((d) {
-          final conf = relP[d]! / sumExp * 100;
+          final conf = (sumExp > 0) ? (relP[d]! / sumExp * 100) : 0.0;
           final info = (_diseaseInfo?[d] as Map<String, dynamic>?) ?? {};
           return ClassifierResult(
-            disease:     d,
-            confidence:  double.parse(conf.toStringAsFixed(1)),
-            urgency:     _urgency(d),
-            description: info['description']?.toString() ?? '',
-            treatment:   info['treatment']?.toString()   ?? 'Consult a vet.',
-            prevention:  info['prevention']?.toString()  ?? 'Regular checkups.',
-            isOffline:   true,
+            disease: d,
+            confidence: double.parse(conf.toStringAsFixed(1)),
+            urgency: _urgency(d),
+            description:
+                info['description']?.toString() ??
+                'Clinical status tracking condition.',
+            treatment:
+                info['treatment']?.toString() ??
+                'Consult a veterinarian for evaluation.',
+            prevention:
+                info['prevention']?.toString() ??
+                'Maintain standard diagnostic protocols.',
+            isOffline: true,
           );
         })
         .where((r) => r.confidence >= 5.0)
@@ -166,8 +206,14 @@ class PetHealthAIService {
   static String _urgency(String disease) {
     final n = disease.toLowerCase();
     const emergency = [
-      'parvovirus', 'distemper', 'bloat', 'tuberculosis',
-      'rabies', 'pneumonia', 'hemorrhagic', 'septicemia',
+      'parvovirus',
+      'distemper',
+      'bloat',
+      'tuberculosis',
+      'rabies',
+      'pneumonia',
+      'hemorrhagic',
+      'septicemia',
     ];
     if (emergency.any((k) => n.contains(k))) return 'Emergency';
     if (n.contains('healthy') || n.contains('pregnancy')) return 'Monitor';

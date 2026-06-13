@@ -73,6 +73,21 @@ exports.register = async (req, res) => {
             0,
           ],
         );
+      } else if (service_type === "Pet Salon") {
+        await db.execute(
+          "INSERT INTO salons (user_id, name, profile_description, is_verified, rating, review_count, price, owner_name, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [
+            userId,
+            name || "",
+            profile_description || "",
+            is_verified || false,
+            rating || 0.0,
+            review_count || 0,
+            price || 0,
+            "",
+            ""
+          ]
+        );
       } else {
         await db.execute(
           "INSERT INTO vets (user_id, name, service_type, degree, is_verified, rating, review_count, price, profile_description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",

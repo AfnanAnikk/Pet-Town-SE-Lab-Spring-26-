@@ -38,6 +38,21 @@ class ApiService {
           }),
         );
         return _handleResponse(response);
+      } else if (serviceType == 'Pet Salon') {
+        final response = await http.post(
+          Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/salons/verify')}'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'userId': userId,
+            'ownerName': ownerName,
+            'nidFrontUrl': nidFrontUrl,
+            'nidBackUrl': nidBackUrl,
+            'tinUrl': tinUrl,
+            'tradeUrl': tradeUrl,
+            'otherUrl': otherUrl,
+          }),
+        );
+        return _handleResponse(response);
       } else {
         final response = await http.post(
           Uri.parse('${AuthService.baseUrl.replaceAll('/api/auth', '/api/vets/verify')}'),

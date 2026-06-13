@@ -28,6 +28,7 @@ const _kSpecies = [
   {'label': 'Sheep', 'emoji': '🐑'},
   {'label': 'Goat', 'emoji': '🐐'},
   {'label': 'Pig', 'emoji': '🐖'},
+  {'label': 'Ferret', 'emoji': '🦡'},
 ];
 
 const _kSymptomGroups = {
@@ -493,11 +494,12 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
             _sectionLabel('🐾 Select Your Pet Species'),
             const SizedBox(height: 14),
             GridView.count(
-              crossAxisCount: 4,
+              crossAxisCount: 3,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
+              childAspectRatio: 1.15,
               children: _kSpecies
                   .map((s) => _speciesCard(s['label']!, s['emoji']!))
                   .toList(),
@@ -1371,17 +1373,23 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
   }
 
   Widget _buildEmptyState() {
+    final bool hadSymptoms = _selectedSymptoms.isNotEmpty;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(36),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('✅', style: TextStyle(fontSize: 64)),
+            Text(
+              hadSymptoms ? '⚠️' : '✅',
+              style: const TextStyle(fontSize: 64),
+            ),
             const SizedBox(height: 16),
-            const Text(
-              'No Conditions Detected',
-              style: TextStyle(
+            Text(
+              hadSymptoms
+                  ? 'No Pattern Match Found'
+                  : 'No Conditions Detected',
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: _kPrimaryDk,
@@ -1390,16 +1398,25 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
             ),
             const SizedBox(height: 10),
             Text(
-              'The AI server found no anomalies matching known condition patterns.',
+              hadSymptoms
+                  ? 'The AI could not confidently match your pet\'s symptoms to a known condition. This does NOT mean your pet is well — please consult a veterinarian for a proper examination.'
+                  : 'The AI server found no anomalies matching known condition patterns.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey.shade600,
+                color: hadSymptoms ? _kEmergency : Colors.grey.shade600,
                 fontFamily: 'Outfit',
                 height: 1.5,
               ),
             ),
             const SizedBox(height: 28),
-            _primaryButton('← Try Again', () => _goTo(0)),
+            _primaryButton(
+              hadSymptoms ? '🏥 Find a Vet' : '← Try Again',
+              () => hadSymptoms ? Navigator.pop(context) : _goTo(0),
+            ),
+            if (hadSymptoms) ...[
+              const SizedBox(height: 10),
+              _outlineButton('← Try Different Symptoms', () => _goTo(1)),
+            ],
           ],
         ),
       ),
@@ -1501,6 +1518,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     'Sheep':  {'tempLo': 38.5, 'tempHi': 40.0, 'hrLo': 60,  'hrHi': 120, 'tempTyp': '39.0', 'hrTyp': '80'},
     'Goat':   {'tempLo': 38.5, 'tempHi': 40.0, 'hrLo': 60,  'hrHi': 120, 'tempTyp': '39.0', 'hrTyp': '80'},
     'Pig':    {'tempLo': 38.0, 'tempHi': 40.0, 'hrLo': 55,  'hrHi': 100, 'tempTyp': '39.0', 'hrTyp': '75'},
+    'Ferret': {'tempLo': 37.8, 'tempHi': 40.0, 'hrLo': 180, 'hrHi': 250, 'tempTyp': '38.8', 'hrTyp': '220'},
   };
 
   String _tempHint() => _kVitalsRef[_selectedSpecies]?['tempTyp'] as String? ?? '38.5';

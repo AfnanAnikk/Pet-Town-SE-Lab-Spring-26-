@@ -173,7 +173,7 @@ DISEASE_ALIAS: dict = {
     "Parasites":                          "Ascaris",
     "Pasteurellosis":                     "Pasteurellosis (rabbit)",
     "Degenerative Joint Disease":         "Arthritis and Joint Pain (cats and Dogs)",
-    "Equine Arthritis":                   "Arthritis and Joint Pain (cats and Dogs)",
+    # Equine Arthritis has its own species-specific INLINE_INFO — do not alias to cats/dogs
     "Ear Infections":                     "Ear Problems (cats and Dogs)",
     "Feline Respiratory Disease Complex": "Cat Flu",
     "Feline Herpesvirus":                 "Cat Flu",
@@ -206,24 +206,18 @@ DISEASE_ALIAS: dict = {
     "Skin Lesions":                       "Dermatitis (cats and Dogs)",
     "Conjunctivitis":                     "Eye Inflammation (cats and Dogs)",
     "Respiratory Syncytial Virus":        "Bovine Respiratory Disease (brd, \u2018shipping Fever\u2019)",
-    "Caprine Respiratory Disease":        "Bovine Respiratory Disease (brd, \u2018shipping Fever\u2019)",
-    "Porcine Respiratory Disease Complex":"Bovine Respiratory Disease (brd, \u2018shipping Fever\u2019)",
-    "Feline Coronavirus":                 "Canine Coronavirus",
+    # Caprine/Porcine respiratory diseases use their own INLINE_INFO entries (not bovine)
     "Lyme Disease":                       "Tick Borne Disease",
     "Equine Lyme Disease":                "Tick Borne Disease",
     "Lameness":                           "Arthritis and Joint Pain (cats and Dogs)",
     "Laminitis":                          "Equine Laminitis",
-    "Pneumonia":                          "Bovine Pneumonia",
-    "Equine Pneumonia":                   "Bovine Pneumonia",
+    # Pneumonia has species-appropriate INLINE_INFO entries — do not alias to bovine
     "Bovine Pneumonia":                   "Pnuemonia (cattle)",
-    "Chronic Bronchitis":                 "Canine Influenza",
-    "Feline Asthma":                      "Canine Influenza",
+    # Feline Asthma and Chronic Bronchitis have correct INLINE_INFO — do not alias to canine flu
     "Feline Chlamydia":                   "Feline Chlamydia",
-    "Rabbit Hemorrhagic Disease":         "Myxomatosis (rabbit)",
-    "Rabbit Calicivirus":                 "Myxomatosis (rabbit)",
-    "Rabbit Syphilis":                    "Myxomatosis (rabbit)",
+    # Rabbit diseases each have distinct INLINE_INFO — do not collapse them all into Myxomatosis
     "Snuffles":                           "Pasteurellosis (rabbit)",
-    "Hyperthyroidism":                    "Diabetes (cats and Dogs)",
+    # Hyperthyroidism is a thyroid disorder — INLINE_INFO is correct, do not alias to Diabetes
     "Pancreatitis":                       "Gastrointestinal and Digestive Disorders (cats and Dogs)",
     "Giardiasis":                         "Gastrointestinal and Digestive Disorders (cats and Dogs)",
     "Cryptosporidiosis":                  "Calf Scour",
@@ -422,6 +416,11 @@ INLINE_INFO: dict = {
         "description": "A hormonal disorder in horses and ponies characterized by obesity (especially cresty neck), insulin dysregulation, and predisposition to laminitis. Distinct from but often co-existing with PPID (Cushings).",
         "treatment": "Dietary management — low-starch, low-sugar forage;Increase exercise;Weight loss program;Thyro-L (levothyroxine) to support metabolic rate;Treat concurrent laminitis;Monitor insulin levels.",
         "prevention": "Maintain healthy body condition score 4-5 out of 9;Restrict access to lush, sugar-rich pasture;Feed hay soaked in water for 30-60 minutes to reduce sugar;Regular exercise;Annual blood glucose and insulin testing."
+    },
+    "Equine Pneumonia": {
+        "description": "Bacterial or viral pneumonia in horses, most commonly caused by Streptococcus zooepidemicus, Rhodococcus equi (in foals), or viral agents such as EHV or Equine Influenza. Causes fever, nasal discharge, labored breathing, and reduced performance.",
+        "treatment": "Broad-spectrum antibiotics — penicillin/gentamicin or trimethoprim-sulfonamide;NSAIDs such as phenylbutazone or flunixin meglumine for fever;Complete rest from exercise;Supportive care — good nutrition, hydration, clean air;Nebulization therapy in severe cases.",
+        "prevention": "Vaccination against Equine Influenza and EHV-1/4;Quarantine new horses for 3 weeks;Reduce stress and overcrowding;Proper ventilation in stabling;Avoid moving horses during active respiratory outbreaks."
     },
     "Equine Osteoarthritis": {
         "description": "Progressive deterioration of joint cartilage in horses causing chronic pain and lameness. Most commonly affects the hock, fetlock, and pastern joints. A leading cause of performance loss in sport horses.",

@@ -45,7 +45,7 @@ _HF_URL    = f"https://api-inference.huggingface.co/pipeline/feature-extraction/
 _HF_HEADERS = {"Authorization": f"Bearer {_HF_TOKEN}"} if _HF_TOKEN else {}
 
 # Minimum cosine similarity score to accept a semantic symptom match
-_SEM_THRESHOLD = 0.45
+_SEM_THRESHOLD = 0.55
 
 master_symptoms = encoders["symptoms"]
 SYNONYM_RULES: dict = encoders.get("synonym_rules", {})
@@ -949,18 +949,36 @@ async def _extract_symptoms_logic(req: TextRequest):
         if user_vec is not None:
             sims = cosine_similarity(user_vec, _sym_embeddings)[0]  # shape (N,)
 
-            # Walk from highest similarity downward — stop after 8 unique symptoms
+            # Walk from highest similarity downward — keep track of (label, score)
             top_indices = np.argsort(sims)[::-1]
-            sem_found: list[str] = []
+            sem_candidates: list[tuple[str, float]] = []
             for idx in top_indices:
                 if sims[idx] < _SEM_THRESHOLD:
                     break
                 candidate = _sym_labels[idx]
-                if candidate in _master_sym_set and candidate not in detected and candidate not in sem_found:
-                    sem_found.append(candidate)
-                if len(sem_found) >= 8:
+                if candidate in _master_sym_set and candidate not in detected:
+                    if not any(x[0] == candidate for x in sem_candidates):
+                        sem_candidates.append((candidate, float(sims[idx])))
+
+            # Apply mutual exclusion: Appetite Loss vs Increased Appetite
+            if "Appetite Loss" in detected:
+                sem_candidates = [x for x in sem_candidates if x[0] != "Increased Appetite"]
+            if "Increased Appetite" in detected:
+                sem_candidates = [x for x in sem_candidates if x[0] != "Appetite Loss"]
+
+            app_loss_score = next((x[1] for x in sem_candidates if x[0] == "Appetite Loss"), None)
+            inc_app_score  = next((x[1] for x in sem_candidates if x[0] == "Increased Appetite"), None)
+            if app_loss_score is not None and inc_app_score is not None:
+                if app_loss_score >= inc_app_score:
+                    sem_candidates = [x for x in sem_candidates if x[0] != "Increased Appetite"]
+                else:
+                    sem_candidates = [x for x in sem_candidates if x[0] != "Appetite Loss"]
+
+            # Add up to 8 unique symptoms
+            for candidate, score in sem_candidates:
+                detected.append(candidate)
+                if len(detected) >= 8:
                     break
-            detected.extend(sem_found)
 
     return {"matched_symptoms": detected}
 

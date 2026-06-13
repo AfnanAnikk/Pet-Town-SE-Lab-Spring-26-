@@ -9,6 +9,8 @@ class PostCard extends StatefulWidget {
 
   const PostCard({super.key, required this.post});
 
+  static final ValueNotifier<String?> openOverlayPostId = ValueNotifier(null);
+
   @override
   State<PostCard> createState() => _PostCardState();
 }
@@ -26,6 +28,23 @@ class _PostCardState extends State<PostCard> {
     _checkSaveStatus();
     _checkLikeStatus();
     _fetchLiveLikesCount();
+    PostCard.openOverlayPostId.addListener(_onOverlayChanged);
+  }
+
+  void _onOverlayChanged() {
+    if (PostCard.openOverlayPostId.value != widget.post.id && _isDarkened) {
+      if (mounted) {
+        setState(() {
+          _isDarkened = false;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    PostCard.openOverlayPostId.removeListener(_onOverlayChanged);
+    super.dispose();
   }
 
   Future<void> _checkSaveStatus() async {
@@ -150,6 +169,7 @@ class _PostCardState extends State<PostCard> {
       setState(() {
         _isDarkened = true;
       });
+      PostCard.openOverlayPostId.value = widget.post.id;
     } else {
       _navigateToDetail();
     }
@@ -163,6 +183,7 @@ class _PostCardState extends State<PostCard> {
     setState(() {
       _isDarkened = false;
     });
+    PostCard.openOverlayPostId.value = null;
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(

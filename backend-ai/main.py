@@ -46,6 +46,7 @@ VITALS_RANGES = {
     "Sheep":  {"temp": (38.5, 40.0), "hr": (60, 120)},
     "Goat":   {"temp": (38.5, 40.0), "hr": (60, 120)},
     "Pig":    {"temp": (38.0, 40.0), "hr": (55, 100)},
+    "Ferret": {"temp": (37.8, 40.0), "hr": (180, 250)},
 }
 
 # Absolute impossible limits (physics-based sanity checks)
@@ -53,6 +54,103 @@ TEMP_ABSOLUTE_MIN = 25.0   # below 25°C means instrument error or dead animal
 TEMP_ABSOLUTE_MAX = 45.0   # above 45°C is incompatible with life
 HR_ABSOLUTE_MIN   = 10     # below 10 bpm is not a living animal
 HR_ABSOLUTE_MAX   = 500    # above 500 bpm is instrument error
+
+
+# ── Species-Disease Compatibility Map ─────────────────────────────────────────
+# Strict species prefixes: a disease named with these prefixes ONLY belongs to
+# that species. Diseases without a species prefix are considered general and
+# allowed for all species.
+_SPECIES_PREFIXES: dict = {
+    "Dog":    ["canine"],
+    "Cat":    ["feline"],
+    "Cow":    ["bovine"],
+    "Horse":  ["equine"],
+    "Pig":    ["porcine", "swine", "african swine"],
+    "Goat":   ["caprine", "goat"],
+    "Sheep":  ["ovine", "sheep", "scrapie", "maedi", "caseous"],
+    "Rabbit": ["rabbit", "myxomatosis", "snuffles"],
+    "Ferret": [],
+}
+
+# Additional explicit overrides for diseases that don't have a prefix but are
+# still species-specific (sourced from training-data inspection).
+_DISEASE_SPECIES_OVERRIDES: dict = {
+    "Mastitis":                      {"Cow", "Goat", "Sheep"},
+    "Laminitis":                     {"Horse", "Goat", "Cow"},
+    "Equine Laminitis":              {"Horse"},
+    "Gastrointestinal Stasis":       {"Rabbit"},
+    "Bluetongue":                    {"Sheep", "Goat", "Cow"},
+    "Kennel Cough":                  {"Dog"},
+    "Bordetella Infection":          {"Dog", "Cat", "Rabbit"},
+    "Heartworm Disease":             {"Dog"},
+    "Distemper":                     {"Dog"},
+    "Foot and Mouth Disease":        {"Cow", "Sheep", "Goat", "Pig"},
+    "Footrot":                       {"Sheep", "Goat", "Cow"},
+    "Chlamydia in Sheep":            {"Sheep"},
+    "Contagious Ecthyma":            {"Sheep", "Goat"},
+    "Contagious Abortion":           {"Goat", "Sheep", "Cow"},
+    "Actinobacillus Pleuropneumonia":{"Pig"},
+    "Actinobacillus Suis":           {"Pig"},
+    "African Swine Fever":           {"Pig"},
+    "Hyperthyroidism":               {"Cat", "Dog"},
+    "Snuffles":                      {"Rabbit"},
+    "Rabbit Syphilis":               {"Rabbit"},
+    "Rabbit Hemorrhagic Disease":    {"Rabbit"},
+    "Myxomatosis":                   {"Rabbit"},
+    "Cryptosporidiosis":             {"Cow", "Sheep", "Goat"},
+}
+
+# General diseases (permitted for any species) — these are diseases from the
+# 5-category NLP corpus that don't have a species prefix.
+_GENERAL_DISEASES = {
+    "Healthy / No Disease", "Digestive Issues", "Lameness", "Skin Lesions",
+    "Ear Infections", "Parasites", "Gastroenteritis", "Gastrointestinal Infection",
+    "Arthritis", "Conjunctivitis", "Respiratory Infection",
+    "Upper Respiratory Infection", "Degenerative Joint Disease",
+    "Chronic Bronchitis", "Allergic Rhinitis", "Fungal Infection",
+    "Pneumonia", "Coccidiosis", "Inflammatory Bowel Disease",
+    "Leptospirosis", "Giardiasis", "Intestinal Parasites", "Enteritis",
+    "Salmonellosis", "Pasteurellosis", "Weight Loss", "Pregnancy",
+    "Distemper", "Parvovirus", "Lyme Disease",
+}
+
+
+def _is_disease_allowed_for_species(disease_name: str, species: str) -> bool:
+    """
+    Returns True if disease_name is biologically possible for the given species.
+    Logic:
+      1. If explicitly in _DISEASE_SPECIES_OVERRIDES, check the allowed set.
+      2. If disease name starts with a strict species prefix for a DIFFERENT species → block.
+      3. Otherwise (no prefix / general disease) → allow.
+    """
+    # Step 1: explicit override wins
+    if disease_name in _DISEASE_SPECIES_OVERRIDES:
+        return species in _DISEASE_SPECIES_OVERRIDES[disease_name]
+
+    # Step 2: check strict prefix ownership
+    d_lower = disease_name.lower()
+    for sp, prefixes in _SPECIES_PREFIXES.items():
+        for prefix in prefixes:
+            if d_lower.startswith(prefix):
+                # This disease belongs to `sp`
+                return sp == species
+
+    # Step 3: general / no species prefix → allow for all
+    return True
+
+
+def _vitals_are_abnormal(species: str, temperature: Optional[float], heart_rate: Optional[float]) -> bool:
+    """Returns True if either vital is outside the species-normal range."""
+    v = VITALS_RANGES.get(species, {})
+    if temperature is not None and "temp" in v:
+        lo, hi = v["temp"]
+        if temperature < lo or temperature > hi:
+            return True
+    if heart_rate is not None and "hr" in v:
+        lo, hi = v["hr"]
+        if heart_rate < lo or heart_rate > hi:
+            return True
+    return False
 
 
 # ── Disease alias map: encoder name -> disease_info.json key ─────────────────
@@ -838,7 +936,9 @@ def predict(req: PredictRequest):
 
         probs = model.predict_proba(features)[0]
 
-        # Suppress false-positive Pregnancy when no pregnancy indicators present
+        disease_list = encoders["disease"]
+
+        # ── Guard 1: Pregnancy — suppress when no pregnancy indicators present ──
         pregnancy_indicators = {
             "Nesting Behavior", "Clear Vaginal Discharge",
             "Bloody Vaginal Discharge", "Purulent Vaginal Discharge",
@@ -847,12 +947,32 @@ def predict(req: PredictRequest):
         has_pregnancy_indicator = any(s in req.symptoms for s in pregnancy_indicators)
         if not has_pregnancy_indicator:
             try:
-                preg_idx = encoders["disease"].index("Pregnancy")
+                preg_idx = disease_list.index("Pregnancy")
                 probs[preg_idx] = 0.0
-                if probs.sum() > 0:
-                    probs = probs / probs.sum()
             except ValueError:
                 pass
+
+        # ── Guard 2: Healthy — suppress when animal has symptoms or abnormal vitals
+        # A sick animal should never be predicted as healthy.
+        has_symptoms     = len(req.symptoms) > 0
+        vitals_abnormal  = _vitals_are_abnormal(req.animal_type, req.temperature, req.heart_rate)
+        if has_symptoms or vitals_abnormal:
+            try:
+                healthy_idx = disease_list.index("Healthy / No Disease")
+                probs[healthy_idx] = 0.0
+            except ValueError:
+                pass
+
+        # ── Guard 3: Species-disease filter — zero out biologically impossible diseases
+        # e.g., Bovine Tuberculosis for a Cat, Feline Herpesvirus for a Horse.
+        for idx, dis_name in enumerate(disease_list):
+            if not _is_disease_allowed_for_species(dis_name, req.animal_type):
+                probs[idx] = 0.0
+
+        # Re-normalise after all suppressions
+        total = probs.sum()
+        if total > 0:
+            probs = probs / total
 
         top3 = np.argsort(probs)[::-1][:3]
 

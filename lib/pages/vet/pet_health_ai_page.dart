@@ -195,7 +195,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
       heartRate: double.tryParse(_hrCtrl.text),
     );
 
-    await Future.delayed(const Duration(milliseconds: 1500));
+    await Future.delayed(const Duration(milliseconds: 1200));
 
     try {
       final r = await PetHealthAIService.predict(profile);
@@ -204,6 +204,19 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
           _results = r;
         });
       }
+    } on VitalsValidationException catch (e) {
+      // Navigate back to step 1 and show a premium vitals error dialog.
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _results = [];
+          _error = null;
+        });
+        _goTo(0);
+        await Future.delayed(const Duration(milliseconds: 350));
+        if (mounted) _showVitalsErrorDialog(e.toString());
+      }
+      return;
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -213,6 +226,114 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// Premium bottom-sheet error dialog for unrealistic vitals.
+  void _showVitalsErrorDialog(String message) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 24,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Icon
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3CD),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4), width: 2),
+              ),
+              child: const Center(
+                child: Text('⚠️', style: TextStyle(fontSize: 30)),
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Unrealistic Vitals Detected',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A6B8A),
+                fontFamily: 'Outfit',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.55,
+                color: Colors.grey.shade700,
+                fontFamily: 'Outfit',
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Please re-check your measurement device and enter a valid reading, or leave the field blank to use the species baseline.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: Colors.grey.shade500,
+                fontFamily: 'Outfit',
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3293B3),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Fix My Vitals',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    fontFamily: 'Outfit',
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -385,7 +506,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
             _sectionLabel('🌡️ Vitals (Optional)'),
             const SizedBox(height: 4),
             Text(
-              'Leave blank if unknown — server AI models will apply baseline averages.',
+              'Leave blank if unknown — AI will apply species baseline averages.',
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontSize: 12,
@@ -399,7 +520,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                   child: _vitalField(
                     _tempCtrl,
                     'Temperature',
-                    '38.5',
+                    _tempHint(),
                     '°C',
                     Icons.thermostat,
                   ),
@@ -409,14 +530,41 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
                   child: _vitalField(
                     _hrCtrl,
                     'Heart Rate',
-                    '90',
+                    _hrHint(),
                     'bpm',
                     Icons.favorite_border,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 8),
+            // Normal range reminder chip
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: _kPrimary.withOpacity(0.07),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _kPrimary.withOpacity(0.20)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, size: 14, color: _kPrimaryDk),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Normal for $_selectedSpecies — Temp: ${_tempRange()}, HR: ${_hrRange()}',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: _kPrimaryDk,
+                        fontFamily: 'Outfit',
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
             _primaryButton('Next: Select Symptoms →', () => _goTo(1)),
           ],
         ),
@@ -1343,6 +1491,33 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
     );
   }
 
+  // ── Species vitals reference data ─────────────────────────────────────────
+  static const _kVitalsRef = {
+    'Dog':    {'tempLo': 37.5, 'tempHi': 39.5, 'hrLo': 60,  'hrHi': 180, 'tempTyp': '38.5', 'hrTyp': '100'},
+    'Cat':    {'tempLo': 38.0, 'tempHi': 39.5, 'hrLo': 120, 'hrHi': 240, 'tempTyp': '38.5', 'hrTyp': '160'},
+    'Rabbit': {'tempLo': 38.5, 'tempHi': 40.0, 'hrLo': 120, 'hrHi': 325, 'tempTyp': '39.0', 'hrTyp': '200'},
+    'Horse':  {'tempLo': 37.0, 'tempHi': 38.5, 'hrLo': 28,  'hrHi': 44,  'tempTyp': '37.8', 'hrTyp': '36'},
+    'Cow':    {'tempLo': 38.0, 'tempHi': 39.5, 'hrLo': 40,  'hrHi': 80,  'tempTyp': '38.8', 'hrTyp': '60'},
+    'Sheep':  {'tempLo': 38.5, 'tempHi': 40.0, 'hrLo': 60,  'hrHi': 120, 'tempTyp': '39.0', 'hrTyp': '80'},
+    'Goat':   {'tempLo': 38.5, 'tempHi': 40.0, 'hrLo': 60,  'hrHi': 120, 'tempTyp': '39.0', 'hrTyp': '80'},
+    'Pig':    {'tempLo': 38.0, 'tempHi': 40.0, 'hrLo': 55,  'hrHi': 100, 'tempTyp': '39.0', 'hrTyp': '75'},
+  };
+
+  String _tempHint() => _kVitalsRef[_selectedSpecies]?['tempTyp'] as String? ?? '38.5';
+  String _hrHint()   => _kVitalsRef[_selectedSpecies]?['hrTyp']   as String? ?? '90';
+
+  String _tempRange() {
+    final r = _kVitalsRef[_selectedSpecies];
+    if (r == null) return '37–40 °C';
+    return '${r["tempLo"]}–${r["tempHi"]} °C';
+  }
+
+  String _hrRange() {
+    final r = _kVitalsRef[_selectedSpecies];
+    if (r == null) return '40–200 bpm';
+    return '${r["hrLo"]}–${r["hrHi"]} bpm';
+  }
+
   Widget _sectionLabel(String text) {
     return Text(
       text,
@@ -1354,6 +1529,7 @@ class _PetHealthAiPageState extends State<PetHealthAiPage>
       ),
     );
   }
+
 
   Widget _primaryButton(String label, VoidCallback onTap) {
     return SizedBox(

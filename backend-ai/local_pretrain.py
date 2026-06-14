@@ -497,7 +497,6 @@ def build_and_train():
     print(f"  Species:  {len(le_sp.classes_)}")
     print(f"  Corpus:   {len(text_corpus)} documents")
     print(f"  Score:    {score}%")
-    print("\nCommit the 'assets' folder to GitHub for Render deployment.")
 
 if __name__ == "__main__":
     build_and_train()

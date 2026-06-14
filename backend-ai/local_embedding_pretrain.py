@@ -1,19 +1,3 @@
-"""
-local_embedding_pretrain.py
-───────────────────────────
-Pre-calculates dense semantic embedding vectors for every canonical symptom
-in the master vocabulary using the free Hugging Face Inference API
-(sentence-transformers/all-MiniLM-L6-v2).
-
-Run this once locally whenever the symptom vocabulary changes:
-    python local_embedding_pretrain.py
-
-Output (in ./assets/):
-    symptom_embeddings.joblib  — numpy array (N_phrases × 384)
-    symptom_labels.joblib      — list of N_phrases canonical symptom strings
-
-These replace tfidf_vectorizer.joblib and tfidf_matrix.joblib in the API.
-"""
 
 import os
 import time
@@ -22,11 +6,6 @@ import joblib
 import requests
 import numpy as np
 
-# ── Config ────────────────────────────────────────────────────────────────────
-# Set your HF token as an environment variable before running:
-#   Windows:  $env:HF_TOKEN = "hf_your_token_here"
-#   Linux/Mac: export HF_TOKEN="hf_your_token_here"
-# Get a free token at: https://huggingface.co/settings/tokens
 HF_TOKEN   = os.getenv("HF_TOKEN", "")
 MODEL_ID   = "sentence-transformers/all-MiniLM-L6-v2"
 API_URL    = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{MODEL_ID}"
@@ -36,10 +15,7 @@ BATCH_SIZE = 64   # HF free tier handles up to 100 inputs per call safely
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# ── Master symptom vocabulary ─────────────────────────────────────────────────
-# Every canonical symptom name used by the classifier + its natural-language
-# synonyms and example phrases. The richer the phrases, the better the model
-# understands the user's conversational input.
+
 SYMPTOM_PHRASES: dict[str, list[str]] = {
     "Appetite Loss": [
         "not eating", "won't eat", "refuse food", "refusing food", "loss of appetite",

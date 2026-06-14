@@ -283,40 +283,44 @@ class EventCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
       child: Row(
         children: [
-          // Pet type chip
-          _PetTypeChip(emoji: _petTypeEmoji(event.petType), label: event.petType),
+          // ── Left: chip (Expanded so it fills remaining space and ellipses)
+          Expanded(
+            child: _PetTypeChip(
+              emoji: _petTypeEmoji(event.petType),
+              label: event.petType,
+            ),
+          ),
+
+          // Organizer avatar (optional)
+          if (event.organizerAvatarUrl != null || event.organizerName != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 6),
+              child: _buildOrganizerAvatar(),
+            ),
 
           const SizedBox(width: 8),
 
-          // Organizer avatar (if available)
-          if (event.organizerAvatarUrl != null ||
-              event.organizerName != null) ...[
-            _buildOrganizerAvatar(),
-            const SizedBox(width: 8),
-          ],
-
-          const Spacer(),
-
-          // Going count
-          _CountBadge(
-            icon: Icons.check_circle_outline_rounded,
-            count: event.goingCount,
-            color: const Color(0xFF2ECC71),
-            tooltip: 'Going',
+          // ── Right: fixed-size badges + bookmark (mainAxisSize:min = rigid)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _CountBadge(
+                icon: Icons.check_circle_outline_rounded,
+                count: event.goingCount,
+                color: const Color(0xFF2ECC71),
+                tooltip: 'Going',
+              ),
+              const SizedBox(width: 6),
+              _CountBadge(
+                icon: Icons.star_outline_rounded,
+                count: event.interestedCount,
+                color: const Color(0xFFF39C12),
+                tooltip: 'Interested',
+              ),
+              const SizedBox(width: 4),
+              _BookmarkButton(isSaved: isSaved, onTap: onSave),
+            ],
           ),
-          const SizedBox(width: 6),
-
-          // Interested count
-          _CountBadge(
-            icon: Icons.star_outline_rounded,
-            count: event.interestedCount,
-            color: const Color(0xFFF39C12),
-            tooltip: 'Interested',
-          ),
-          const SizedBox(width: 4),
-
-          // Bookmark button
-          _BookmarkButton(isSaved: isSaved, onTap: onSave),
         ],
       ),
     );
@@ -366,18 +370,23 @@ class _PetTypeChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFCCE8F2), width: 1),
       ),
+      // No mainAxisSize:min – the Row fills the width that Flexible allocates,
+      // which prevents overflow when the chip is squeezed in a tight layout.
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Text(emoji, style: const TextStyle(fontSize: 12)),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Outfit',
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF3293B3),
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF3293B3),
+              ),
             ),
           ),
         ],
